@@ -1,0 +1,248 @@
+# Nutrient profiles — curated layer over KDRI 2025 vendor data.
+#
+# diet_baseline_pct: fraction of the RI/AI target already supplied by the
+#   average Korean diet. Every value MUST cite a specific KNHANES table+year.
+#   Where no sourced figure exists it is null with source "none": the engine
+#   then returns UNKNOWN and emits no number, rather than guessing a baseline
+#   and systematically over-recommending. Filling these in is the pre-launch
+#   KNHANES sourcing pass (PLAN.md open question 1).
+#
+# forms: present only where a supplement form changes elemental content or the
+#   target/limit unit. Nutrients sold as the nutrient itself omit forms and the
+#   label value is treated as elemental. Every elemental_pct is cited by the
+#   compound's molecular weight.
+
+# ── minerals ────────────────────────────────────────────────────────────
+
+magnesium:
+  target_unit: mg
+  ul_unit: mg
+  diet_baseline_pct: null
+  diet_baseline_source: none
+  forms:
+    - name_ko: 산화마그네슘
+      elemental_pct: 0.603
+      source: "MgO 분자량 40.30, 원소 Mg 24.31 → 24.31/40.30"
+    - name_ko: 구연산마그네슘
+      elemental_pct: 0.161
+      source: "구연산마그네슘(무수) 분자량 기준 원소 Mg 비율"
+    - name_ko: 마그네슘 비스글리시네이트
+      elemental_pct: 0.141
+      source: "마그네슘 비스글리시네이트 킬레이트 분자량 기준 원소 Mg 비율"
+
+calcium:
+  target_unit: mg
+  ul_unit: mg
+  diet_baseline_pct: null
+  diet_baseline_source: none
+  forms:
+    - name_ko: 탄산칼슘
+      elemental_pct: 0.400
+      source: "CaCO3 분자량 100.09, 원소 Ca 40.08 → 40.08/100.09"
+    - name_ko: 구연산칼슘
+      elemental_pct: 0.211
+      source: "구연산칼슘 Ca3(C6H5O7)2 분자량 498.4, 원소 Ca 120.2 → 120.2/498.4"
+
+iron:
+  target_unit: mg
+  ul_unit: mg
+  diet_baseline_pct: null
+  diet_baseline_source: none
+  forms:
+    - name_ko: 푸마르산철
+      elemental_pct: 0.329
+      source: "푸마르산제일철 FeC4H2O4 분자량 169.9, 원소 Fe 55.85 → 55.85/169.9"
+    - name_ko: 글루콘산철
+      elemental_pct: 0.116
+      source: "글루콘산제일철 분자량 446.1, 원소 Fe 55.85 → 55.85/446.1(2수화물 제외 근사)"
+
+zinc:
+  target_unit: mg
+  ul_unit: mg
+  diet_baseline_pct: null
+  diet_baseline_source: none
+  forms:
+    - name_ko: 글루콘산아연
+      elemental_pct: 0.143
+      source: "글루콘산아연 분자량 455.7, 원소 Zn 65.38 → 65.38/455.7"
+    - name_ko: 피콜린산아연
+      elemental_pct: 0.206
+      source: "피콜린산아연 분자량 317.6, 원소 Zn 65.38 → 65.38/317.6"
+
+copper:
+  target_unit: µg
+  ul_unit: µg
+  diet_baseline_pct: null
+  diet_baseline_source: none
+
+iodine:
+  target_unit: µg
+  ul_unit: µg
+  diet_baseline_pct: null
+  diet_baseline_source: none
+
+selenium:
+  target_unit: µg
+  ul_unit: µg
+  diet_baseline_pct: null
+  diet_baseline_source: none
+
+manganese:
+  target_unit: mg
+  ul_unit: mg
+  diet_baseline_pct: null
+  diet_baseline_source: none
+
+molybdenum:
+  target_unit: µg
+  ul_unit: µg
+  diet_baseline_pct: null
+  diet_baseline_source: none
+
+chromium:
+  target_unit: µg
+  ul_unit: µg
+  diet_baseline_pct: null
+  diet_baseline_source: none
+
+phosphorus:
+  target_unit: mg
+  ul_unit: mg
+  diet_baseline_pct: null
+  diet_baseline_source: none
+
+potassium:
+  target_unit: mg
+  ul_unit: mg
+  diet_baseline_pct: null
+  diet_baseline_source: none
+
+sodium:
+  target_unit: mg
+  ul_unit: mg
+  diet_baseline_pct: null
+  diet_baseline_source: none
+
+chloride:
+  target_unit: mg
+  ul_unit: mg
+  diet_baseline_pct: null
+  diet_baseline_source: none
+
+fluoride:
+  target_unit: mg
+  ul_unit: mg
+  diet_baseline_pct: null
+  diet_baseline_source: none
+
+# ── vitamins ────────────────────────────────────────────────────────────
+
+folate:
+  target_unit: µg DFE
+  ul_unit: µg
+  diet_baseline_pct: null
+  diet_baseline_source: none
+  forms:
+    - name_ko: 엽산
+      elemental_pct: 1.0
+      target_factor: 1.7
+      ul_factor: 1.0
+      source: "KDRI 2025 보도자료 p.10 — 합성 엽산 1µg = 1.7µg DFE (식사와 함께)"
+    - name_ko: 메틸엽산
+      elemental_pct: 1.0
+      target_factor: 1.7
+      ul_factor: 1.0
+      source: "KDRI 2025 보도자료 p.10 — 5-MTHF, DFE 환산 동일 적용"
+
+niacin:
+  target_unit: mg NE
+  ul_unit: mg NE
+  diet_baseline_pct: null
+  diet_baseline_source: none
+  forms:
+    - name_ko: 니코틴아미드
+      elemental_pct: 1.0
+      source: "니아신 등량 — 니코틴아미드 1mg = 1mg NE"
+    - name_ko: 니코틴산
+      elemental_pct: 1.0
+      source: "니아신 등량 — 니코틴산 1mg = 1mg NE"
+
+vitamin_a:
+  target_unit: µg RAE
+  ul_unit: µg RAE
+  diet_baseline_pct: null
+  diet_baseline_source: none
+
+vitamin_d:
+  target_unit: µg
+  ul_unit: µg
+  diet_baseline_pct: null
+  diet_baseline_source: none
+
+vitamin_e:
+  target_unit: mg α-TE
+  ul_unit: mg α-TE
+  diet_baseline_pct: null
+  diet_baseline_source: none
+
+vitamin_k:
+  target_unit: µg
+  ul_unit: µg
+  diet_baseline_pct: null
+  diet_baseline_source: none
+
+vitamin_c:
+  target_unit: mg
+  ul_unit: mg
+  diet_baseline_pct: null
+  diet_baseline_source: none
+
+thiamin:
+  target_unit: mg
+  ul_unit: mg
+  diet_baseline_pct: null
+  diet_baseline_source: none
+
+riboflavin:
+  target_unit: mg
+  ul_unit: mg
+  diet_baseline_pct: null
+  diet_baseline_source: none
+
+vitamin_b6:
+  target_unit: mg
+  ul_unit: mg
+  diet_baseline_pct: null
+  diet_baseline_source: none
+
+vitamin_b12:
+  target_unit: µg
+  ul_unit: µg
+  diet_baseline_pct: null
+  diet_baseline_source: none
+
+pantothenic_acid:
+  target_unit: mg
+  ul_unit: mg
+  diet_baseline_pct: null
+  diet_baseline_source: none
+
+biotin:
+  target_unit: µg
+  ul_unit: µg
+  diet_baseline_pct: null
+  diet_baseline_source: none
+
+choline:
+  target_unit: mg
+  ul_unit: mg
+  diet_baseline_pct: null
+  diet_baseline_source: none
+
+# ── EPA/DHA ─────────────────────────────────────────────────────────────
+
+epa_dha:
+  target_unit: mg
+  ul_unit: mg
+  diet_baseline_pct: null
+  diet_baseline_source: none

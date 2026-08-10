@@ -1,0 +1,2 @@
+nutrient_code,gender,age_min,age_max,field,value,source,note
+magnesium,M,15,18,ri_base,380,"KDRI 2025 보도자료 붙임3 — 마그네슘 70~380","2020 잔존값 410 수정. MVP 범위 밖이나 범위 검증 통과에 필요"

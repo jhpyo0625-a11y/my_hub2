@@ -1,0 +1,4 @@
+macronutrient,age_min,age_max,pct_min,pct_max,kdri_version,source,changed_2025
+carbohydrate,1,99,50,65,2025,"KDRI 2025 보도자료 p.7","하한선 하향 (55→50)"
+protein,1,99,10,20,2025,"KDRI 2025 보도자료 p.7","하한선 상향 (7→10)"
+fat,1,99,15,30,2025,"KDRI 2025 보도자료 p.7","유지"

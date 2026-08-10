@@ -1,0 +1,19 @@
+# 예시 데이터 — KDRI/KNHANES 미출처, 화면 시연용.
+#
+# 실제 KNHANES 식이 기준이 아니라 UI 시연을 위한 illustrative diet_baseline_pct
+# 값이다. 프로덕션 경로(KDRI_DEMO 미설정)에서는 이 파일을 읽지 않으며,
+# diet_baseline_pct 가 null 인 영양소는 그대로 UNKNOWN 으로 남는다.
+#
+# 일부 영양소(chromium, molybdenum, choline, epa_dha, biotin,
+# pantothenic_acid 등)는 의도적으로 비워 두어 시연 화면에서도 UNKNOWN
+# 상태가 그대로 보이도록 한다.
+
+magnesium: 0.70
+iron: 0.60
+folate: 0.40
+niacin: 0.90
+calcium: 0.55
+vitamin_d: 0.30
+zinc: 0.65
+vitamin_c: 0.80
+vitamin_b12: 0.70

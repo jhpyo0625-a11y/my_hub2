@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>S-08 근거 채팅 — 영양제 추천 엔진</title>
+<link rel="stylesheet" href="wireframes.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap">
+    <div class="brand">영양제 추천 엔진 <span>KDRI 2025</span></div>
+    <nav>
+      <a href="intake.html">입력</a>
+      <a href="confirm.html">확인</a>
+      <a href="report.html">리포트</a>
+      <a href="chat.html" aria-current="page">근거</a>
+      <a href="history.html">히스토리</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <span class="screen-tag">S-08 · /reports/41/chat · v1 고정 · 읽기 전용</span>
+  <h1>이 결과의 근거</h1>
+  <p class="lede">리포트 v1에 저장된 계산 기록만으로 답변합니다. 새로운 용량을 제시하지 않습니다.</p>
+
+  <div class="callout info">
+    이 대화는 <strong>리포트 v1에 연결</strong>되어 있습니다. 입력을 바꾸면 새 버전이 만들어지고,
+    이 대화는 v1에 그대로 남습니다.
+  </div>
+
+  <section class="card">
+
+    <div class="msg user">
+      <span class="who">나</span>
+      <div class="body"><div class="bubble">마그네슘이 왜 초과라고 나왔나요? 제품에 적힌 대로 하루 한 알만 먹었는데요.</div></div>
+    </div>
+
+    <div class="msg bot">
+      <span class="who">AI</span>
+      <div class="body"><div class="bubble">
+        라벨의 <strong>600mg은 산화마그네슘 화합물 전체 무게</strong>이고, 그중 마그네슘 원소는 60.3%입니다.
+        실제 섭취하신 마그네슘은 <strong>361.8mg</strong>입니다.<br><br>
+        마그네슘 상한섭취량은 <strong>350mg</strong>인데, 이 값은 <strong>보충제로 섭취한 양에만</strong> 적용됩니다.
+        식품으로 먹은 266mg은 여기에 포함되지 않습니다. 그래서 361.8 − 350 = <strong>11.8mg 초과</strong>입니다.<br><br>
+        <span style="color:var(--muted);font-size:13px">근거: KDRI 2025 마그네슘 상한섭취량 — 식품 외 급원에만 적용</span>
+      </div></div>
+    </div>
+
+    <div class="msg user">
+      <span class="who">나</span>
+      <div class="body"><div class="bubble">목표가 380mg인데 상한이 350mg이면 목표를 못 채우는 것 아닌가요?</div></div>
+    </div>
+
+    <div class="msg bot">
+      <span class="who">AI</span>
+      <div class="body"><div class="bubble">
+        두 숫자의 기준이 다릅니다.<br><br>
+        <strong>380mg</strong>은 식품과 보충제를 <strong>모두 합한</strong> 하루 목표량입니다.
+        <strong>350mg</strong>은 <strong>보충제만</strong>의 상한선입니다.<br><br>
+        계산에서는 식품으로 266mg을 섭취하는 것으로 보았고, 보충제로 채워야 할 부족분은
+        380 − 266 = <strong>114mg</strong>이었습니다. 이 값은 보충제 상한 350mg 안에 충분히 들어옵니다.
+        문제는 실제로 361.8mg을 드시고 있다는 점입니다.
+      </div></div>
+    </div>
+
+    <div class="msg user">
+      <span class="who">나</span>
+      <div class="body"><div class="bubble">그럼 500mg짜리로 바꾸면 딱 맞나요? 그 용량으로 추천해 주세요.</div></div>
+    </div>
+
+    <div class="msg bot">
+      <span class="who">AI</span>
+      <div class="body"><div class="bubble">
+        <strong>새로운 용량을 제가 직접 정해 드릴 수는 없습니다.</strong>
+        이 대화는 저장된 계산 기록을 설명하는 용도이고, 용량은 계산 엔진만 산출합니다.<br><br>
+        제품을 바꾸실 예정이라면 <strong>입력 수정</strong>에서 제품과 용량을 바꾸신 뒤 다시 계산해 주세요.
+        새 리포트(v2)가 만들어지고, 지금 보고 계신 v1은 그대로 남습니다.
+        <div class="actions" style="margin-top:14px">
+          <a class="btn btn-primary btn-sm" href="intake.html">입력 수정하고 다시 계산</a>
+        </div>
+      </div></div>
+    </div>
+
+    <div class="msg user">
+      <span class="who">나</span>
+      <div class="body"><div class="bubble">아 참, 멀티비타민도 먹고 있는데 입력을 빠뜨렸어요.</div></div>
+    </div>
+
+    <div class="msg bot">
+      <span class="who">AI</span>
+      <div class="body"><div class="bubble">
+        빠진 입력이 있으면 결과가 달라집니다. 멀티비타민에 마그네슘이나 엽산이 들어 있다면
+        현재 초과량은 <strong>더 커집니다</strong>.<br><br>
+        <strong>입력 수정</strong>에서 추가해 주세요. 지금 리포트의 숫자를 제가 고쳐 드리는 것은
+        계산을 거치지 않은 값이 되어 버리기 때문에 하지 않습니다.
+        <div class="actions" style="margin-top:14px">
+          <a class="btn btn-primary btn-sm" href="intake.html">멀티비타민 추가하기</a>
+        </div>
+      </div></div>
+    </div>
+
+    <div style="margin-top:22px;display:flex;gap:10px">
+      <input type="text" placeholder="이 결과에 대해 궁금한 점을 물어보세요" style="flex:1">
+      <button class="btn btn-primary">보내기</button>
+    </div>
+  </section>
+
+  <p class="disclaimer">
+    이 대화는 리포트에 저장된 계산 기록(trace)만을 근거로 답변하며, 새로운 섭취량을 산출하지 않습니다.
+    추천을 바꾸시려면 입력을 수정해 다시 계산하세요.
+  </p>
+</main>
+
+</body>
+</html>
