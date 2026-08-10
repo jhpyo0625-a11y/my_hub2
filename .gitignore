@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+*.sqlite
+*.sqlite3
+*.db
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+npm-debug.log*
+yarn-error.log*
+.env
+.env.local
+
+# OS / editor
+.DS_Store
+Thumbs.db

@@ -69,6 +69,23 @@ def test_missing_diet_baseline_yields_unknown(tables):
     assert result.recommend == 0.0
 
 
+def test_over_supplemental_limit_surfaces_even_without_a_baseline(tables):
+    """Safety-first: 600mg MgO is over the 350mg supplemental limit and must
+    report OVER, not UNKNOWN, even though magnesium's diet baseline is null."""
+    bands, limits, profiles = tables
+    assert profiles["magnesium"].diet_baseline_pct is None  # honest curated state
+    user = Profile(
+        age=34,
+        sex="M",
+        supplements=(SupplementIntake("magnesium", dose=600, form_ko="산화마그네슘"),),
+    )
+    result = compute_nutrient("magnesium", user, bands, limits, profiles)
+    assert result.status == "OVER"
+    assert result.headroom == pytest.approx(-11.8)
+    assert result.recommend == 0.0
+    assert any(s.rule_id == "recommend.computed" for s in result.trace)
+
+
 def test_total_intake_limit_subtracts_diet(tables):
     """Iron's limit comes from the vendor band, so it is total-intake based."""
     bands, limits, profiles = tables

@@ -111,6 +111,35 @@ def compute_nutrient(
 
     baseline = nutrient_profile.diet_baseline_pct if nutrient_profile else None
     if baseline is None:
+        # Safety-first: a confirmed overshoot of a supplemental-only limit is
+        # OVER even without a diet baseline. That basis excludes food, so diet
+        # is not part of the comparison — the overdose is real either way, and
+        # "OVER leads" outranks "no baseline -> UNKNOWN" (spec section 6.4).
+        if (
+            limit is not None
+            and limit.basis == "supplemental_only"
+            and headroom is not None
+            and headroom < 0
+        ):
+            trace.append(
+                TraceStep(
+                    "recommend.computed",
+                    {"gap": None, "headroom": headroom, "basis": limit.basis},
+                    0.0,
+                    limit.source,
+                )
+            )
+            return NutrientResult(
+                nutrient_code=nutrient_code,
+                status="OVER",
+                target=target,
+                from_diet=0.0,
+                from_supplements=toward_target,
+                gap=0.0,
+                headroom=headroom,
+                recommend=0.0,
+                trace=trace,
+            )
         trace.append(TraceStep("baseline.unknown", {"nutrient": nutrient_code}, None))
         return NutrientResult(
             nutrient_code=nutrient_code,
