@@ -1,0 +1,5 @@
+nutrient_code,applies_to_form,age_min,age_max,sex,ul_value,ul_unit,ul_basis,source
+magnesium,,19,99,ALL,350,mg,supplemental_only,"KDRI 2025 마그네슘 상한섭취량 — 식품 외 급원에만 적용"
+niacin,니코틴산,19,99,ALL,35,mg NE,supplemental_only,"KDRI 2025 보도자료 p.9 — 니코틴산 상한치 2020년 수준 유지"
+niacin,니코틴아미드,19,99,ALL,850,mg NE,supplemental_only,"KDRI 2025 보도자료 p.10 — 니코틴아미드 1,000→850 하향"
+folate,,19,99,ALL,1000,µg,supplemental_only,"KDRI 2025 보도자료 p.10 — 상한섭취량은 µg/일 유지"

@@ -1,0 +1,55 @@
+magnesium:
+  target_unit: mg
+  ul_unit: mg
+  diet_baseline_pct: 0.70
+  diet_baseline_source: "PROVISIONAL — KNHANES 출처 확정 필요 (Task 13)"
+  forms:
+    - name_ko: 산화마그네슘
+      elemental_pct: 0.603
+      source: "MgO 분자량 40.30/24.31"
+    - name_ko: 구연산마그네슘
+      elemental_pct: 0.161
+      source: "구연산마그네슘 분자량 기준"
+    - name_ko: 마그네슘 비스글리시네이트
+      elemental_pct: 0.141
+      source: "비스글리시네이트 킬레이트 분자량 기준"
+
+niacin:
+  target_unit: mg NE
+  ul_unit: mg NE
+  diet_baseline_pct: 0.90
+  diet_baseline_source: "PROVISIONAL — KNHANES 출처 확정 필요 (Task 13)"
+  forms:
+    - name_ko: 니코틴아미드
+      elemental_pct: 1.0
+      source: "니아신 등량"
+    - name_ko: 니코틴산
+      elemental_pct: 1.0
+      source: "니아신 등량"
+
+folate:
+  target_unit: µg DFE
+  ul_unit: µg
+  diet_baseline_pct: 0.40
+  diet_baseline_source: "PROVISIONAL — KNHANES 출처 확정 필요 (Task 13)"
+  forms:
+    - name_ko: 엽산
+      elemental_pct: 1.0
+      target_factor: 1.7
+      ul_factor: 1.0
+      source: "KDRI 2025 보도자료 p.10 — 합성 엽산 1µg = 1.7µg DFE (식사와 함께)"
+    - name_ko: 메틸엽산
+      elemental_pct: 1.0
+      target_factor: 1.7
+      ul_factor: 1.0
+      source: "KDRI 2025 보도자료 p.10"
+
+iron:
+  target_unit: mg
+  ul_unit: mg
+  diet_baseline_pct: 0.60
+  diet_baseline_source: "PROVISIONAL — KNHANES 출처 확정 필요 (Task 13)"
+  forms:
+    - name_ko: 푸마르산철
+      elemental_pct: 0.329
+      source: "푸마르산제일철 분자량 기준"
