@@ -1,3 +1,5 @@
+import dataclasses
+
 import pytest
 
 from kdri.engine import accumulate, compute_nutrient, compute_report, round_down
@@ -8,6 +10,15 @@ from kdri.models import Profile, SupplementIntake
 @pytest.fixture(scope="module")
 def tables():
     return load_bands(), load_limits(), load_profiles()
+
+
+def pin_baselines(profiles, **baselines):
+    """Curated baselines are null until KNHANES-sourced; pin them for a test
+    that exercises a diet-dependent path, mirroring the golden/property tests."""
+    out = dict(profiles)
+    for code, pct in baselines.items():
+        out[code] = dataclasses.replace(out[code], diet_baseline_pct=pct)
+    return out
 
 
 # ── Task 8: accounting + core computation ───────────────────────────────
@@ -61,6 +72,7 @@ def test_missing_diet_baseline_yields_unknown(tables):
 def test_total_intake_limit_subtracts_diet(tables):
     """Iron's limit comes from the vendor band, so it is total-intake based."""
     bands, limits, profiles = tables
+    profiles = pin_baselines(profiles, iron=0.60)
     profile = Profile(age=34, sex="F")
     result = compute_nutrient("iron", profile, bands, limits, profiles)
     # F 30-49 iron: RI 12, UL 45, baseline 0.60 -> diet 7.2
@@ -82,6 +94,7 @@ def test_report_covers_every_in_scope_nutrient(tables):
 
 def test_report_puts_over_first(tables):
     bands, limits, profiles = tables
+    profiles = pin_baselines(profiles, magnesium=0.70)
     user = Profile(
         age=34,
         sex="M",
@@ -135,6 +148,7 @@ def test_recommendation_is_always_traceable(tables):
 
 def test_trace_records_the_limit_source_when_one_applies(tables):
     bands, limits, profiles = tables
+    profiles = pin_baselines(profiles, magnesium=0.70)
     user = Profile(age=34, sex="M")
     result = compute_nutrient("magnesium", user, bands, limits, profiles)
     step = [s for s in result.trace if s.rule_id == "recommend.computed"][0]

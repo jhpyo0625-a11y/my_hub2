@@ -1,6 +1,13 @@
 import pytest
 
-from kdri.loader import load_limits, load_profiles
+from kdri.loader import (
+    in_scope_codes,
+    load_energy_ratios,
+    load_interactions,
+    load_limits,
+    load_nutrients,
+    load_profiles,
+)
 
 
 def test_limits_load_with_form_scoping():
@@ -44,3 +51,56 @@ def test_split_unit_nutrients_require_conversion_factors_on_every_form():
             for form in profile.forms:
                 assert form.target_factor is not None
                 assert form.ul_factor is not None
+
+
+# ── Task 13: complete, cited profiles for all 30 ────────────────────────
+
+
+def test_every_in_scope_nutrient_has_a_profile():
+    profiles = load_profiles()
+    missing = in_scope_codes(load_nutrients()) - set(profiles)
+    assert missing == set(), f"missing profiles: {sorted(missing)}"
+
+
+def test_every_baseline_is_sourced_or_explicitly_absent():
+    for profile in load_profiles().values():
+        if profile.diet_baseline_pct is None:
+            assert profile.diet_baseline_source == "none"
+        else:
+            assert profile.diet_baseline_source
+            assert "PROVISIONAL" not in profile.diet_baseline_source
+            assert 0.0 <= profile.diet_baseline_pct <= 1.5
+
+
+def test_every_form_is_cited():
+    for profile in load_profiles().values():
+        for form in profile.forms:
+            assert form.source.strip(), f"{profile.nutrient_code}/{form.name_ko} uncited"
+            assert 0.0 < form.elemental_pct <= 1.0
+
+
+# ── Task 14: interactions + AMDR reference ──────────────────────────────
+
+
+def test_interactions_are_cited_and_scoped():
+    rows = load_interactions()
+    assert rows
+    codes = in_scope_codes(load_nutrients())
+    for row in rows:
+        assert row["nutrient_code"] in codes
+        assert row["severity"] in ("low", "medium", "high", "critical")
+        assert row["source"].strip()
+        assert "가이드" != row["source"].strip(), "name a specific reference"
+
+
+def test_amdr_matches_the_2025_revision():
+    ratios = {r["macronutrient"]: r for r in load_energy_ratios()}
+    assert (float(ratios["carbohydrate"]["pct_min"]), float(ratios["carbohydrate"]["pct_max"])) == (50.0, 65.0)
+    assert (float(ratios["protein"]["pct_min"]), float(ratios["protein"]["pct_max"])) == (10.0, 20.0)
+    assert (float(ratios["fat"]["pct_min"]), float(ratios["fat"]["pct_max"])) == (15.0, 30.0)
+
+
+def test_engine_never_imports_energy_ratios():
+    """AMDR is reference-only; the engine has no denominator to compute it."""
+    source = (__import__("pathlib").Path(__file__).parents[1] / "src" / "kdri" / "engine.py").read_text(encoding="utf-8")
+    assert "energy_ratio" not in source

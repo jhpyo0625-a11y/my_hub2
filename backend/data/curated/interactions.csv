@@ -1,0 +1,7 @@
+nutrient_code,drug_class,drug_examples_ko,effect,action,severity,source
+calcium,levothyroxine,"레보티록신(씬지로이드)",흡수저해,4시간 이상 간격 두기,high,"Stockley's Drug Interactions — levothyroxine + calcium salts"
+magnesium,quinolone,"시프로플록사신, 레보플록사신",킬레이트 형성으로 흡수저해,2시간 이상 간격 두기,high,"Stockley's Drug Interactions — quinolones + magnesium"
+calcium,quinolone,"시프로플록사신, 레보플록사신",킬레이트 형성으로 흡수저해,2시간 이상 간격 두기,high,"Stockley's Drug Interactions — quinolones + calcium"
+iron,proton_pump_inhibitor,"오메프라졸, 판토프라졸",위산 감소로 흡수저해,담당의와 상담,medium,"Lexicomp Drug Interactions — iron salts + PPIs"
+vitamin_k,warfarin,"와파린",항응고 효과 길항,담당의 상담 필수,critical,"Stockley's Drug Interactions — warfarin + vitamin K"
+vitamin_b12,metformin,"메트포르민",장기 복용 시 흡수저해,정기적 혈중 수치 확인,medium,"Lexicomp Drug Interactions — metformin + vitamin B12"
