@@ -15,6 +15,7 @@ from typing import Optional
 from uuid import uuid4
 
 from fastapi import Depends, FastAPI, Request, Response
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy import func, select
@@ -278,8 +279,15 @@ def _envelope(row, results: list, inp) -> dict:
         "disclaimer": DISCLAIMER,
         # Echo the stored input snapshot so the report renders block 1 (입력 요약)
         # on any GET/reload/history view — the report is reproducible from its
-        # own row (NFR-7), not from client-held state.
-        "profile": row.profile_json,
+        # own row (NFR-7), not from client-held state. Flattened: the inner
+        # profile fields (age/sex/weight/goals) sit beside supplements/
+        # medications/biomarkers so the client reads them at one level.
+        "profile": {
+            **(row.profile_json.get("profile") or {}),
+            "supplements": row.profile_json.get("supplements", []),
+            "medications": row.profile_json.get("medications", []),
+            "biomarkers": row.profile_json.get("biomarkers", []),
+        },
         "summary": summary,
         "results": results,
         "energy_ratios_reference": _energy_reference(inp),
@@ -300,6 +308,21 @@ def create_app(db_url: str | None = None, demo: bool | None = None) -> FastAPI:
         seed_all(s, inp)  # runs assertions; raises -> startup aborts (PF-04)
 
     app = FastAPI(title="KDRI 2025 supplement engine")
+
+    # Credentialed cross-origin for the Next.js dev/frontend host. Origins are
+    # explicit (a wildcard is invalid with allow_credentials), overridable via
+    # KDRI_CORS_ORIGINS (comma-separated) for a real deployment.
+    origins = os.environ.get(
+        "KDRI_CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000"
+    ).split(",")
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[o.strip() for o in origins if o.strip()],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
     app.state.engine = engine
     app.state.SessionLocal = SessionLocal
     app.state.inputs = inp
