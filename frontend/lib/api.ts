@@ -60,6 +60,15 @@ export type NutrientResult = {
   limit: { value: number; unit: string; basis: string; source: string } | null;
   message_ko?: string;
   interactions?: Interaction[];
+  biomarker?: {
+    biomarker_code: string;
+    value: number;
+    unit: string;
+    threshold: number;
+    direction: string;
+    note_ko: string;
+    source: string;
+  } | null;
   trace?: TraceStep[];
 };
 

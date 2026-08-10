@@ -24,10 +24,12 @@ reporting, so the maintainer completed the scoring from the same evidence.
 **S1 (release-blocking): none.**
 
 **S2 (real gaps, not wrong numbers):**
-- FR-13 biomarker-driven priority is not wired: a flagged biomarker (e.g. low
-  hemoglobin) does not lift iron in the ordering. The `Profile` engine type does
-  not yet carry biomarkers. Refusals and status ordering are correct; only the
-  biomarker nudge is absent.
+- ~~FR-13 biomarker-driven priority is not wired.~~ **RESOLVED.** Cited
+  `biomarkers.csv` (hemoglobin/ferritin→iron, 25(OH)D→vitamin D) drives a
+  priority tier directly under OVER; a below-range value flags the nutrient and
+  adds a "target unchanged, see a doctor" note. Verified end-to-end (engine
+  tests + live UI): low hemoglobin lifts iron to the top with its dosing numbers
+  untouched. 80 tests green.
 - Report block 3 (추천) omits the "suggested form + why + timing" prose the
   wireframe shows (RP-10). The API contract exposes `recommend`/`limit`/
   `interactions`/`message_ko` but no `nutrient_timing` — that table is unseeded
@@ -44,7 +46,9 @@ reporting, so the maintainer completed the scoring from the same evidence.
   reload → flattened profile echo added (report reproducible from its own row).
 
 ## Follow-ups for Phase 2.1 / later phases
-1. Add `biomarkers` to the engine `Profile` and implement priority rank 2 (FR-13).
+1. ~~Add `biomarkers` to the engine `Profile` and implement priority rank 2 (FR-13).~~ **Done.**
 2. Author `nutrient_timing` (Phase 1 curated) and expose it so block 3 can show
    form choice rationale and timing.
 3. Source the KNHANES diet baselines (pre-launch gate) to replace the demo overlay.
+4. Add a `biomarkers` seeded table to `erd.md`/`db.py` (currently the engine reads
+   the cited refs from files only, consistent with limits/profiles).

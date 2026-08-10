@@ -5,6 +5,8 @@ from typing import Iterable, Optional
 
 from kdri.lookup import BandNotFound, find_band, find_form, resolve_limit
 from kdri.models import (
+    BiomarkerFlag,
+    BiomarkerRef,
     KdriRow,
     Limit,
     NutrientProfile,
@@ -205,15 +207,61 @@ def band_unit_unknown() -> str:
 
 # ── Task 11: full report with safety-first priority ordering ────────────
 
-STATUS_RANK = {"OVER": 0, "DEFICIT": 1, "ADEQUATE": 2, "UNKNOWN": 3}
+def evaluate_biomarkers(
+    user: Profile, refs: list[BiomarkerRef]
+) -> dict[str, BiomarkerFlag]:
+    """Map each out-of-range biomarker to the nutrient it flags.
+
+    A value below its cited `low` reference bound flags the nutrient. This
+    prioritizes and contextualizes only — it never enters any dose arithmetic.
+    Sex-specific bounds match the user's sex or an 'ALL' row. First matching
+    ref per nutrient wins.
+    """
+    flags: dict[str, BiomarkerFlag] = {}
+    for bm in user.biomarkers:
+        if bm.value is None:
+            continue
+        for ref in refs:
+            if ref.biomarker_code != bm.code or ref.sex not in ("ALL", user.sex):
+                continue
+            if ref.low is not None and bm.value < ref.low:
+                flags.setdefault(
+                    ref.nutrient_code,
+                    BiomarkerFlag(
+                        biomarker_code=bm.code,
+                        nutrient_code=ref.nutrient_code,
+                        value=bm.value,
+                        unit=bm.unit or ref.unit,
+                        threshold=ref.low,
+                        direction="low",
+                        source=ref.source,
+                    ),
+                )
+    return flags
+
+
+# Priority tiers, safety-first (spec section 6.5). A biomarker-flagged nutrient
+# sits directly under OVER and above every unflagged nutrient — so a low
+# hemoglobin surfaces iron even when its dose is DEFICIT or UNKNOWN.
+def _tier(result: NutrientResult) -> int:
+    if result.status == "OVER":
+        return 0
+    if result.biomarker_flag is not None:
+        return 1
+    if result.status == "DEFICIT":
+        return 2
+    if result.status == "ADEQUATE":
+        return 3
+    return 4  # UNKNOWN
 
 
 def _priority(result: NutrientResult) -> tuple[int, float]:
-    rank = STATUS_RANK[result.status]
-    if result.status == "DEFICIT" and result.target:
-        # larger shortfall relative to target sorts earlier
-        return (rank, -(result.gap / result.target))
-    return (rank, 0.0)
+    ratio = (
+        -(result.gap / result.target)
+        if (result.status == "DEFICIT" and result.target)
+        else 0.0
+    )
+    return (_tier(result), ratio)
 
 
 def compute_report(
@@ -221,6 +269,7 @@ def compute_report(
     bands: list[KdriRow],
     limits: list[Limit],
     profiles: dict[str, NutrientProfile],
+    biomarker_refs: list[BiomarkerRef] = (),
 ) -> list[NutrientResult]:
     if user.age < MIN_ADULT_AGE:
         raise ValueError(f"age {user.age} is outside MVP scope (adults {MIN_ADULT_AGE}+)")
@@ -229,7 +278,27 @@ def compute_report(
     results = [
         compute_nutrient(code, user, bands, limits, profiles) for code in codes
     ]
+
+    flags = evaluate_biomarkers(user, list(biomarker_refs))
+    for result in results:
+        flag = flags.get(result.nutrient_code)
+        if flag is not None:
+            result.biomarker_flag = flag
+            result.trace.append(
+                TraceStep(
+                    "biomarker.flag",
+                    {
+                        "biomarker": flag.biomarker_code,
+                        "value": flag.value,
+                        "threshold": flag.threshold,
+                        "direction": flag.direction,
+                    },
+                    "prioritized",  # note: no dose number changes
+                    flag.source,
+                )
+            )
+
     results.sort(key=_priority)
     for result in results:
-        result.priority_score = float(STATUS_RANK[result.status])
+        result.priority_score = float(_tier(result))
     return results

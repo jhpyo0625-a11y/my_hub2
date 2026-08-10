@@ -25,7 +25,7 @@ from kdri import reports as reports_acc
 from kdri.db import KdriBand, make_engine, make_session_factory, Base
 from kdri.engine import compute_report
 from kdri.lookup import BandNotFound, find_band, resolve_limit
-from kdri.models import Profile, SupplementIntake
+from kdri.models import Biomarker, Profile, SupplementIntake
 from kdri.seed import load_engine_inputs, seed_all
 
 KDRI_VERSION = "2025"
@@ -182,8 +182,37 @@ def _ser_step(step) -> dict:
     return d
 
 
+BIOMARKER_KO = {"hemoglobin": "헤모글로빈", "ferritin": "페리틴", "vitamin_d": "비타민 D"}
+
+
+def _biomarker_block(flag, nutrient_ko: str) -> dict | None:
+    """Serialize a biomarker flag with a deterministic Korean context note.
+
+    Context only — states plainly that the target was not changed."""
+    if flag is None:
+        return None
+    bm_ko = BIOMARKER_KO.get(flag.biomarker_code, flag.biomarker_code)
+    note = (
+        f"{bm_ko} 수치({_fmt(flag.value)}{flag.unit})가 참고 범위보다 낮습니다. "
+        f"{nutrient_ko}을(를) 우선 항목으로 표시했습니다. "
+        "목표 섭취량은 변경하지 않았습니다 — 수치 이상에 대한 치료 용량은 "
+        "의료 영역입니다. 의사와 상담하세요."
+    )
+    return {
+        "biomarker_code": flag.biomarker_code,
+        "value": _num(flag.value),
+        "unit": flag.unit,
+        "threshold": _num(flag.threshold),
+        "direction": flag.direction,
+        "note_ko": note,
+        "source": flag.source,
+    }
+
+
 def _render_results(user: Profile, inp) -> tuple[list, dict, dict]:
-    results = compute_report(user, inp.bands, inp.limits, inp.profiles)
+    results = compute_report(
+        user, inp.bands, inp.limits, inp.profiles, inp.biomarker_refs
+    )
     out: list = []
     trace_map: dict = {}
     summary = {"over": 0, "deficit": 0, "adequate": 0, "unknown": 0}
@@ -240,6 +269,7 @@ def _render_results(user: Profile, inp) -> tuple[list, dict, dict]:
                     r.status, r.headroom, r.recommend, over_unit, target_unit
                 ),
                 "interactions": interactions,
+                "biomarker": _biomarker_block(r.biomarker_flag, n.name_ko if n else code),
                 "trace": trace,
             }
         )
@@ -442,6 +472,11 @@ def create_app(db_url: str | None = None, demo: bool | None = None) -> FastAPI:
                 for s in req.supplements
             ),
             medications=tuple(req.medications),
+            biomarkers=tuple(
+                Biomarker(code=b.code, value=b.value, unit=b.unit)
+                for b in req.biomarkers
+                if b.value is not None
+            ),
             weight_kg=req.profile.weight_kg,
         )
         results, trace_map, _summary = _render_results(user, inp)

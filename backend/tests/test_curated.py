@@ -2,6 +2,7 @@ import pytest
 
 from kdri.loader import (
     in_scope_codes,
+    load_biomarker_refs,
     load_energy_ratios,
     load_interactions,
     load_limits,
@@ -104,3 +105,15 @@ def test_engine_never_imports_energy_ratios():
     """AMDR is reference-only; the engine has no denominator to compute it."""
     source = (__import__("pathlib").Path(__file__).parents[1] / "src" / "kdri" / "engine.py").read_text(encoding="utf-8")
     assert "energy_ratio" not in source
+
+
+def test_biomarker_refs_are_cited_scoped_and_bounded():
+    refs = load_biomarker_refs()
+    assert refs
+    codes = in_scope_codes(load_nutrients())
+    for ref in refs:
+        assert ref.nutrient_code in codes
+        assert ref.sex in ("M", "F", "ALL")
+        assert ref.low is not None or ref.high is not None
+        assert ref.source.strip()
+        assert ref.unit.strip()

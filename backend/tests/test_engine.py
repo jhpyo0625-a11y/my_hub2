@@ -2,9 +2,15 @@ import dataclasses
 
 import pytest
 
-from kdri.engine import accumulate, compute_nutrient, compute_report, round_down
-from kdri.loader import load_bands, load_limits, load_profiles
-from kdri.models import Profile, SupplementIntake
+from kdri.engine import (
+    accumulate,
+    compute_nutrient,
+    compute_report,
+    evaluate_biomarkers,
+    round_down,
+)
+from kdri.loader import load_bands, load_biomarker_refs, load_limits, load_profiles
+from kdri.models import Biomarker, Profile, SupplementIntake
 
 
 @pytest.fixture(scope="module")
@@ -161,6 +167,67 @@ def test_recommendation_is_always_traceable(tables):
             assert "recommend.computed" in rules
             assert "target.from_band" in rules
             assert "diet.baseline" in rules
+
+
+# ── FR-13: biomarker-driven priority ────────────────────────────────────
+
+
+@pytest.fixture(scope="module")
+def bmrefs():
+    return load_biomarker_refs()
+
+
+def test_biomarker_low_hemoglobin_is_sex_specific(bmrefs):
+    """WHO anaemia bound: M <13, F <12 g/dL. 12.5 flags a man, not a woman."""
+    male = Profile(age=34, sex="M", biomarkers=(Biomarker("hemoglobin", 12.5, "g/dL"),))
+    female = Profile(age=34, sex="F", biomarkers=(Biomarker("hemoglobin", 12.5, "g/dL"),))
+    assert "iron" in evaluate_biomarkers(male, bmrefs)
+    assert "iron" not in evaluate_biomarkers(female, bmrefs)
+
+
+def test_biomarker_in_range_does_not_flag(bmrefs):
+    ok = Profile(age=34, sex="F", biomarkers=(Biomarker("hemoglobin", 13.5, "g/dL"),))
+    assert evaluate_biomarkers(ok, bmrefs) == {}
+
+
+def test_biomarker_flag_prioritizes_iron_without_changing_numbers(tables, bmrefs):
+    """Low hemoglobin lifts iron to the top (after any OVER) but must not move
+    a single dosing number — decision 10, 'prioritize, never re-target'."""
+    bands, limits, profiles = tables
+    profiles = pin_baselines(profiles, iron=0.60)
+    base = Profile(age=34, sex="F")
+    flagged = Profile(age=34, sex="F", biomarkers=(Biomarker("hemoglobin", 10.5, "g/dL"),))
+
+    def iron_of(user, refs):
+        return [r for r in compute_report(user, bands, limits, profiles, refs)
+                if r.nutrient_code == "iron"][0]
+
+    a = iron_of(base, [])
+    b = iron_of(flagged, bmrefs)
+    # numbers identical
+    assert (a.target, a.from_diet, a.gap, a.recommend, a.status) == (
+        b.target, b.from_diet, b.gap, b.recommend, b.status
+    )
+    # but flagged, and now first (no OVER present)
+    assert a.biomarker_flag is None
+    assert b.biomarker_flag is not None and b.biomarker_flag.direction == "low"
+    ranked = compute_report(flagged, bands, limits, profiles, bmrefs)
+    assert ranked[0].nutrient_code == "iron"
+
+
+def test_over_still_outranks_a_biomarker_flag(tables, bmrefs):
+    """Safety first: an OVER nutrient leads even when a biomarker is flagged."""
+    bands, limits, profiles = tables
+    profiles = pin_baselines(profiles, magnesium=0.70, iron=0.60)
+    user = Profile(
+        age=34,
+        sex="F",
+        supplements=(SupplementIntake("magnesium", dose=600, form_ko="산화마그네슘"),),
+        biomarkers=(Biomarker("hemoglobin", 10.5, "g/dL"),),
+    )
+    ranked = compute_report(user, bands, limits, profiles, bmrefs)
+    assert ranked[0].nutrient_code == "magnesium" and ranked[0].status == "OVER"
+    assert ranked[1].nutrient_code == "iron" and ranked[1].biomarker_flag is not None
 
 
 def test_trace_records_the_limit_source_when_one_applies(tables):

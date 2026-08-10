@@ -8,7 +8,7 @@ from typing import Optional
 import yaml
 
 from kdri import CURATED_DIR, VENDOR_DIR
-from kdri.models import Form, KdriRow, Limit, Nutrient, NutrientProfile
+from kdri.models import BiomarkerRef, Form, KdriRow, Limit, Nutrient, NutrientProfile
 
 
 def _opt_float(raw: str) -> Optional[float]:
@@ -260,6 +260,31 @@ def _load_cited_csv(path: Path) -> list[dict[str, str]]:
         if not (row.get("source") or "").strip():
             raise ValueError(f"{path.name} row {row} has no source")
     return rows
+
+
+def load_biomarker_refs(curated_dir: Path = CURATED_DIR) -> list[BiomarkerRef]:
+    path = curated_dir / "biomarkers.csv"
+    if not path.exists():
+        return []
+    out: list[BiomarkerRef] = []
+    with path.open(encoding="utf-8") as fh:
+        for row in csv.DictReader(fh):
+            if not (row.get("source") or "").strip():
+                raise ValueError(f"biomarkers.csv row {row} has no source")
+            if not (row.get("low") or "").strip() and not (row.get("high") or "").strip():
+                raise ValueError(f"biomarkers.csv row {row} has neither low nor high bound")
+            out.append(
+                BiomarkerRef(
+                    biomarker_code=row["biomarker_code"],
+                    nutrient_code=row["nutrient_code"],
+                    sex=row["sex"],
+                    low=_opt_float(row["low"]),
+                    high=_opt_float(row["high"]),
+                    unit=row["unit"],
+                    source=row["source"],
+                )
+            )
+    return out
 
 
 def load_interactions(curated_dir: Path = CURATED_DIR) -> list[dict[str, str]]:

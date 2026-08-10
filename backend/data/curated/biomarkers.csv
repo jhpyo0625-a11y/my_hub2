@@ -1,0 +1,5 @@
+biomarker_code,nutrient_code,sex,low,high,unit,source
+hemoglobin,iron,M,13,,g/dL,"WHO Haemoglobin concentrations for the diagnosis of anaemia (2011) — 성인 남성 빈혈 기준 <13 g/dL"
+hemoglobin,iron,F,12,,g/dL,"WHO Haemoglobin concentrations for the diagnosis of anaemia (2011) — 비임신 성인 여성 빈혈 기준 <12 g/dL"
+ferritin,iron,ALL,15,,ng/mL,"WHO Serum ferritin for assessing iron status (2020) — 철결핍 기준 <15 µg/L"
+vitamin_d,vitamin_d,ALL,20,,ng/mL,"US Endocrine Society 2011 / KDRI 참고 — 25(OH)D 결핍 기준 <20 ng/mL"

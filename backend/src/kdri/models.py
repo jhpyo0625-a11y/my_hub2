@@ -72,11 +72,49 @@ class SupplementIntake:
 
 
 @dataclass(frozen=True)
+class Biomarker:
+    """A health-checkup value the user supplies (e.g. hemoglobin 11.2 g/dL)."""
+    code: str
+    value: float
+    unit: Optional[str] = None
+
+
+@dataclass(frozen=True)
+class BiomarkerRef:
+    """Curated, cited reference bound mapping a biomarker to a nutrient.
+
+    A value below `low` flags the nutrient for priority — it never changes a
+    target. `sex` is 'M', 'F', or 'ALL'.
+    """
+    biomarker_code: str
+    nutrient_code: str
+    sex: str
+    low: Optional[float]
+    high: Optional[float]
+    unit: str
+    source: str
+
+
+@dataclass(frozen=True)
+class BiomarkerFlag:
+    """Attached to a NutrientResult when a biomarker is out of range. Context
+    and priority only — the dosing numbers are untouched."""
+    biomarker_code: str
+    nutrient_code: str
+    value: float
+    unit: str
+    threshold: float
+    direction: str  # "low" (below reference) — "high" reserved for later
+    source: str
+
+
+@dataclass(frozen=True)
 class Profile:
     age: int
     sex: Sex
     supplements: tuple[SupplementIntake, ...] = ()
     medications: tuple[str, ...] = ()
+    biomarkers: tuple[Biomarker, ...] = ()
     weight_kg: Optional[float] = None
 
 
@@ -99,4 +137,5 @@ class NutrientResult:
     headroom: Optional[float]
     recommend: float
     priority_score: float = 0.0
+    biomarker_flag: Optional["BiomarkerFlag"] = None
     trace: list[TraceStep] = field(default_factory=list)

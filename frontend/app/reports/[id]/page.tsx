@@ -127,6 +127,10 @@ function NutrientCard({ r }: { r: NutrientResult }) {
         </span>
       </div>
 
+      {r.biomarker && (
+        <div className="callout info">{r.biomarker.note_ko}</div>
+      )}
+
       {r.message_ko && (
         <div className={`callout${r.status === "OVER" ? "" : " info"}`}>
           {r.message_ko}

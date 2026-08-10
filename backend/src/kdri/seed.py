@@ -43,6 +43,7 @@ class EngineInputs:
     profiles: dict[str, NutrientProfile]
     interactions: list[dict]
     energy_ratios: list[dict]
+    biomarker_refs: list = field(default_factory=list)
     demo: bool = False
     in_scope: set[str] = field(default_factory=set)
 
@@ -81,6 +82,7 @@ def load_engine_inputs(demo: bool | None = None) -> EngineInputs:
         profiles=profiles,
         interactions=loader.load_interactions(),
         energy_ratios=loader.load_energy_ratios(),
+        biomarker_refs=loader.load_biomarker_refs(),
         demo=bool(demo),
         in_scope=loader.in_scope_codes(nutrients),
     )
