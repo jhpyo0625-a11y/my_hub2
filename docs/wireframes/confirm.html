@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>S-05 확인 화면 — 영양제 추천 엔진</title>
+<link rel="stylesheet" href="wireframes.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap">
+    <div class="brand">영양제 추천 엔진 <span>KDRI 2025</span></div>
+    <nav>
+      <a href="intake.html">입력</a>
+      <a href="confirm.html" aria-current="page">확인</a>
+      <a href="report.html">리포트</a>
+      <a href="chat.html">근거</a>
+      <a href="history.html">히스토리</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <span class="screen-tag">S-05 · /intake/confirm · 신뢰 경계</span>
+  <h1>읽어온 내용이 맞는지 확인해 주세요</h1>
+  <p class="lede">사진과 직접 입력 모두 이 화면을 거칩니다. 확인하신 내용만 계산에 사용됩니다.</p>
+
+  <div class="steps">
+    <span>1 기본 정보</span><i>›</i>
+    <span>2 복용 중인 영양제</span><i>›</i>
+    <span class="on">3 확인</span><i>›</i>
+    <span>4 리포트</span>
+  </div>
+
+  <div class="callout info">
+    라벨 사진에서 자동으로 읽어온 값입니다. <strong>계산 전에 사람이 한 번 확인합니다</strong> —
+    OCR과 자동 해석은 틀릴 수 있고, 잘못된 용량은 그대로 잘못된 추천이 되기 때문입니다.
+  </div>
+
+  <section class="card flush">
+    <table class="data">
+      <thead>
+        <tr>
+          <th style="width:26%">영양소</th>
+          <th style="width:26%">형태</th>
+          <th class="num" style="width:14%">용량</th>
+          <th style="width:12%">단위</th>
+          <th class="num" style="width:12%">1일 횟수</th>
+          <th style="width:10%"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>마그네슘</strong></td>
+          <td>
+            <select>
+              <option selected>산화마그네슘</option>
+              <option>구연산마그네슘</option>
+              <option>마그네슘 비스글리시네이트</option>
+            </select>
+          </td>
+          <td class="num"><input type="number" value="600" style="width:80px"></td>
+          <td>mg</td>
+          <td class="num"><input type="number" value="1" style="width:56px"></td>
+          <td><button class="btn btn-ghost btn-sm">삭제</button></td>
+        </tr>
+        <tr>
+          <td><strong>엽산</strong></td>
+          <td>
+            <select>
+              <option selected>엽산 (합성 folic acid)</option>
+              <option>메틸엽산 (5-MTHF)</option>
+            </select>
+          </td>
+          <td class="num"><input type="number" value="200" style="width:80px"></td>
+          <td>µg</td>
+          <td class="num"><input type="number" value="1" style="width:56px"></td>
+          <td><button class="btn btn-ghost btn-sm">삭제</button></td>
+        </tr>
+        <tr class="needs-check">
+          <td><strong>—</strong> <span class="tag">확인 필요</span></td>
+          <td colspan="4" style="color:var(--danger)">
+            라벨에서 <code>“이뮨플러스 컴플렉스”</code>를 읽었지만 영양소를 특정하지 못했습니다.
+            직접 선택해 주세요.
+          </td>
+          <td><button class="btn btn-ghost btn-sm">선택</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="card">
+    <h2>마그네슘 600mg — 어느 쪽인가요?</h2>
+    <p class="lede" style="margin-bottom:16px">
+      라벨의 숫자가 <strong>화합물 전체 무게</strong>인지 <strong>마그네슘 원소량</strong>인지에 따라 결과가 약 2.5배 달라집니다.
+    </p>
+    <div class="seg" style="max-width:520px">
+      <button type="button" aria-pressed="true">산화마그네슘 600mg<br><small style="font-weight:400">원소량 361.8mg</small></button>
+      <button type="button" aria-pressed="false">마그네슘 원소량 600mg<br><small style="font-weight:400">화합물 995mg</small></button>
+    </div>
+    <p class="why" style="margin-top:12px">
+      산화마그네슘의 마그네슘 함량은 60.3%입니다. 국내 제품 라벨은 대부분 화합물 무게를 표기합니다.
+    </p>
+  </section>
+
+  <section class="card">
+    <h2>확인된 섭취량</h2>
+    <div class="ref-row"><span class="k">마그네슘 · 산화마그네슘 600mg × 1회</span><span class="v">원소량 361.8 mg</span></div>
+    <div class="ref-row"><span class="k">엽산 · 합성 엽산 200µg × 1회</span><span class="v">목표 기준 340 µg DFE / 상한 기준 200 µg</span></div>
+    <p class="why" style="margin-top:12px">
+      엽산은 목표와 상한의 단위가 다릅니다. 합성 엽산 1µg은 1.7µg DFE에 해당하지만,
+      상한섭취량은 합성 엽산의 실제 µg으로 계산합니다. <strong>같은 한 알이 두 개의 숫자를 만듭니다.</strong>
+    </p>
+  </section>
+
+  <div class="actions">
+    <a class="btn btn-ghost" href="intake.html">뒤로 — 다시 입력</a>
+    <span class="spacer"></span>
+    <button class="btn btn-primary" disabled style="opacity:.5;cursor:not-allowed">
+      확인 필요 항목 1개를 먼저 처리해 주세요
+    </button>
+  </div>
+
+  <p class="disclaimer">
+    확인 필요 항목은 임의로 삭제하지 않습니다. 읽지 못한 항목을 조용히 버리면
+    사용자는 그 영양제가 계산에서 빠진 사실을 알 수 없습니다.
+  </p>
+</main>
+
+</body>
+</html>

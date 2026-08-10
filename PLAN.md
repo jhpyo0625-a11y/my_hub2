@@ -165,6 +165,8 @@ frontend/                          Phase 2
 
 ## 4. Data Model (SQLite → Postgres path)
 
+> **Canonical schema lives in [docs/erd.md](docs/erd.md).** This section is a summary; when the two disagree, `erd.md` wins.
+
 No database exists in Phase 0-1. The tables below are seeded from files in Phase 2. Types are kept portable so a move to Postgres is a driver swap, not a rewrite.
 
 ```

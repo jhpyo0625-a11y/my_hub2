@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>S-07 리포트 — 영양제 추천 엔진</title>
+<link rel="stylesheet" href="wireframes.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap">
+    <div class="brand">영양제 추천 엔진 <span>KDRI 2025</span></div>
+    <nav>
+      <a href="intake.html">입력</a>
+      <a href="confirm.html">확인</a>
+      <a href="report.html" aria-current="page">리포트</a>
+      <a href="chat.html">근거</a>
+      <a href="history.html">히스토리</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <span class="screen-tag">S-07 · /reports/41 · v1</span>
+  <h1>영양 상태 분석 결과</h1>
+  <p class="lede">2026년 8월 10일 · 2025 한국인 영양소 섭취기준 기준 · 30개 영양소 분석</p>
+
+  <!-- ── BLOCK 1 ───────────────────────────────────── -->
+  <section class="card">
+    <div class="block-head">
+      <span class="block-num">1</span>
+      <h2>입력 요약</h2>
+      <a class="btn btn-ghost btn-sm hint" href="intake.html" style="margin-left:auto">입력 수정</a>
+    </div>
+
+    <div class="grid-2">
+      <div>
+        <div class="ref-row"><span class="k">나이 · 성별</span><span class="v">34세 · 남성</span></div>
+        <div class="ref-row"><span class="k">체중</span><span class="v">72 kg <small style="color:var(--muted);font-weight:400">— 결과 미반영</small></span></div>
+        <div class="ref-row"><span class="k">목표</span><span class="v">수면·이완</span></div>
+      </div>
+      <div>
+        <div class="ref-row"><span class="k">복용 중인 영양제</span><span class="v">2건</span></div>
+        <div class="ref-row"><span class="k">복용 중인 약</span><span class="v">퀴놀론계 항생제</span></div>
+        <div class="ref-row"><span class="k">검진 수치</span><span class="v">헤모글로빈 11.2 g/dL</span></div>
+      </div>
+    </div>
+
+    <div class="callout info" style="margin-top:16px;margin-bottom:0">
+      체중은 저장되었지만 이번 결과에는 반영되지 않았습니다. 2025 섭취기준의 비타민·무기질 항목에는
+      체중 기반 산출값이 없습니다.
+    </div>
+  </section>
+
+  <!-- ── BLOCK 2 ───────────────────────────────────── -->
+  <section class="card">
+    <div class="block-head">
+      <span class="block-num">2</span>
+      <h2>현재 상태 분석</h2>
+      <span class="hint">상한 초과 1 · 부족 12 · 충분 9 · 판단 보류 8</span>
+    </div>
+
+    <!-- OVER -->
+    <div class="nutrient is-over">
+      <div class="nutrient-head">
+        <span class="name">마그네슘</span>
+        <span class="pill over">상한 초과</span>
+      </div>
+
+      <div class="callout">
+        현재 보충제 섭취량이 상한섭취량을 <strong>11.8mg 초과</strong>합니다. 용량을 줄이세요.
+      </div>
+
+      <dl class="numbers">
+        <div><dt>목표 섭취량</dt><dd>380<small>mg</small></dd></div>
+        <div><dt>식품 기여</dt><dd>266<small>mg</small></dd></div>
+        <div><dt>보충제 기여</dt><dd>361.8<small>mg</small></dd></div>
+        <div class="neg"><dt>상한 여유</dt><dd>−11.8<small>mg</small></dd></div>
+      </dl>
+
+      <details class="trace">
+        <summary>이 숫자는 어떻게 나왔나요?</summary>
+        <div class="trace-body">
+          <div class="trace-step">
+            <span class="rule">target.from_band</span> ·
+            <span class="calc">남성 · 34세 → 30–49세 구간 → 380 mg</span><br>
+            <span class="cite">KDRI 2025</span>
+          </div>
+          <div class="trace-step">
+            <span class="rule">intake.accumulated</span> ·
+            <span class="calc">산화마그네슘 600mg × 60.3% × 1회 = 361.8 mg</span><br>
+            <span class="cite">MgO 분자량 40.30 / 24.31</span>
+          </div>
+          <div class="trace-step">
+            <span class="rule">diet.baseline</span> ·
+            <span class="calc">380 × 0.70 = 266 mg</span><br>
+            <span class="cite">KNHANES</span>
+          </div>
+          <div class="trace-step">
+            <span class="rule">limit.resolved</span> ·
+            <span class="calc">350 mg · 보충제 기준(supplemental_only) → 식품 기여 제외</span><br>
+            <span class="cite">KDRI 2025 마그네슘 상한섭취량 — 식품 외 급원에만 적용</span>
+          </div>
+          <div class="trace-step">
+            <span class="rule">recommend.computed</span> ·
+            <span class="calc">상한 여유 = 350 − 361.8 = −11.8 → 추가 섭취 0 mg</span>
+          </div>
+        </div>
+      </details>
+    </div>
+
+    <!-- DEFICIT, biomarker-flagged -->
+    <div class="nutrient">
+      <div class="nutrient-head">
+        <span class="name">철</span>
+        <span class="pill deficit">부족</span>
+      </div>
+      <div class="callout info">
+        헤모글로빈 수치가 참고 범위보다 낮습니다. 철을 우선 항목으로 표시했습니다.
+        <strong>목표 섭취량은 변경하지 않았습니다</strong> — 수치 이상에 대한 치료 용량은 의료 영역입니다.
+        의사와 상담하세요.
+      </div>
+      <dl class="numbers">
+        <div><dt>목표 섭취량</dt><dd>8<small>mg</small></dd></div>
+        <div><dt>식품 기여</dt><dd>4.8<small>mg</small></dd></div>
+        <div><dt>보충제 기여</dt><dd>0<small>mg</small></dd></div>
+        <div><dt>부족량</dt><dd>3.2<small>mg</small></dd></div>
+      </dl>
+      <details class="trace"><summary>이 숫자는 어떻게 나왔나요?</summary>
+        <div class="trace-body">
+          <div class="trace-step"><span class="rule">target.from_band</span> ·
+            <span class="calc">남성 · 30–49세 → 8 mg</span><br><span class="cite">KDRI 2025</span></div>
+          <div class="trace-step"><span class="rule">limit.resolved</span> ·
+            <span class="calc">45 mg · 총섭취 기준 → 여유 40.2 mg</span><br><span class="cite">KDRI 2025 vendor table</span></div>
+        </div>
+      </details>
+    </div>
+
+    <!-- ADEQUATE -->
+    <div class="nutrient">
+      <div class="nutrient-head">
+        <span class="name">엽산</span>
+        <span class="pill adequate">충분</span>
+      </div>
+      <dl class="numbers">
+        <div><dt>목표 섭취량</dt><dd>400<small>µg DFE</small></dd></div>
+        <div><dt>식품 기여</dt><dd>160<small>µg DFE</small></dd></div>
+        <div><dt>보충제 기여</dt><dd>340<small>µg DFE</small></dd></div>
+        <div><dt>상한 여유</dt><dd>800<small>µg</small></dd></div>
+      </dl>
+      <details class="trace"><summary>200µg을 먹었는데 왜 340으로 계산되나요?</summary>
+        <div class="trace-body">
+          <div class="trace-step"><span class="rule">intake.accumulated</span> ·
+            <span class="calc">목표 기준: 200 µg × 1.7 = 340 µg DFE<br>상한 기준: 200 µg × 1.0 = 200 µg</span><br>
+            <span class="cite">KDRI 2025 보도자료 p.10 — 합성 엽산 1µg = 1.7µg DFE (식사와 함께)</span></div>
+          <div class="trace-step"><span class="rule">limit.resolved</span> ·
+            <span class="calc">1000 µg · 합성 엽산 기준 → 여유 = 1000 − 200 = 800 µg</span><br>
+            <span class="cite">KDRI 2025 — 상한섭취량은 µg/일 단위 유지</span></div>
+        </div>
+      </details>
+    </div>
+
+    <!-- UNKNOWN -->
+    <div class="nutrient">
+      <div class="nutrient-head">
+        <span class="name">크롬</span>
+        <span class="pill unknown">판단 보류</span>
+      </div>
+      <div class="callout info">
+        국민 평균 식이 섭취량 자료가 확보되지 않아 <strong>추천량을 제시하지 않습니다.</strong>
+        식품 기여를 추정하지 않은 채 계산하면 필요량을 과대 추천하게 됩니다.
+      </div>
+      <dl class="numbers">
+        <div><dt>목표 섭취량</dt><dd>30<small>µg</small></dd></div>
+        <div><dt>식품 기여</dt><dd>—</dd></div>
+        <div><dt>보충제 기여</dt><dd>0<small>µg</small></dd></div>
+        <div><dt>추천량</dt><dd>—</dd></div>
+      </dl>
+    </div>
+
+    <p class="why" style="text-align:center;margin-top:16px">나머지 26개 영양소 보기 ▾</p>
+  </section>
+
+  <!-- ── BLOCK 3 ───────────────────────────────────── -->
+  <section class="card">
+    <div class="block-head">
+      <span class="block-num">3</span>
+      <h2>추천</h2>
+      <span class="hint">현재 복용 중인 약을 반영했습니다</span>
+    </div>
+
+    <div class="nutrient is-over">
+      <div class="nutrient-head">
+        <span class="name">마그네슘 — 줄이세요</span>
+        <span class="pill over">감량</span>
+      </div>
+      <p style="margin:0 0 10px">
+        산화마그네슘 600mg을 <strong>400mg 이하로 낮추거나</strong>,
+        위장 부담이 적은 <strong>비스글리시네이트</strong>로 바꾸는 것을 고려하세요.
+      </p>
+      <div class="ref-row"><span class="k">권장 형태</span><span class="v">마그네슘 비스글리시네이트</span></div>
+      <div class="ref-row"><span class="k">이유</span><span class="v">흡수율 높고 완하 작용 적음</span></div>
+      <div class="ref-row"><span class="k">복용 시점</span><span class="v">저녁 · 식사와 함께</span></div>
+      <div class="callout warn" style="margin-top:12px;margin-bottom:0">
+        <strong>퀴놀론계 항생제와 함께 복용하지 마세요.</strong>
+        킬레이트를 형성해 항생제 흡수를 방해합니다. 최소 2시간 이상 간격을 두세요.
+      </div>
+    </div>
+
+    <div class="nutrient">
+      <div class="nutrient-head">
+        <span class="name">철 — 하루 3mg 추가</span>
+        <span class="pill deficit">추가 권장</span>
+      </div>
+      <div class="ref-row"><span class="k">추천 섭취량</span><span class="v">원소량 3 mg/일</span></div>
+      <div class="ref-row"><span class="k">권장 형태</span><span class="v">푸마르산철 (원소량 32.9%) → 제품 기준 약 9mg</span></div>
+      <div class="ref-row"><span class="k">복용 시점</span><span class="v">공복 · 비타민 C와 함께</span></div>
+      <div class="ref-row"><span class="k">상한 여유</span><span class="v">40.2 mg</span></div>
+    </div>
+
+    <div class="nutrient">
+      <div class="nutrient-head">
+        <span class="name">엽산 — 추가 불필요</span>
+        <span class="pill adequate">유지</span>
+      </div>
+      <p style="margin:0">현재 섭취량으로 목표에 도달했습니다. 추가 보충은 필요하지 않습니다.</p>
+    </div>
+  </section>
+
+  <!-- ── BLOCK 4 ───────────────────────────────────── -->
+  <section class="card">
+    <div class="block-head">
+      <span class="block-num">4</span>
+      <h2>참고 — 2025 에너지 적정비율</h2>
+      <span class="hint">계산하지 않은 참고 정보</span>
+    </div>
+
+    <div class="ref-row"><span class="k">탄수화물</span><span class="v">50 – 65 %<small style="color:var(--muted);font-weight:400"> · 2020년 55%에서 하향</small></span></div>
+    <div class="ref-row"><span class="k">단백질</span><span class="v">10 – 20 %<small style="color:var(--muted);font-weight:400"> · 2020년 7%에서 상향</small></span></div>
+    <div class="ref-row"><span class="k">지방</span><span class="v">15 – 30 %<small style="color:var(--muted);font-weight:400"> · 유지</small></span></div>
+
+    <div class="callout info" style="margin-top:16px;margin-bottom:0">
+      <strong>이 항목은 평가하지 않았습니다.</strong> 에너지 적정비율은 실제 섭취 열량에 대한 비율이며,
+      이 서비스는 식단을 기록하지 않으므로 분모가 없습니다. 국가 기준값을 참고용으로만 표시합니다.
+    </div>
+  </section>
+
+  <div class="actions">
+    <a class="btn btn-primary" href="chat.html">왜 이렇게 나왔나요?</a>
+    <a class="btn btn-ghost" href="intake.html">입력 수정</a>
+    <span class="spacer"></span>
+    <a class="btn btn-ghost" href="history.html">저장하고 히스토리 보기</a>
+  </div>
+
+  <p class="disclaimer">
+    본 결과는 진단·치료를 목적으로 하지 않으며, 2025 한국인 영양소 섭취기준에 근거한 참고 정보입니다.
+    질환이 있거나 약을 복용 중이신 경우 반드시 의사·약사와 상담하세요.
+    표시된 모든 수치는 계산 근거를 펼쳐 확인할 수 있습니다.
+  </p>
+</main>
+
+</body>
+</html>

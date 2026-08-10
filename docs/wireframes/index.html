@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>와이어프레임 — 영양제 추천 엔진</title>
+<link rel="stylesheet" href="wireframes.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap">
+    <div class="brand">영양제 추천 엔진 <span>와이어프레임</span></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <h1>화면 와이어프레임</h1>
+  <p class="lede">KDRI 2025 기반 영양제 추천 서비스 · 클릭해서 화면 흐름을 따라가 보세요.</p>
+
+  <section class="card flush">
+    <table class="data">
+      <thead>
+        <tr><th style="width:80px">ID</th><th>화면</th><th>경로</th><th style="width:80px">Phase</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>S-02</strong></td>
+          <td><a href="intake.html">기본 정보 입력</a><div class="meta" style="font-size:12px;color:var(--muted)">나이·성별 필수, 약·검진 수치 선택</div></td>
+          <td><code>/intake</code></td><td>2</td>
+        </tr>
+        <tr>
+          <td><strong>S-05</strong></td>
+          <td><a href="confirm.html">확인 화면</a><div style="font-size:12px;color:var(--muted)">신뢰 경계 — 계산 전 사람이 승인</div></td>
+          <td><code>/intake/confirm</code></td><td>3</td>
+        </tr>
+        <tr>
+          <td><strong>S-07</strong></td>
+          <td><a href="report.html">리포트</a><div style="font-size:12px;color:var(--muted)">4개 블록 + 계산 근거 펼치기</div></td>
+          <td><code>/reports/[id]</code></td><td>2</td>
+        </tr>
+        <tr>
+          <td><strong>S-08</strong></td>
+          <td><a href="chat.html">근거 채팅</a><div style="font-size:12px;color:var(--muted)">trace 기반 · 읽기 전용</div></td>
+          <td><code>/reports/[id]/chat</code></td><td>6</td>
+        </tr>
+        <tr>
+          <td><strong>S-09</strong></td>
+          <td><a href="history.html">히스토리</a><div style="font-size:12px;color:var(--muted)">버전 체인</div></td>
+          <td><code>/history</code></td><td>7</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <div class="callout info">
+    정적 목업입니다. 상단 내비게이션으로 화면 간 이동만 가능하며, 실제 계산은 수행하지 않습니다.
+    표시된 숫자는 명세의 검증된 예시값(마그네슘 M 34세, 산화마그네슘 600mg)을 사용했습니다.
+  </div>
+
+  <p class="disclaimer">
+    설계 문서: <code>docs/와이어프레임.md</code> · <code>docs/화면흐름도.md</code> · <code>docs/기능명세서.md</code>
+  </p>
+</main>
+
+</body>
+</html>

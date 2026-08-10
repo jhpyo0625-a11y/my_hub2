@@ -534,6 +534,8 @@ This is what keeps the read-only chat from being a limitation: the user changes 
 
 ## 11. Data model
 
+> **Canonical schema lives in [erd.md](../../erd.md).** This section is a summary; when the two disagree, `erd.md` wins.
+
 ```
 users(id, email, created_at)
 magic_links(token, user_id, expires_at, used_at)

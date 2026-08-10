@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>S-02 기본 정보 입력 — 영양제 추천 엔진</title>
+<link rel="stylesheet" href="wireframes.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap">
+    <div class="brand">영양제 추천 엔진 <span>KDRI 2025</span></div>
+    <nav>
+      <a href="intake.html" aria-current="page">입력</a>
+      <a href="confirm.html">확인</a>
+      <a href="report.html">리포트</a>
+      <a href="chat.html">근거</a>
+      <a href="history.html">히스토리</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <span class="screen-tag">S-02 · /intake</span>
+  <h1>기본 정보를 입력해 주세요</h1>
+  <p class="lede">입력하신 정보만으로 계산합니다. 비워 두신 항목은 국가 기준값을 적용합니다.</p>
+
+  <div class="steps">
+    <span class="on">1 기본 정보</span><i>›</i>
+    <span>2 복용 중인 영양제</span><i>›</i>
+    <span>3 확인</span><i>›</i>
+    <span>4 리포트</span>
+  </div>
+
+  <section class="card">
+    <div class="grid-2">
+      <div class="field">
+        <label for="age">나이 <span class="req">*</span></label>
+        <input type="number" id="age" value="34" min="19" max="120">
+        <p class="why">만 19세 이상 성인만 이용할 수 있습니다. 소아·청소년은 연령 구간 기준이 달라 별도 검토가 필요합니다.</p>
+      </div>
+
+      <div class="field">
+        <label>성별 <span class="req">*</span></label>
+        <div class="seg">
+          <button type="button" aria-pressed="true">남성</button>
+          <button type="button" aria-pressed="false">여성</button>
+        </div>
+        <p class="why"><strong>건너뛸 수 없는 항목입니다.</strong> 2025 섭취기준에는 성인 구간에 성별 공통 기준이 없습니다.
+          예를 들어 철은 여성 12mg, 남성 8mg으로 기준 자체가 다릅니다.</p>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="field">
+        <label for="weight">체중 (kg)</label>
+        <input type="number" id="weight" value="72" placeholder="선택 입력">
+        <p class="why">저장은 하지만 <strong>현재 추천 결과에는 반영되지 않습니다.</strong>
+          2025 섭취기준의 비타민·무기질 항목에는 체중 기반 산출값이 없습니다.</p>
+      </div>
+
+      <div class="field">
+        <label for="goal">관심 있는 목표</label>
+        <select id="goal">
+          <option>선택 안 함</option>
+          <option selected>수면·이완</option>
+          <option>피로 개선</option>
+          <option>뼈 건강</option>
+          <option>빈혈 개선</option>
+        </select>
+        <p class="why">추천 순서에만 반영되며, 용량 계산에는 영향을 주지 않습니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>해당되는 항목이 있으신가요?</h2>
+    <div class="checks">
+      <label><input type="checkbox"> 임신 중</label>
+      <label><input type="checkbox"> 수유 중</label>
+    </div>
+    <div class="callout warn" style="margin-top:14px">
+      임신·수유 중에는 결과를 제공하지 않고 산부인과 상담을 안내합니다.
+      임신부 기준은 별도 가산값이며, 수유부 기준은 현재 데이터에 포함되어 있지 않습니다.
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>복용 중인 약</h2>
+    <p class="lede" style="margin-bottom:14px">영양제와 함께 복용할 때 간격을 두어야 하는 약이 있습니다.</p>
+    <div class="checks">
+      <label><input type="checkbox" checked> 퀴놀론계 항생제</label>
+      <label><input type="checkbox"> 레보티록신(씬지로이드)</label>
+      <label><input type="checkbox"> 와파린</label>
+      <label><input type="checkbox"> 메트포르민</label>
+      <label><input type="checkbox"> 위산분비억제제(PPI)</label>
+      <label><input type="checkbox"> 해당 없음</label>
+    </div>
+    <p class="why" style="margin-top:12px">목록에 없는 약은 <strong>평가되지 않음</strong>으로 표시되며, 약사 상담을 안내합니다.</p>
+  </section>
+
+  <section class="card">
+    <h2>건강검진 수치 <span style="font-weight:400;color:var(--muted);font-size:13px">선택</span></h2>
+    <div class="grid-2">
+      <div class="field">
+        <label for="hb">헤모글로빈 (g/dL)</label>
+        <input type="number" id="hb" value="11.2" step="0.1">
+      </div>
+      <div class="field">
+        <label for="vd">비타민 D (ng/mL)</label>
+        <input type="number" id="vd" placeholder="선택 입력" step="0.1">
+      </div>
+    </div>
+    <div class="callout info">
+      검진 수치는 <strong>우선순위 판단에만</strong> 사용됩니다. 목표 섭취량을 올리지 않습니다.
+      수치 이상에 대한 치료 용량은 의료 영역이며 이 서비스의 범위가 아닙니다.
+    </div>
+  </section>
+
+  <div class="actions">
+    <a class="btn btn-ghost" href="#">이전</a>
+    <span class="spacer"></span>
+    <a class="btn btn-ghost" href="confirm.html">영양제 입력 건너뛰기</a>
+    <a class="btn btn-primary" href="confirm.html">다음 — 복용 중인 영양제</a>
+  </div>
+
+  <p class="disclaimer">
+    본 서비스는 진단·치료를 목적으로 하지 않으며, 2025 한국인 영양소 섭취기준에 근거한 참고 정보를 제공합니다.
+    질환이 있거나 약을 복용 중이신 경우 의사·약사와 상담하세요.
+  </p>
+</main>
+
+</body>
+</html>
