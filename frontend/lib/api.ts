@@ -105,6 +105,16 @@ export type Report = {
   biomarkers?: { code: string; value: number; unit: string }[];
 };
 
+export type ReportListItem = {
+  report_id: number;
+  version: number;
+  parent_id: number | null;
+  created_at: string;
+  summary: { over: number; deficit: number; adequate: number; unknown: number };
+  goals: string[];
+  supplement_count: number;
+};
+
 export type ApiError = {
   code: string;
   message: string;
@@ -119,6 +129,15 @@ export async function getReference(): Promise<Reference> {
   });
   if (!res.ok) throw new Error(`reference ${res.status}`);
   return res.json();
+}
+
+export async function listReports(): Promise<ReportListItem[]> {
+  const res = await fetch(`${API_BASE}/api/reports`, {
+    credentials: "include",
+  });
+  if (!res.ok) throw new Error(`reports ${res.status}`);
+  const body = await res.json();
+  return body.reports as ReportListItem[];
 }
 
 export async function getReport(id: string): Promise<Report> {

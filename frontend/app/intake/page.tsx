@@ -170,10 +170,11 @@ export default function IntakePage() {
   return (
     <main className="wrap">
       <span className="screen-tag">S-02 · /intake</span>
-      <h1>기본 정보를 입력해 주세요</h1>
+      <h1>{step === 1 ? "기본 정보를 입력해 주세요" : "복용 중인 영양제를 입력해 주세요"}</h1>
       <p className="lede">
-        입력하신 정보만으로 계산합니다. 비워 두신 항목은 국가 기준값을
-        적용합니다.
+        {step === 1
+          ? "입력하신 정보만으로 계산합니다. 비워 두신 항목은 국가 기준값을 적용합니다."
+          : "복용 중인 영양제가 있으면 추가해 주세요. 없으면 건너뛸 수 있습니다."}
       </p>
 
       <div className="steps">

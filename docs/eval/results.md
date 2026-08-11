@@ -41,9 +41,10 @@ reporting, so the maintainer completed the scoring from the same evidence.
   the null diet baselines.
 
 **S3 (cosmetic):**
-- The intake wizard `<h1>` stays "기본 정보를 입력해 주세요" on step 2 (the step
-  indicator and card heading do update).
-- favicon 404 in the browser console.
+- ~~The intake wizard `<h1>` stays "기본 정보를 입력해 주세요" on step 2.~~ **Fixed** —
+  the `<h1>` and lede now switch with the step.
+- ~~favicon 404 in the browser console.~~ **Fixed** — `app/icon.svg` (Paper Desk
+  capsule) added.
 
 ## Integration bugs found during QA and already fixed
 - Missing CORS blocked credentialed :3000→:8000 calls → `CORSMiddleware` added.
@@ -57,5 +58,7 @@ reporting, so the maintainer completed the scoring from the same evidence.
    nutrient profile (magnesium, iron authored; remaining nutrients pending
    pharmacist-reviewed citations).
 3. Source the KNHANES diet baselines (pre-launch gate) to replace the demo overlay.
+5. ~~Build the history screen (S-09).~~ **Done** — `GET /api/reports` (session-scoped
+   via the TB-3 accessor) + `/history` renders the immutable version chain.
 4. Add a `biomarkers` seeded table to `erd.md`/`db.py` (currently the engine reads
    the cited refs from files only, consistent with limits/profiles).

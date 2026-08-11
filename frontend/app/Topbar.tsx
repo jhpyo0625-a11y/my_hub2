@@ -5,7 +5,10 @@ import { usePathname } from "next/navigation";
 
 export default function Topbar() {
   const path = usePathname();
-  const items = [{ href: "/intake", label: "입력" }];
+  const items = [
+    { href: "/intake", label: "입력" },
+    { href: "/history", label: "히스토리" },
+  ];
   return (
     <header className="topbar">
       <div className="wrap">

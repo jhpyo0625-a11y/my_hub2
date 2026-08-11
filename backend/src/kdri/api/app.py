@@ -503,6 +503,31 @@ def create_app(db_url: str | None = None, demo: bool | None = None) -> FastAPI:
             app.state.idem[(sid, idem_key)] = row.id
         return JSONResponse(status_code=201, content=_envelope(row, results, inp))
 
+    @app.get("/api/reports")
+    def list_reports(
+        db: Session = Depends(get_db),
+        sid: str = Depends(get_sid),
+    ):
+        rows = reports_acc.list_reports(db, sid)
+        items = []
+        for row in rows:
+            summary = {"over": 0, "deficit": 0, "adequate": 0, "unknown": 0}
+            for r in row.result_json:
+                summary[r["status"].lower()] += 1
+            prof = row.profile_json or {}
+            items.append(
+                {
+                    "report_id": row.id,
+                    "version": row.version,
+                    "parent_id": row.parent_id,
+                    "created_at": _iso(row.created_at),
+                    "summary": summary,
+                    "goals": (prof.get("profile") or {}).get("goals", []),
+                    "supplement_count": len(prof.get("supplements", [])),
+                }
+            )
+        return {"reports": items}
+
     @app.get("/api/reports/{report_id}")
     def get_report(
         report_id: int,

@@ -171,6 +171,41 @@ def test_non_owner_gets_404_not_403():
     assert r.json()["error"]["code"] == "REPORT_NOT_FOUND"
 
 
+def test_list_reports_is_scoped_to_the_session(client):
+    """GET /api/reports returns only the caller's own reports, newest first,
+    with a per-version summary — never another session's rows (TB-3)."""
+    app = create_app("sqlite://", demo=True)
+    owner = TestClient(app)
+    stranger = TestClient(app)
+
+    first = owner.post("/api/reports", json=_valid_body()).json()["report_id"]
+    second = owner.post(
+        "/api/reports", json=_valid_body(parent_id=first)
+    ).json()["report_id"]
+    stranger.post("/api/reports", json=_valid_body())
+
+    listing = owner.get("/api/reports").json()["reports"]
+    ids = [r["report_id"] for r in listing]
+    assert ids == [second, first]  # newest first
+    assert listing[0]["parent_id"] == first
+    assert set(listing[0]["summary"]) == {"over", "deficit", "adequate", "unknown"}
+    assert listing[0]["supplement_count"] == 1
+
+    # a fresh session sees only its own single report
+    assert len(stranger.get("/api/reports").json()["reports"]) == 1
+
+
+def test_report_serializes_cited_guidance_for_block_3(client):
+    """Magnesium (OVER here) carries the cited form/timing guidance block."""
+    data = client.post("/api/reports", json=_valid_body()).json()
+    mg = next(r for r in data["results"] if r["nutrient_code"] == "magnesium")
+    assert mg["guidance"]["recommended_form_ko"] == "마그네슘 비스글리시네이트"
+    assert mg["guidance"]["source"].strip()
+    # a nutrient without authored guidance serializes null, not a crash
+    zinc = next(r for r in data["results"] if r["nutrient_code"] == "zinc")
+    assert zinc["guidance"] is None
+
+
 def test_idempotency_key_returns_same_report(client):
     h = {"Idempotency-Key": "abc-123"}
     first = client.post("/api/reports", json=_valid_body(), headers=h).json()

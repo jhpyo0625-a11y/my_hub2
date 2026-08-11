@@ -276,6 +276,18 @@ details.trace[open] > summary::before { content: "▾ "; }
   color: var(--ink-dim); font-size: 14px; line-height: 1.7;
 }
 
+/* history: version chain (S-09) */
+.chain { border-left: 2px solid var(--border); margin-left: 9px; padding-left: 18px; }
+.chain-item { position: relative; padding: 12px 0; }
+.chain-item + .chain-item { border-top: 1px solid var(--border); }
+.chain-item::before {
+  content: ""; position: absolute; left: -25px; top: 19px;
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--surface); border: 2px solid var(--border-strong);
+}
+.chain-item .ver { font-weight: 700; font-size: 14px; }
+.chain-item .meta { font-size: 12.5px; color: var(--ink-dim); margin-top: 4px; }
+
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
