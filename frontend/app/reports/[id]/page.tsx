@@ -28,6 +28,11 @@ const MACRO_KO: Record<string, string> = {
   protein: "단백질",
   fat: "지방",
 };
+const BIOMARKER_KO: Record<string, string> = {
+  hemoglobin: "헤모글로빈",
+  ferritin: "페리틴",
+  vitamin_d: "비타민 D",
+};
 
 // tabular number, drop noise; "—" for null/undefined
 function num(v: number | null | undefined): string {
@@ -438,7 +443,10 @@ export default function ReportPage() {
               <span className="v">
                 {biomarkers.length
                   ? biomarkers
-                      .map((b) => `${b.code} ${b.value} ${b.unit}`)
+                      .map(
+                        (b) =>
+                          `${BIOMARKER_KO[b.code] ?? b.code} ${b.value} ${b.unit}`
+                      )
                       .join(", ")
                   : "미입력"}
               </span>
