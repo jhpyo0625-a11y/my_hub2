@@ -107,6 +107,21 @@ def test_engine_never_imports_energy_ratios():
     assert "energy_ratio" not in source
 
 
+def test_guidance_is_cited_and_populated_where_present():
+    """Block-3 form/timing advice is optional per nutrient, but any block that
+    exists must carry a source (loader raises otherwise) and say something."""
+    profiles = load_profiles()
+    assert profiles["magnesium"].guidance is not None
+    assert profiles["iron"].guidance is not None
+    for code, prof in profiles.items():
+        g = prof.guidance
+        if g is not None:
+            assert g.source.strip(), f"{code} guidance uncited"
+            assert g.recommended_form_ko or g.form_reason_ko or g.timing_ko, (
+                f"{code} guidance is empty"
+            )
+
+
 def test_biomarker_refs_are_cited_scoped_and_bounded():
     refs = load_biomarker_refs()
     assert refs

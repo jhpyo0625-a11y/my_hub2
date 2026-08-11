@@ -29,6 +29,13 @@ magnesium:
     - name_ko: 마그네슘 비스글리시네이트
       elemental_pct: 0.141
       source: "마그네슘 비스글리시네이트 킬레이트 분자량 기준 원소 Mg 비율"
+  # guidance: qualitative form/timing advice for report block 3. Cited like any
+  # curated row; never a dose (the engine owns every number).
+  guidance:
+    recommended_form_ko: 마그네슘 비스글리시네이트
+    form_reason_ko: 흡수율이 높고 완하(설사) 작용이 적어 위장 부담이 적습니다
+    timing_ko: 저녁 · 식사와 함께
+    source: "Firoz & Graber, Magnes Res 2001;14(4):257 — 산화마그네슘 생체이용률 최저·삼투성 완하 작용, 유기 킬레이트염 위장 내약성 우수"
 
 calcium:
   target_unit: mg
@@ -55,6 +62,11 @@ iron:
     - name_ko: 글루콘산철
       elemental_pct: 0.116
       source: "글루콘산제일철 분자량 446.1, 원소 Fe 55.85 → 55.85/446.1(2수화물 제외 근사)"
+  guidance:
+    recommended_form_ko: 푸마르산철
+    form_reason_ko: 원소 철 함량이 높고 흡수가 잘 됩니다
+    timing_ko: 공복 · 비타민 C와 함께 (칼슘·제산제와 2시간 이상 간격)
+    source: "Cook & Reddy, Am J Clin Nutr 2001;73(1):93 — 아스코르브산 병용 시 비헴철 흡수 증가; 공복 복용·칼슘 병용 회피 권장"
 
 zinc:
   target_unit: mg

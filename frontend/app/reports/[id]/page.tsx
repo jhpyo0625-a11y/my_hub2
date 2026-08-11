@@ -154,6 +154,35 @@ function NutrientCard({ r }: { r: NutrientResult }) {
   );
 }
 
+// Cited form/timing rows for block 3, rendered only where curated (RP-10).
+function GuidanceRows({ r }: { r: NutrientResult }) {
+  const g = r.guidance;
+  if (!g || (!g.recommended_form_ko && !g.form_reason_ko && !g.timing_ko))
+    return null;
+  return (
+    <>
+      {g.recommended_form_ko && (
+        <div className="ref-row">
+          <span className="k">권장 형태</span>
+          <span className="v">{g.recommended_form_ko}</span>
+        </div>
+      )}
+      {g.form_reason_ko && (
+        <div className="ref-row">
+          <span className="k">이유</span>
+          <span className="v">{g.form_reason_ko}</span>
+        </div>
+      )}
+      {g.timing_ko && (
+        <div className="ref-row">
+          <span className="k">복용 시점</span>
+          <span className="v">{g.timing_ko}</span>
+        </div>
+      )}
+    </>
+  );
+}
+
 // ── Block 3: recommendation card per nutrient ──
 function RecoCard({ r }: { r: NutrientResult }) {
   const unit = r.target_unit;
@@ -173,6 +202,7 @@ function RecoCard({ r }: { r: NutrientResult }) {
             </span>
           </div>
         )}
+        <GuidanceRows r={r} />
         {r.interactions?.map((it, i) => (
           <div
             className="callout warn"
@@ -205,6 +235,7 @@ function RecoCard({ r }: { r: NutrientResult }) {
             {num(r.recommend)} {unit}/일
           </span>
         </div>
+        <GuidanceRows r={r} />
         {r.limit && (
           <div className="ref-row">
             <span className="k">상한 여유</span>

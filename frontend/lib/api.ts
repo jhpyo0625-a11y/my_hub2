@@ -69,6 +69,12 @@ export type NutrientResult = {
     note_ko: string;
     source: string;
   } | null;
+  guidance?: {
+    recommended_form_ko: string | null;
+    form_reason_ko: string | null;
+    timing_ko: string | null;
+    source: string;
+  } | null;
   trace?: TraceStep[];
 };
 

@@ -54,6 +54,19 @@ class Form:
 
 
 @dataclass(frozen=True)
+class Guidance:
+    """Curated, cited form/timing advice shown in report block 3 (추천).
+
+    Qualitative only — never a dose or any other number the engine owns. When a
+    guidance block is present its `source` is required (loader raises on blank),
+    same bar as every other curated row."""
+    recommended_form_ko: Optional[str]
+    form_reason_ko: Optional[str]
+    timing_ko: Optional[str]
+    source: str
+
+
+@dataclass(frozen=True)
 class NutrientProfile:
     nutrient_code: str
     target_unit: str
@@ -61,6 +74,7 @@ class NutrientProfile:
     diet_baseline_pct: Optional[float]
     diet_baseline_source: Optional[str]
     forms: tuple[Form, ...] = ()
+    guidance: Optional[Guidance] = None
 
 
 @dataclass(frozen=True)

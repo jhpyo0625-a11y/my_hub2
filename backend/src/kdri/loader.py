@@ -8,7 +8,15 @@ from typing import Optional
 import yaml
 
 from kdri import CURATED_DIR, VENDOR_DIR
-from kdri.models import BiomarkerRef, Form, KdriRow, Limit, Nutrient, NutrientProfile
+from kdri.models import (
+    BiomarkerRef,
+    Form,
+    Guidance,
+    KdriRow,
+    Limit,
+    Nutrient,
+    NutrientProfile,
+)
 
 
 def _opt_float(raw: str) -> Optional[float]:
@@ -237,6 +245,17 @@ def load_profiles(curated_dir: Path = CURATED_DIR) -> dict[str, NutrientProfile]
             )
             for f in body.get("forms", [])
         )
+        guidance = None
+        g = body.get("guidance")
+        if g is not None:
+            if not (g.get("source") or "").strip():
+                raise ValueError(f"{code}: guidance block has no source")
+            guidance = Guidance(
+                recommended_form_ko=(g.get("recommended_form_ko") or "").strip() or None,
+                form_reason_ko=(g.get("form_reason_ko") or "").strip() or None,
+                timing_ko=(g.get("timing_ko") or "").strip() or None,
+                source=g["source"],
+            )
         out[code] = NutrientProfile(
             nutrient_code=code,
             target_unit=body["target_unit"],
@@ -244,6 +263,7 @@ def load_profiles(curated_dir: Path = CURATED_DIR) -> dict[str, NutrientProfile]
             diet_baseline_pct=body.get("diet_baseline_pct"),
             diet_baseline_source=body.get("diet_baseline_source"),
             forms=forms,
+            guidance=guidance,
         )
     return out
 

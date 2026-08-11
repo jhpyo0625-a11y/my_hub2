@@ -250,6 +250,16 @@ def _render_results(user: Profile, inp) -> tuple[list, dict, dict]:
             for row in inp.interactions
             if row["nutrient_code"] == code and row["drug_class"] in meds
         ]
+        guidance = None
+        if prof is not None and prof.guidance is not None:
+            g = prof.guidance
+            guidance = {
+                "recommended_form_ko": g.recommended_form_ko,
+                "form_reason_ko": g.form_reason_ko,
+                "timing_ko": g.timing_ko,
+                "source": g.source,
+            }
+
         trace = [_ser_step(s) for s in r.trace]
         trace_map[code] = trace
         out.append(
@@ -270,6 +280,7 @@ def _render_results(user: Profile, inp) -> tuple[list, dict, dict]:
                 ),
                 "interactions": interactions,
                 "biomarker": _biomarker_block(r.biomarker_flag, n.name_ko if n else code),
+                "guidance": guidance,
                 "trace": trace,
             }
         )
