@@ -1,7 +1,7 @@
 [project]
 name = "agent"
 version = "0.1.0"
-description = "Add your description here"
+description = "AI 영양제 추천 서비스"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -9,4 +9,7 @@ dependencies = [
     "langgraph>=1.2.11",
     "pymupdf>=1.28.2",
     "sentence-transformers>=5.7.0",
+    "fastapi>=0.110.0",
+    "uvicorn>=0.28.0",
+    "python-multipart>=0.0.9", 
 ]
