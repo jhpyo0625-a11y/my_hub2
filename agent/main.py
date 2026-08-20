@@ -9,17 +9,28 @@ from rag_retriever import rag_retriever
 # 1. LangGraph State Definition
 # ==========================================
 class State(TypedDict, total=False):
+
     user_input: Dict[str, Any]
+
     ocr_text: str  
     ocr_result: Dict[str, Any]       # OCR을 통해 추출된 구조화된 검진 데이터
+
     normalized_data: Dict[str, Any]
+
     rag_context: List[Dict[str, Any]] # RAG 검색 결과를 담는 리스트로 변경
+
     execution_plan: List[Dict[str, Any]]
+
     execution_results: List[Dict[str, Any]]
-    review_status: Literal["pass", "reject_to_executor", "reject_to_planner"]
+
+    review_status: Literal["pass", "reject_to_executor", "reject_to_planner", "fail"]
+
     review_feedback: str
+
     aggregated_report: Dict[str, Any]
+
     final_report: Dict[str, Any]
+    
     retry_count: int                 # 무한 루프 방지를 위한 재시도 횟수
 
 
@@ -213,6 +224,10 @@ def specialized_review_node(state: State) -> State:
         state["review_status"] = "reject_to_planner"
         state["review_feedback"] = "상한 섭취량(UL) 초과 항목 감지. 추천 수치 하향 조정 요망. [cite: 354]"
         state["retry_count"] = retry_cnt + 1
+    elif not ul_pass and retry_cnt < 2:
+                state["review_status"] = "reject_to_planner"
+                state["review_feedback"] = "상한 섭취량(UL) 초과 항목 감지. 추천 수치 하향 조정 요망. [cite: 354]"
+                state["retry_count"] = retry_cnt + 1
     else:
         state["review_status"] = "pass"
         state["review_feedback"] = "모든 연산 및 가드레일 검수 통과."
