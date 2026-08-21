@@ -1,0 +1,174 @@
+{
+  "meta": {
+    "generatedAt": "2026-08-21T09:12:00.000Z",
+    "source": "mock",
+    "engine": "예시 데이터 (LLM 응답 대역)"
+  },
+  "input": {
+    "name": "김지훈",
+    "age": "34",
+    "sex": "남성",
+    "date": "2026-08-21",
+    "countMeal": true,
+    "chronic": [],
+    "products": [
+      {
+        "name": "종합비타민 A",
+        "items": [
+          {"name": "비타민D", "amount": 25, "unit": "µg"},
+          {"name": "엽산", "amount": 400, "unit": "µg"},
+          {"name": "아연", "amount": 15, "unit": "mg"},
+          {"name": "마그네슘", "amount": 100, "unit": "mg"}
+        ]
+      },
+      {
+        "name": "마그네슘 400",
+        "items": [
+          {"name": "마그네슘", "amount": 300, "unit": "mg"}
+        ]
+      },
+      {
+        "name": "오메가3 1000",
+        "items": [
+          {"name": "EPA+DHA", "amount": 1000, "unit": "mg"}
+        ]
+      }
+    ],
+    "meds": [
+      {"name": "와파린", "desc": "항응고제 · 아침 1정"}
+    ]
+  },
+  "hasSupp": true,
+  "mealOnly": false,
+  "badges": [
+    {"text": "고혈압·당뇨병·이상지질혈증 질환의심", "tone": "red"},
+    {"text": "복약 1건", "tone": "orange"},
+    {"text": "영양제 3종", "tone": "green"},
+    {"text": "성분 상한 초과", "tone": "red"},
+    {"text": "보충 권장 2", "tone": "blue"}
+  ],
+  "exam": {
+    "overall": {
+      "label": "고혈압·당뇨병·이상지질혈증 질환의심",
+      "tone": "red",
+      "desc": "해당 항목이 기준을 벗어나 진료와 검사가 필요합니다."
+    },
+    "filled": 6,
+    "counts": {"A": 1, "B": 4, "D": 1},
+    "groups": [
+      {
+        "group": "계측검사",
+        "rows": [
+          {"key": "bmi", "name": "체질량지수", "ref": "18.5~24.9", "value": "26.4",
+           "judge": {"code": "B", "text": "경계", "tone": "orange"}}
+        ]
+      },
+      {
+        "group": "고혈압",
+        "rows": [
+          {"key": "bp", "name": "혈압(수축기/이완기)", "ref": "120 미만 / 80 미만", "value": "138 / 88",
+           "judge": {"code": "B", "text": "경계", "tone": "orange"}}
+        ]
+      },
+      {
+        "group": "당뇨병",
+        "rows": [
+          {"key": "glu", "name": "공복혈당", "ref": "100 미만", "value": "118",
+           "judge": {"code": "B", "text": "경계", "tone": "orange"}}
+        ]
+      },
+      {
+        "group": "이상지질혈증",
+        "rows": [
+          {"key": "tc", "name": "총콜레스테롤", "ref": "200 미만", "value": "215",
+           "judge": {"code": "B", "text": "경계", "tone": "orange"}},
+          {"key": "ldl", "name": "LDL 콜레스테롤", "ref": "130 미만", "value": "142",
+           "judge": {"code": "D", "text": "질환의심", "tone": "red",
+                     "advice": "LDL 콜레스테롤이 기준을 넘었습니다. 진료와 추가 검사를 권합니다."}}
+        ]
+      },
+      {
+        "group": "신장질환",
+        "rows": [
+          {"key": "cr", "name": "혈청크레아티닌", "ref": "1.5 이하", "value": "0.9",
+           "judge": {"code": "A", "text": "정상A", "tone": "green"}}
+        ]
+      }
+    ],
+    "rows": [],
+    "abnormal": []
+  },
+  "nutrients": [
+    {
+      "key": "mg", "name": "마그네슘", "unit": "mg",
+      "supp": 400, "meal": 90, "rda": 350, "ul": 350, "ulSuppOnly": true,
+      "sources": ["종합비타민 A", "마그네슘 400"], "unmapped": [],
+      "note": {"title": "상한 초과.",
+               "body": "영양제로만 400mg, 상한 350mg을 넘었습니다. 마그네슘 단일 제품의 함량을 낮춰 보세요."}
+    },
+    {
+      "key": "vitd", "name": "비타민D", "unit": "µg",
+      "supp": 25, "meal": 3, "rda": 10, "ul": 100,
+      "sources": ["종합비타민 A"], "unmapped": [],
+      "note": {"title": "충분합니다.", "body": "현재 구성을 유지해도 괜찮습니다."}
+    },
+    {
+      "key": "zn", "name": "아연", "unit": "mg",
+      "supp": 15, "meal": 9, "rda": 10, "ul": 35,
+      "sources": ["종합비타민 A"], "unmapped": [],
+      "note": {"title": "충분합니다.", "body": "상한 35mg까지는 아직 여유가 있습니다."}
+    },
+    {
+      "key": "folate", "name": "엽산", "unit": "µg",
+      "supp": 400, "meal": 220, "rda": 400, "ul": 1000, "ulSuppOnly": true,
+      "sources": ["종합비타민 A"], "unmapped": [],
+      "note": {"title": "충분합니다.", "body": "영양제분 400µg으로 상한 안에 있습니다."}
+    },
+    {
+      "key": "ca", "name": "칼슘", "unit": "mg",
+      "supp": 0, "meal": 480, "rda": 800, "ul": 2500,
+      "sources": [], "unmapped": [],
+      "note": {"title": "식사만으로는 모자랍니다.",
+               "body": "권장량 800mg까지 320mg이 부족합니다. 유제품이나 보충제를 고려해 보세요."}
+    },
+    {
+      "key": "epa_dha", "name": "EPA+DHA", "unit": "mg",
+      "supp": 1000, "meal": 0, "rda": null, "ul": null,
+      "sources": ["오메가3 1000"], "unmapped": [],
+      "note": {"title": "기준값이 없습니다.", "body": "기준표에 없는 성분이라 합산량만 표시합니다."}
+    }
+  ],
+  "issues": [
+    {"kind": "상한 초과", "tone": "red",
+     "text": "마그네슘 영양제 섭취량 400mg이 상한 350mg을 넘습니다. 제품 구성을 조정해 보세요."},
+    {"kind": "성분 중복", "tone": "blue",
+     "text": "마그네슘이 종합비타민 A · 마그네슘 400 에 함께 들어 있습니다."},
+    {"kind": "상호작용", "tone": "orange", "med": "와파린",
+     "text": "와파린 · 오메가3를 함께 드시면 출혈 경향이 커질 수 있습니다. 복용 전 의사·약사와 상의하세요."},
+    {"kind": "기준 미등록", "tone": "gray",
+     "text": "EPA+DHA는 기준값이 등록되어 있지 않아 비율을 계산하지 못했습니다."}
+  ],
+  "recommend": {
+    "title": "이런 성분을 더 챙겨 보세요",
+    "desc": "식사 평균 추정치 · 복용 중인 영양제 · 복용 중인 약 1건 · 검진 6개 항목을 기준으로, 권장량에 못 미치는 성분을 모자란 순서로 골랐습니다.",
+    "advice": "건강검진에서 5개 항목이 기준을 벗어났습니다. 영양제를 고르기 전에 의사·약사와 상의하시기를 권합니다.",
+    "items": [
+      {"name": "칼슘", "amount": "320mg 더", "tone": "blue",
+       "reason": "식사 추정치로 480mg, 권장량 800mg의 60%입니다.", "caution": ""},
+      {"name": "비타민K", "amount": "15µg 더", "tone": "orange",
+       "reason": "식사 추정치로 60µg, 권장량 75µg의 80%입니다.",
+       "caution": "복용 중인 와파린 — 시작 전 의사·약사와 상의하세요."}
+    ],
+    "more": 0,
+    "moreText": "",
+    "note": "권장섭취량에 견준 계산 결과일 뿐, 특정 제품이나 복용을 권하는 것이 아닙니다. 복용을 시작하기 전에 의사·약사와 상의하세요."
+  },
+  "summary": {
+    "text": "건강검진 종합 판정은 '고혈압·당뇨병·이상지질혈증 질환의심' 입니다. 등록한 3개 제품과 식사 평균 추정치에서 6개 성분을 확인했습니다. 마그네슘은 상한을 넘어 조정이 필요합니다. 칼슘은 권장량에 미치지 못합니다. 나머지 3개 성분은 권장 범위 안에 있습니다. 점검에서 4건이 확인됐습니다.",
+    "chips": [
+      {"text": "상한 초과 1", "tone": "red"},
+      {"text": "적정 3", "tone": "green"},
+      {"text": "부족 1", "tone": "blue"}
+    ]
+  }
+}
