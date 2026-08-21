@@ -1,0 +1,827 @@
+/* =========================================================================
+   styles.css — MyHerb 화면 생김새
+   -------------------------------------------------------------------------
+   report.html(목업용)과 Live.html(실서버용)이 이 파일 하나를 함께 씁니다.
+   두 화면의 생김새는 똑같아야 하므로, 디자인은 여기 한 곳만 고치면 됩니다.
+   ========================================================================= */
+/* =========================================================================
+   0. 공통 — 변수 · 리셋 · 페이지 틀
+   ========================================================================= */
+:root{
+  --ff:'Pretendard Variable',Pretendard,-apple-system,system-ui,'Malgun Gothic',sans-serif;
+  --border:#E5E7EB;
+  --radius:16px;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:#EDEEF1;
+  color:#111827;
+  font-family:var(--ff);
+  -webkit-font-smoothing:antialiased;
+}
+a{color:#1E3A8A;text-decoration:none}
+a:hover{color:#15803D}
+
+/* 페이지 전체를 감싸는 세로 스택. 블록 사이 간격을 여기서 한 번에 조절합니다. */
+.page{
+  max-width:1200px;
+  margin:0 auto;
+  padding:40px 24px 72px;
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+}
+
+/* 큰 카드(블록 껍데기)의 공통 모양 */
+.card{
+  background:#FFFFFF;
+  /* 회색 대신 아주 옅은 파랑 — 메인 화면 카드와 같은 톤입니다 */
+  border:1px solid #E9F1FD;
+  border-radius:var(--radius);
+  box-shadow:0 1px 2px rgba(16,24,40,.04);
+}
+
+/* -------- 자주 쓰는 작은 부품들 -------------------------------------------- */
+.chip{font:600 11.5px/1 var(--ff);padding:5px 9px;
+  border-radius:999px;border:1px solid}
+.tag{font:700 10px/1.35 var(--ff);padding:4px 7px;border-radius:6px;
+  border:1px solid transparent;display:inline-block;white-space:nowrap;flex:none}
+.bigchip{font:700 12.5px/1 var(--ff);padding:7px 12px;
+  border-radius:999px;border:1px solid transparent}
+.h2{font:700 20px/1.3 var(--ff)}
+.h3{font:700 16px/1.3 var(--ff)}
+.sub{font:400 12.5px/1.6 var(--ff);color:#6B7280;text-wrap:pretty}
+.link{font:600 12px/1.4 var(--ff)}
+.note-s{font:400 11.5px/1.7 var(--ff);color:#9CA3AF}
+.b{font-weight:600} .right{text-align:right}
+
+/* 빈 상태 카드 — 데이터가 없을 때 그 자리에 대신 들어갑니다 */
+.empty{
+  border:1px dashed #D8DCE2;border-radius:10px;background:#FFFFFF;
+  padding:14px 13px;display:flex;flex-direction:column;gap:6px;align-items:flex-start;
+}
+.empty.plain{border:none;padding:22px 20px}   /* 섹션 통째로 비었을 때 */
+.empty-t{font:600 13px/1.4 var(--ff);color:#4B5563}
+.empty-d{font:400 11.5px/1.6 var(--ff);color:#9CA3AF}
+
+/* 접기/펼치기 버튼 (<details> 의 요약 줄에 들어갑니다) */
+.toggle{
+  font:600 13px/1.4 var(--ff);padding:9px 14px;border-radius:10px;
+  border:1px solid #C7CDD6;background:#FFFFFF;
+  color:#1F2937;flex:none;white-space:nowrap;
+}
+.toggle .on{display:inline} .toggle .off{display:none}
+details:not([open]) .toggle .on{display:none}
+details:not([open]) .toggle .off{display:inline}
+
+
+/* =========================================================================
+   [블록 1] 프로필 헤더
+   구조:  요약 줄(아바타 + 이름 + 태그 + 접기버튼)
+          └ 펼침 영역 = 3열(검진 결과 / 복약 정보 / 등록한 영양제) + 링크 줄
+   ========================================================================= */
+.hd{overflow:hidden}
+.hd-sum{list-style:none;display:flex;align-items:flex-start;
+  justify-content:space-between;gap:24px;padding:22px 24px;cursor:pointer}
+.hd-sum::-webkit-details-marker{display:none}
+.hd-left{display:flex;gap:16px;align-items:flex-start}
+.avatar{width:56px;height:56px;border-radius:50%;
+  background:linear-gradient(135deg,#123A8C,#38BDF8);border:none;
+  display:flex;align-items:center;justify-content:center;
+  font:700 18px/1 var(--ff);color:#FFFFFF;flex:none}
+.hd-info{display:flex;flex-direction:column;gap:8px}
+.hd-name{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.hd-name .nm{font:700 22px/1.2 var(--ff)}
+.hd-name .mt{font:400 13px/1.4 var(--ff);color:#6B7280}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+
+.hd-body{border-top:1px solid #E9F1FD;background:#F8FBFF;
+  padding:22px 24px;display:flex;flex-direction:column;gap:16px}
+/* 헤더 3열. 열 수는 tokens.LAYOUT["header_cols"] 로 정합니다. */
+.hd-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.hd-col{display:flex;flex-direction:column;gap:10px}
+.hd-col-t{font:700 13px/1.4 var(--ff);color:#111827}
+.hd-links{display:flex;gap:18px;flex-wrap:wrap;
+  border-top:1px dashed #E1E4E9;padding-top:12px}
+
+/* 검진 결과 표 — 열 너비 비율을 여기서 조절합니다 */
+.tbl{border:1px solid #E9F1FD;border-radius:10px;
+  background:#FFFFFF;overflow:hidden}
+.tr{display:grid;grid-template-columns:1.25fr .85fr .95fr .62fr;gap:6px;
+  padding:8px 10px;font:400 11.5px/1.5 var(--ff);
+  border-top:1px solid #F1F2F4;align-items:center}
+.tr.th{font:600 11px/1.4 var(--ff);color:#4B5563;
+  background:#F1F7FF;border-top:none}
+.tr .b{white-space:nowrap}
+.tr .rf{color:#6B7280}
+
+/* [추가] 검진 표를 목표질환별로 나누는 구분줄 */
+.tr.gp{background:#FAFBFC;font:700 10.5px/1.4 var(--ff);color:#9CA3AF;
+  grid-template-columns:1fr;letter-spacing:.04em}
+/* [추가] 검진 전체 표를 감싸는 접이식 영역 */
+.exam summary{list-style:none}
+.exam summary::-webkit-details-marker{display:none}
+
+/* 복약 / 영양제 목록의 작은 줄 */
+.rows{display:flex;flex-direction:column;gap:8px}
+.row{border:1px solid #E9F1FD;border-radius:10px;background:#FFFFFF;
+  padding:11px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.row.top{align-items:flex-start}
+.row-l{display:flex;flex-direction:column;gap:3px}
+.row-t{font:600 12.5px/1.4 var(--ff)}
+.row-d{font:400 11.5px/1.4 var(--ff);color:#6B7280}
+
+
+/* =========================================================================
+   [블록 2] 섭취량
+   구조:  제목 + 범례 / 탭 / 본문
+          본문은 데이터에 따라 둘 중 하나 → 성분 카드 그리드  또는  안내 블록
+   ========================================================================= */
+.intake{display:flex;flex-direction:column;gap:14px}
+.in-head{display:flex;align-items:flex-start;justify-content:space-between;
+  gap:24px;flex-wrap:wrap}
+.in-head-l{display:flex;flex-direction:column;gap:6px;max-width:720px}
+
+.legend{display:flex;flex-wrap:wrap;gap:12px;align-items:center;
+  font:500 11.5px/1.4 var(--ff);color:#4B5563}
+.legend span{display:flex;align-items:center;gap:5px}
+.legend .sw{width:10px;height:10px;border-radius:2px;display:inline-block}
+.legend .ln{width:2px;height:12px;display:inline-block}
+
+/* 성분 카드가 들어가는 자리. 예전에는 '권장 대비 / 상한 대비' 탭 두 개에
+   pane 이 하나씩 있었지만, 지금은 한 화면이라 pane 도 하나뿐입니다.
+   (.always 는 '탭 없이 늘 보인다'는 뜻입니다) */
+.pane{display:none;flex-direction:column;gap:16px}
+.pane.always{display:flex}
+
+/* 성분 카드 그리드. 열 수는 data-cols 속성으로 지정됩니다(카드 개수에 따라 자동). */
+.grid{display:grid;gap:16px;grid-template-columns:repeat(4,1fr)}
+.grid[data-cols="1"]{grid-template-columns:repeat(1,1fr)}
+.grid[data-cols="2"]{grid-template-columns:repeat(2,1fr)}
+.grid[data-cols="3"]{grid-template-columns:repeat(3,1fr)}
+.grid[data-cols="4"]{grid-template-columns:repeat(4,1fr)}
+
+/* --- 성분 카드 ------------------------------------------------------------
+   위에서부터: 이름+배지 / 캡션 / 반원 게이지 / 등급 / 막대 / 수치 / 코멘트    */
+.nc{background:#FFFFFF;border:1px solid #E9F1FD;
+  border-radius:14px;padding:18px;
+  box-shadow:0 1px 2px rgba(16,24,40,.04);
+  display:flex;flex-direction:column;gap:12px}
+.nc-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.nc-name{font:700 18px/1.3 var(--ff)}
+.nc-cap{font:500 11.5px/1.4 var(--ff);padding:5px 9px;
+  border-radius:7px;display:inline-block}
+.gauge{width:100%;max-width:190px;margin:2px auto 0;display:block}
+.nc-level{text-align:center;font:700 13px/1.4 var(--ff);margin-top:-4px}
+
+/* 막대 + 마커. barwrap 이 좌표 기준이고 마커는 % 위치로 절대배치됩니다. */
+.barwrap{position:relative;height:40px}
+.bar{position:absolute;left:0;right:0;top:20px;height:10px;
+  border-radius:5px;background:#F3F4F6;
+  display:flex;overflow:hidden}
+.mk{position:absolute;top:12px;height:26px;width:2px;display:block}
+.mk-rda{background:#15803D}
+.mk-ul{background:#DC2626}
+.mkl{position:absolute;top:0;font:700 9.5px/1 var(--ff);font-style:normal;white-space:nowrap}
+.mkl-rda{color:#15803D;transform:translateX(-50%)}
+.mkl-ul{color:#DC2626;transform:translateX(-50%)}
+
+.nc-vals{display:flex;justify-content:space-between;gap:8px;
+  font:500 11.5px/1.4 var(--ff);color:#4B5563;margin-top:-6px}
+.nc-note{border:1px solid;border-radius:9px;padding:10px 11px;
+  font:400 12px/1.6 var(--ff);text-wrap:pretty}
+.nc-note b{font-weight:700}
+
+/* --- 안내 블록 (성분 카드가 없을 때 그 자리에 들어갑니다) -------------------- */
+.guide{border:1px solid #F5C9A4;background:#FFF8F2;border-radius:14px;
+  padding:20px 22px;display:flex;flex-direction:column;gap:8px}
+.guide-t{font:700 17px/1.3 var(--ff);color:#9A3412}
+.guide-d{margin:0;font:400 13.5px/1.8 var(--ff);color:#7C2D12;
+  max-width:900px;text-wrap:pretty}
+
+/* 안내 카드들 — 헤더와 같은 3열 그리드를 재사용합니다 */
+.opts{display:grid;grid-template-columns:repeat(3,1fr);
+  gap:16px}
+.opt{background:#FFFFFF;border:1px solid var(--border);
+  border-top:4px solid #9CA3AF;border-radius:14px;padding:20px;
+  display:flex;flex-direction:column;gap:12px;align-items:flex-start;
+  box-shadow:0 1px 2px rgba(16,24,40,.04)}
+.opt-t{font:700 17px/1.3 var(--ff)}
+.opt-d{margin:0;font:400 13px/1.7 var(--ff);color:#4B5563}
+.btn{margin-top:auto;align-self:stretch;text-align:center;
+  font:700 13.5px/1.4 var(--ff);padding:12px 16px;border-radius:10px;color:#fff!important}
+
+/* 안내 카드 안의 숫자 타일 (예: 계산으로 알 수 있는 값) */
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%}
+.stat{border:1px solid var(--border);border-radius:10px;padding:12px;
+  display:flex;flex-direction:column;gap:4px}
+.stat-l{font:600 11px/1.4 var(--ff);color:#6B7280}
+.stat-v{font:800 22px/1.2 var(--ff);color:#111827}
+.stat-v em{font:600 12px/1 var(--ff);color:#6B7280;font-style:normal}
+.opt-hold{background:#F3F4F6;border-radius:9px;padding:11px;
+  font:400 12px/1.6 var(--ff);color:#6B7280;width:100%}
+
+/* 그리드 아래 가로로 눕는 보조 카드 (예: 추가 등록 유도) */
+.wide{background:#FFFFFF;border:1px dashed #C7CDD6;
+  border-radius:14px;padding:18px 20px;display:flex;align-items:center;
+  justify-content:space-between;gap:16px;flex-wrap:wrap}
+.wide .btn{margin:0;align-self:center;flex:none;padding:12px 18px}
+
+
+/* =========================================================================
+   [블록 3] 상호작용 · 성분 중복 점검
+   구조:  제목 줄(접기 가능) + 행 목록 (없으면 빈 상태)
+   ========================================================================= */
+.ix-sum{list-style:none;display:flex;align-items:center;justify-content:space-between;
+  padding:16px 20px;border-bottom:1px solid #F1F2F4;cursor:pointer}
+.ix-sum::-webkit-details-marker{display:none}
+.ix-row{display:flex;align-items:center;gap:14px;padding:14px 20px;
+  border-bottom:1px solid #F5F6F7}
+.ix-kind{font:700 10.5px/1.4 var(--ff);padding:5px 8px;border-radius:6px;
+  flex:none;min-width:96px;text-align:center;white-space:nowrap}
+.ix-text{font:400 13px/1.5 var(--ff);flex:1}
+.ix-foot{padding:12px 20px;border-top:1px solid #F5F6F7}
+
+
+/* =========================================================================
+   [블록 4] 종합 소견
+   ========================================================================= */
+.sm{padding:22px 24px;display:flex;flex-direction:column;gap:14px}
+.sm-text{margin:0;font:400 14px/1.8 var(--ff);color:#1F2937;
+  max-width:900px;text-wrap:pretty}
+.sm-keys{display:flex;flex-direction:column;gap:8px}
+.sm-keys-l{font:700 11.5px/1.4 var(--ff);color:#6B7280}
+.sm-keys-r{display:flex;flex-wrap:wrap;gap:8px}
+
+
+/* =========================================================================
+   [블록 5] 푸터
+   ========================================================================= */
+.ft{display:flex;flex-direction:column;gap:8px;padding:0 4px}
+.ft p{margin:0;font:400 12px/1.7 var(--ff);color:#9CA3AF;
+  max-width:1000px;text-wrap:pretty}
+
+
+/* =========================================================================
+   인쇄 — 탭과 버튼을 숨기고 두 pane 을 모두 펼칩니다. 필요 없으면 지우세요.
+   ========================================================================= */
+@media print{
+  .toggle{display:none}
+  .pane{display:flex!important}
+}
+
+
+/* =========================================================================
+   [추가] 리포트 → 입력 화면 이동 링크
+   ========================================================================= */
+.hd-col-t{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.link.edit{font:600 11.5px/1.4 var(--ff);color:#1E3A8A;flex:none;white-space:nowrap}
+.link.edit::before{content:'✎ ';font-size:10px}
+.link.edit:hover{color:#15803D}
+
+/* 이동한 섹션을 잠깐 강조합니다 */
+.fm-focus{outline:2px solid #1E3A8A;outline-offset:2px;
+  transition:outline-color .4s ease}
+@media (prefers-reduced-motion:reduce){.fm-focus{transition:none}}
+
+/* =========================================================================
+   [블록 0] 입력 화면 — 사용자가 처음 만나는 화면입니다.
+   리포트와 같은 토큰(--ff, --border, --radius)을 씁니다.
+   ========================================================================= */
+.intro{padding:26px 24px;display:flex;flex-direction:column;gap:8px}
+.intro .h1{font:800 24px/1.3 var(--ff)}
+.intro .sub{max-width:640px}
+.intro-steps{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.intro-steps span{font:600 11.5px/1 var(--ff);color:#6B7280;
+  background:#F3F4F6;border-radius:999px;padding:6px 10px}
+
+.fm{padding:22px 24px;display:flex;flex-direction:column;gap:14px}
+.fm-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.fm-opt{font:500 11.5px/1.4 var(--ff);color:#9CA3AF}
+
+.fm-row{display:flex;gap:10px;flex-wrap:wrap}
+.fm-f{display:flex;flex-direction:column;gap:5px;flex:1;min-width:120px}
+.fm-f>span{font:600 11px/1.3 var(--ff);color:#6B7280}
+.fm input[type=text],.fm input[type=number],.fm input[type=date],.fm select{
+  font:500 13px/1.4 var(--ff);color:#111827;font-family:var(--ff);
+  padding:11px 12px;border:1px solid #D9E2F2;border-radius:10px;
+  background:#FFFFFF;width:100%}
+.fm input:focus,.fm select:focus{outline:none;border-color:#1D5FD6;
+  box-shadow:0 0 0 3px rgba(29,95,214,.15)}
+.fm input::placeholder{color:#C7CDD6}
+
+/* 목표질환별 접이식 그룹 */
+.fm-grp{border:1px solid #E6EDF8;border-radius:11px;background:#FBFDFF}
+.fm-grp+.fm-grp{margin-top:7px}
+.fm-grp>summary{list-style:none;cursor:pointer;padding:12px 14px;
+  font:600 13px/1.4 var(--ff);color:#374151;display:flex;align-items:center;gap:10px}
+.fm-grp>summary::-webkit-details-marker{display:none}
+.fm-grp>summary::after{content:'펼치기';margin-left:auto;font:600 11px/1 var(--ff);color:#9CA3AF}
+.fm-grp[open]>summary::after{content:'접기'}
+.fm-grp>summary:hover{background:#F0F7FF;border-radius:11px;color:#123A8C}
+.fm-grp .cnt{font:700 10px/1 var(--ff);color:#123A8C;background:#E8F1FF;
+  padding:5px 7px;border-radius:6px;opacity:0}
+.fm-grp .cnt.on{opacity:1}
+.fm-grpbody{padding:2px 14px 14px;display:flex;flex-direction:column;gap:12px}
+.fm-item>.nm{font:600 11.5px/1.4 var(--ff);color:#6B7280;display:block;margin-bottom:5px}
+
+/* 개수가 정해지지 않은 입력 묶음 (약 · 영양제) */
+.fm-card{border:1px solid #E6EDF8;border-radius:12px;padding:13px;
+  background:#FBFDFF;display:flex;flex-direction:column;gap:9px}
+.fm-card+.fm-card{margin-top:9px}
+.fm-cardtop{display:flex;gap:8px;align-items:center}
+.fm-cardtop input{flex:1}
+.fm-ing{display:grid;grid-template-columns:1fr 92px 96px 34px;gap:6px;align-items:center}
+.fm-inglab{display:grid;grid-template-columns:1fr 92px 96px 34px;gap:6px;
+  font:600 10.5px/1 var(--ff);color:#9CA3AF;padding:0 2px}
+.fm-x{width:34px;height:38px;flex:none;border:1px solid var(--border);border-radius:8px;
+  background:#FFFFFF;color:#9CA3AF;font:600 16px/1 var(--ff);cursor:pointer;padding:0}
+.fm-x:hover{background:#FDECEC;border-color:#F7D4D4;color:#DC2626}
+.fm-add{font:700 12.5px/1.4 var(--ff);color:#123A8C;background:#FFFFFF;
+  border:1px dashed #C3D6F2;border-radius:11px;padding:12px;cursor:pointer;width:100%}
+.fm-add:hover{background:#F0F7FF;border-color:#1D5FD6}
+.fm-add.sm{font:600 11.5px/1.4 var(--ff);border:none;background:none;
+  padding:2px 0;width:auto;text-align:left}
+.fm-add.sm:hover{color:#15803D;background:none}
+
+/* 만성질환 선택 */
+.fm-tags{display:flex;flex-wrap:wrap;gap:6px}
+.fm-tag{font:500 12px/1 var(--ff);border:1px solid var(--border);border-radius:999px;
+  padding:9px 13px;cursor:pointer;background:#FFFFFF;color:#6B7280}
+/* 체크박스는 눈에서만 감춥니다. display:none 으로 지우면 키보드 Tab 으로
+   선택할 수 없게 되어 키보드만 쓰는 사용자가 이 항목을 건너뛰게 됩니다. */
+.fm-tag input{position:absolute;opacity:0;width:1px;height:1px;margin:0;pointer-events:none}
+.fm-tag:focus-within{outline:2px solid #1E3A8A;outline-offset:2px}
+.fm-tag:hover{background:#F6F8FD}
+.fm-tag.on{border-color:#DC2626;background:#FDECEC;color:#DC2626;font-weight:700}
+/* '식사 평균도 함께 계산'은 질환 선택이 아니라 단순 옵션이므로 붉게 칠하지 않습니다 */
+#meal-wrap.on{border-color:#1E3A8A;background:#EAEFF9;color:#1E3A8A}
+
+/* 하단 고정 바 — 입력 요약과 다음 단계 */
+.fm-bar{position:sticky;bottom:0;z-index:5;background:rgba(255,255,255,.92);
+  backdrop-filter:blur(8px);
+  border:1px solid #E3ECFC;border-radius:var(--radius);
+  box-shadow:0 -8px 24px -14px rgba(18,58,140,.35);
+  padding:14px 20px;display:flex;align-items:center;
+  justify-content:space-between;gap:16px;flex-wrap:wrap}
+.fm-sum{display:flex;flex-direction:column;gap:3px}
+.fm-sum b{font:700 13px/1.4 var(--ff)}
+.fm-go{font:700 14px/1.4 var(--ff);color:#FFFFFF;
+  background:linear-gradient(135deg,#123A8C,#1D5FD6);
+  border:none;border-radius:11px;padding:14px 26px;cursor:pointer;flex:none;
+  box-shadow:0 10px 22px -10px rgba(18,58,140,.7)}
+.fm-go:hover{background:linear-gradient(135deg,#0F2F73,#1A54BE)}
+.fm-go:disabled{background:#D8DCE2;color:#FFFFFF;cursor:not-allowed;box-shadow:none}
+
+/* 리포트 상단으로 돌아가는 줄 */
+.rp-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.rp-back{font:600 12.5px/1.4 var(--ff);color:#1E3A8A;background:#FFFFFF;
+  border:1px solid #C7CDD6;border-radius:9px;padding:9px 14px;cursor:pointer}
+.rp-back:hover{background:#F6F8FD;border-color:#1E3A8A}
+
+@media (max-width:640px){
+  .fm-go{width:100%}
+}
+@media print{.fm-bar,.rp-top{display:none}}
+
+
+/* =========================================================================
+   [블록 -1] 상태 화면 — 불러오는 중 / 분석 중 / 실패
+   판정을 백엔드(AI)가 하므로 응답까지 몇 초가 걸립니다.
+   그동안 보여 줄 화면이 반드시 있어야 합니다.
+   ========================================================================= */
+.state{min-height:70vh;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:14px;text-align:center;padding:40px 24px}
+.state .h1{font:800 21px/1.4 var(--ff)}
+.state .sub{max-width:430px;text-align:center}
+.spin{width:38px;height:38px;border-radius:50%;
+  border:3px solid #E1E4E9;border-top-color:#1E3A8A;
+  animation:spin 850ms linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation-duration:2.4s}}
+
+/* 분석 중 단계 표시 — 진행 중인 단계만 진하게 */
+.steps{display:flex;flex-direction:column;gap:7px;margin:6px 0 0;padding:0;text-align:left}
+.steps li{list-style:none;font:500 12.5px/1.5 var(--ff);color:#C7CDD6;
+  display:flex;align-items:center;gap:8px;transition:color .3s ease}
+.steps li::before{content:'○';font-size:10px}
+.steps li.on{color:#1F2937;font-weight:600}
+.steps li.on::before{content:'◉';color:#1E3A8A}
+.steps li.done{color:#15803D}
+.steps li.done::before{content:'✓';color:#15803D}
+
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:6px}
+.btn-line{font:600 13px/1.4 var(--ff);padding:11px 18px;border-radius:10px;
+  border:1px solid #C7CDD6;background:#FFFFFF;color:#1F2937;cursor:pointer}
+.btn-line:hover{background:#F6F8FD;border-color:#1E3A8A;color:#1E3A8A}
+.btn-solid{font:700 13px/1.4 var(--ff);padding:11px 20px;border-radius:10px;
+  border:none;background:#1E3A8A;color:#FFFFFF;cursor:pointer}
+.btn-solid:hover{background:#152B66}
+.errbox{border:1px solid #F7D4D4;background:#FDECEC;border-radius:10px;
+  padding:11px 13px;font:400 11.5px/1.6 var(--ff);color:#991B1B;
+  max-width:520px;text-align:left;word-break:break-word}
+
+/* =========================================================================
+   [블록 -2] 알림 띠 — 예시 기준값 경고 · 샘플 리포트 표시
+   ========================================================================= */
+.banner{display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  border-radius:var(--radius);padding:12px 18px;font:500 12.5px/1.6 var(--ff)}
+.banner.warn{background:#FFF8F2;border:1px solid #F5C9A4;color:#9A3412}
+.banner.info{background:#EAEFF9;border:1px solid #CBD8F0;color:#1E3A8A}
+.banner b{font-weight:700}
+.banner .btn-line{margin-left:auto;padding:8px 14px;font-size:12px}
+
+/* =========================================================================
+   [블록 0-A] 히어로 — 첫 화면 맨 위
+   ========================================================================= */
+/* 입력 화면 맨 위 — 메인 화면의 파랑 계열을 옅게 이어받되, 오래 들여다보며
+   값을 채우는 화면이므로 글자는 검정에 흰 바탕을 유지합니다. 왼쪽 세로선
+   하나와 아주 옅은 하늘색 그라데이션만으로 첫 블록임을 알립니다. */
+.hero{padding:30px 28px;display:flex;flex-direction:column;gap:10px;
+  position:relative;overflow:hidden;border-color:#E3ECFC;
+  background:linear-gradient(120deg,#F7FBFF 0%,#FFFFFF 55%)}
+.hero::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;
+  background:linear-gradient(180deg,#123A8C,#38BDF8)}
+.hero .h1{font:800 25px/1.35 var(--ff);max-width:640px;text-wrap:pretty;
+  letter-spacing:-.015em}
+.hero .sub{max-width:600px;font-size:13px}
+.hero-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px}
+.hero-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.hero-meta span{font:500 11.5px/1.5 var(--ff);color:#4B5563;
+  display:flex;align-items:center;gap:5px;background:#EEF5FF;
+  border:1px solid #DDEAFC;border-radius:999px;padding:5px 11px}
+
+/* =========================================================================
+   [블록 0-B] 입력 섹션 — 접이식 껍데기
+   선택 섹션은 접힌 채로 시작해, 첫 화면에서 폼이 짧아 보이게 합니다.
+   ========================================================================= */
+.sec{overflow:hidden;border-color:#E9F1FD;transition:box-shadow .15s ease}
+.sec[open]{box-shadow:0 10px 26px -20px rgba(18,58,140,.5),0 1px 2px rgba(16,24,40,.04)}
+.sec>summary{list-style:none;cursor:pointer;padding:18px 24px;
+  display:flex;align-items:center;gap:12px}
+.sec>summary::-webkit-details-marker{display:none}
+.sec>summary:hover{background:#F7FBFF}
+.sec-n{width:26px;height:26px;border-radius:9px;flex:none;
+  background:#E8F1FF;color:#123A8C;font:700 12px/26px var(--ff);text-align:center}
+.sec[open] .sec-n{background:linear-gradient(135deg,#123A8C,#38BDF8);color:#FFFFFF}
+.sec-t{font:700 15px/1.3 var(--ff)}
+.sec-req{font:700 10px/1.35 var(--ff);padding:4px 7px;border-radius:6px;
+  background:#FDECEC;color:#DC2626;flex:none}
+.sec-opt{font:500 11.5px/1.4 var(--ff);color:#9CA3AF;flex:none}
+.sec-state{margin-left:auto;display:flex;align-items:center;gap:9px;flex:none}
+.sec-badge{font:700 10.5px/1.35 var(--ff);padding:5px 8px;border-radius:6px;
+  background:#EAF6EE;color:#15803D;white-space:nowrap}
+.sec-arrow{font:600 11px/1 var(--ff);color:#9CA3AF;white-space:nowrap}
+.sec[open] .sec-arrow::after{content:'접기'}
+.sec:not([open]) .sec-arrow::after{content:'펼치기'}
+.sec-body{border-top:1px solid #E9F1FD;padding:20px 24px 24px;
+  display:flex;flex-direction:column;gap:14px}
+
+/* 성분 인식 표시 — 입력하는 순간 기준 유무를 알려 줍니다 */
+.ing-flag{font:600 10px/1.35 var(--ff);padding:4px 6px;border-radius:5px;
+  white-space:nowrap;align-self:center;text-align:center}
+.ing-flag.ok{background:#EAF6EE;color:#15803D}
+.ing-flag.no{background:#F3F4F6;color:#9CA3AF}
+.ing-flag.idle{visibility:hidden}
+.fm-ing,.fm-inglab{grid-template-columns:1fr 84px 88px 60px 34px}
+
+/* 저장 상태 */
+.savestate{font:500 11.5px/1.4 var(--ff);color:#9CA3AF;
+  display:flex;align-items:center;gap:6px}
+.savestate.ok{color:#15803D}
+.savestate.err{color:#DC2626}
+
+/* 리포트 상단 액션 */
+.rp-acts{display:flex;gap:8px;flex-wrap:wrap}
+
+/* =========================================================================
+   [블록 2-B] 추천 영양제
+   구조:  제목 + 근거 설명 / 성분 타일 목록 / 주의 문구
+   ========================================================================= */
+.rc{padding:22px 24px;display:flex;flex-direction:column;gap:14px}
+.rc-head{display:flex;flex-direction:column;gap:6px}
+.rc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.rc-item{border:1px solid #E9F1FD;border-left:4px solid #9CA3AF;
+  border-radius:12px;padding:14px 15px;background:#FFFFFF;
+  display:flex;flex-direction:column;gap:7px}
+.rc-top{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.rc-name{font:700 16px/1.3 var(--ff)}
+.rc-amt{font:700 12px/1.3 var(--ff);flex:none}
+.rc-why{margin:0;font:400 12px/1.65 var(--ff);color:#4B5563;text-wrap:pretty}
+.rc-caution{font:600 11.5px/1.6 var(--ff);color:#C2410C;
+  background:#FFF1E8;border:1px solid #FBD3B8;border-radius:8px;padding:8px 10px}
+.rc-advice{border:1px solid #F7D4D4;background:#FDECEC;border-radius:10px;
+  padding:12px 14px;font:600 12.5px/1.7 var(--ff);color:#991B1B;text-wrap:pretty}
+.rc-note{font:400 11.5px/1.7 var(--ff);color:#9CA3AF;text-wrap:pretty}
+.rc-none{border:1px dashed #C3E5CE;background:#F7FCF9;border-radius:12px;
+  padding:18px 20px;font:500 13px/1.7 var(--ff);color:#14532D}
+
+@media (max-width:900px){ .rc-grid{grid-template-columns:repeat(2,1fr)} }
+@media (max-width:640px){ .rc-grid{grid-template-columns:1fr} }
+
+@media (max-width:640px){
+  .fm-ing,.fm-inglab{grid-template-columns:1fr 66px 70px 50px 34px}
+  .sec>summary{padding:16px 18px;flex-wrap:wrap}
+  .sec-body{padding:16px 18px 20px}
+  .hero{padding:24px 20px}
+  .hero .h1{font-size:21px}
+}
+@media print{.banner,.state,.rp-acts{display:none}}
+
+/* =========================================================================
+   [블록 -3] 상단바 — 로그인한 사용자만 봅니다
+   로그인 전에는 hidden 이라 화면에 아예 없습니다(계정 메뉴를 보여줄 계정이
+   없으니까요). #app 과 별도로 관리해서, 화면(입력→분석중→리포트)이
+   바뀌어도 상단바는 다시 그리지 않습니다.
+   ========================================================================= */
+#topbar{position:sticky;top:0;z-index:20;background:#FFFFFF;
+  border-bottom:1px solid var(--border)}
+#topbar:not([hidden]){display:block}
+.tb-inner{max-width:1200px;margin:0 auto;padding:0 24px;height:56px;
+  display:flex;align-items:center;justify-content:space-between}
+.tb-acct{position:relative}
+.tb-guest{display:flex;gap:8px;align-items:center}
+.tb-name{font:600 13px/1.4 var(--ff);color:#374151;background:none;
+  border:none;cursor:pointer;padding:8px 4px;display:flex;align-items:center;gap:4px}
+.tb-name:hover{color:#1E3A8A}
+.tb-menu{position:absolute;right:0;top:calc(100% + 4px);background:#FFFFFF;
+  border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(16,24,40,.12);
+  min-width:140px;padding:6px;flex-direction:column;z-index:21}
+.tb-menu[hidden]{display:none}
+.tb-menu:not([hidden]){display:flex}
+.tb-menu a{font:500 13px/1.4 var(--ff);color:#374151;padding:9px 10px;
+  border-radius:7px;text-decoration:none}
+.tb-menu a:hover{background:#F6F8FD;color:#1E3A8A}
+
+/* =========================================================================
+   [블록 -4] 로그인 · 회원가입 모달
+   로그인하기 전에는 반드시 이 모달을 거쳐야 합니다. 배경(scrim)을 눌러도
+   닫히지 않습니다 — 선택이 아니라 통과해야 하는 관문이기 때문입니다.
+   ========================================================================= */
+.modal-scrim{position:fixed;inset:0;background:rgba(17,24,39,.5);
+  display:flex;align-items:center;justify-content:center;z-index:50;padding:20px;
+  overflow-y:auto}
+.modal-card{background:#FFFFFF;border-radius:var(--radius);max-width:400px;width:100%;
+  padding:28px 26px;display:flex;flex-direction:column;gap:16px;
+  box-shadow:0 20px 60px rgba(16,24,40,.28);margin:auto}
+.modal-card .h2{display:block}
+.modal-card .sub{display:block;margin-top:6px}
+#app[inert]{filter:blur(1.5px);user-select:none}
+
+/* =========================================================================
+   [블록 -5] 지난 리포트 목록
+   -------------------------------------------------------------------------
+   카드 한 장에 '언제 · 누가 · 무엇을 넣었는지 · 결과가 어땠는지'가 위에서
+   아래로 순서대로 들어갑니다. 날짜와 배지만 있으면 같은 날 여러 번 돌린
+   리포트를 열어 보기 전에는 구분할 수 없기 때문입니다.
+   ========================================================================= */
+.hist-list{display:flex;flex-direction:column;gap:10px}
+.hist-card{background:#FFFFFF;border:1px solid var(--border);border-radius:14px;
+  padding:16px 18px;display:flex;align-items:center;justify-content:space-between;
+  gap:16px;flex-wrap:wrap;transition:border-color .15s ease,background .15s ease}
+.hist-card.asking{border-color:#F3B4B4;background:#FFFBFB}
+.hist-l{display:flex;flex-direction:column;gap:6px;min-width:0;flex:1}
+.hist-date{font:700 13.5px/1.4 var(--ff)}
+.hist-who{font:600 12.5px/1.5 var(--ff);color:#1F2937}
+.hist-what{font:400 12px/1.6 var(--ff);color:#6B7280;text-wrap:pretty}
+.hist-sum{font:400 12px/1.5 var(--ff);color:#9CA3AF}
+.hist-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
+
+/* 오른쪽 버튼 묶음 — '다시 보기'가 주된 동작이고 '삭제'는 옆에 조용히 둡니다.
+   지우는 버튼이 여는 버튼만큼 눈에 띄면 잘못 누르기 쉽습니다. */
+.hist-acts{display:flex;align-items:center;gap:8px;flex:none}
+.hist-del{font:600 12.5px/1.4 var(--ff);color:#9CA3AF;background:none;
+  border:1px solid transparent;border-radius:9px;padding:9px 12px;cursor:pointer}
+.hist-del:hover{color:#B91C1C;background:#FDECEC;border-color:#F3D2D2}
+
+/* 지우기 전 확인 — 카드 안에서 받습니다. 브라우저 기본 확인창은 화면 밖에
+   떠서 '무엇을 지우는 중인지'가 보이지 않습니다. */
+.hist-confirm{flex-direction:column;align-items:flex-end;gap:8px}
+.hist-confirm-t{font:600 11.5px/1.5 var(--ff);color:#991B1B;text-align:right}
+.hist-actrow{display:flex;gap:8px}
+.btn-danger{font:700 13px/1.4 var(--ff);padding:11px 18px;border-radius:10px;
+  border:none;background:#DC2626;color:#FFFFFF;cursor:pointer}
+.btn-danger:hover{background:#B91C1C}
+.btn-danger.sm{padding:9px 16px;font-size:12.5px}
+
+@media (max-width:640px){
+  .hist-acts{width:100%}
+  .hist-acts .btn-line{flex:1}
+  .hist-confirm{align-items:stretch}
+  .hist-confirm-t{text-align:left}
+  .hist-actrow .btn-line,.hist-actrow .btn-danger{flex:1}
+}
+
+@media print{#topbar{display:none}}
+
+/* =========================================================================
+   [블록 -10] 대화형 입력
+   ========================================================================= */
+.mode-toggle{display:inline-flex;gap:4px;padding:4px;background:#FFFFFF;
+  border:1px solid #E3ECFC;border-radius:13px;align-self:flex-start;
+  box-shadow:0 1px 2px rgba(16,24,40,.04)}
+.mode-btn{font:600 12.5px/1.4 var(--ff);padding:9px 16px;border-radius:9px;
+  border:none;background:none;color:#6B7280;cursor:pointer;transition:color .12s ease}
+.mode-btn.on{background:linear-gradient(135deg,#123A8C,#1D5FD6);color:#FFFFFF;
+  box-shadow:0 6px 14px -6px rgba(18,58,140,.55)}
+.mode-btn:not(.on):hover{color:#123A8C;background:#F0F7FF}
+
+/* 채팅창은 정해진 크기를 유지합니다 — 안의 질문이 버튼 몇 개짜리든
+   여러 줄짜리 카드(검진 결과·성분 입력)든, 카드 전체 높이는 늘 같고
+   입력칸(.chat-input-area)은 언제나 카드 맨 아래 같은 자리에 있습니다.
+   대화 목록(.chat-log)만 flex:1 로 남은 공간을 차지하며 안에서 스크롤됩니다. */
+.chat-card{padding:0;display:flex;flex-direction:column;gap:0;
+  height:min(660px,80vh);overflow:hidden;border-color:#E3ECFC;
+  box-shadow:0 18px 40px -24px rgba(18,58,140,.35),0 1px 2px rgba(16,24,40,.04)}
+/* 머리글은 옅은 하늘색 띠로 본문과 구분합니다 — 선 하나만 긋는 것보다
+   카드가 정돈되어 보이고, 메인 화면의 파랑 계열과도 이어집니다. */
+.chat-headrow{display:flex;align-items:flex-start;justify-content:space-between;
+  gap:12px;flex-wrap:wrap;flex:none;padding:18px 22px;
+  background:linear-gradient(180deg,#F5FAFF,#FFFFFF);border-bottom:1px solid #E9F1FD}
+.chat-headrow .h2{font-size:17px;letter-spacing:-.01em}
+.chat-headrow .sub{display:block;margin-top:3px}
+.chat-tools{display:flex;gap:6px;flex-wrap:wrap}
+.chat-tool-btn{font:600 12px/1.3 var(--ff);padding:7px 12px;border-radius:9px;
+  border:1px solid #DCE7F8;background:#FFFFFF;color:#4B5563;cursor:pointer}
+.chat-tool-btn:hover{color:#123A8C;border-color:#1D5FD6;background:#F0F7FF}
+.chat-tool-btn.danger{color:#B91C1C;border-color:#F3D2D2}
+.chat-tool-btn.danger:hover{background:#FDECEC;border-color:#DC2626;color:#B91C1C}
+.chat-log{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:11px;
+  overflow-y:auto;padding:20px 22px 16px;background:#FBFDFF}
+.chat-msg{display:flex;align-items:center;gap:8px}
+.chat-msg.user{justify-content:flex-end}
+.chat-bubble{font:400 13.5px/1.55 var(--ff);padding:10px 14px;border-radius:15px;
+  max-width:min(480px,78%);white-space:pre-wrap;word-break:break-word}
+.chat-msg.bot .chat-bubble{background:#FFFFFF;color:#1F2937;
+  border:1px solid #E6EDF8;border-bottom-left-radius:5px}
+.chat-msg.user .chat-bubble{background:linear-gradient(135deg,#1E3A8A,#2563EB);
+  color:#FFFFFF;border-bottom-right-radius:5px;
+  box-shadow:0 6px 14px -8px rgba(30,58,138,.6)}
+
+/* 답한 말풍선 옆의 '수정' — 평소에는 눈에 띄지 않게 두었다가, 그 줄에
+   마우스를 올리거나 키보드로 짚으면 또렷해집니다. */
+.chat-edit{font:600 11px/1 var(--ff);color:#6B7280;background:#FFFFFF;
+  border:1px solid #DCE7F8;border-radius:999px;padding:5px 10px;cursor:pointer;
+  opacity:.45;transition:opacity .12s ease,color .12s ease,border-color .12s ease}
+.chat-msg:hover .chat-edit,.chat-edit:focus-visible{opacity:1;color:#123A8C;border-color:#1D5FD6}
+.chat-msg.edited .chat-bubble{box-shadow:0 0 0 2px rgba(56,189,248,.35)}
+
+/* 입력칸이 있는 아래쪽 영역 — 카드 안에서 늘 같은 위치(로그 바로 아래)에
+   고정되고, 내용이 긴 위젯(검진 카드 등)은 이 영역 안에서만 스크롤되어
+   카드 전체 크기에는 영향을 주지 않습니다. */
+.chat-input-area{flex:none;border-top:1px solid #E9F1FD;padding:16px 22px 18px;
+  max-height:300px;overflow-y:auto;background:#FFFFFF}
+.chat-confirm{display:flex;flex-direction:column;gap:10px;background:#FDECEC;
+  border:1px solid #F3B4B4;border-radius:12px;padding:14px 16px}
+.chat-confirm .sub2{font:600 13px/1.5 var(--ff);color:#7F1D1D}
+.chat-editbar{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  flex-wrap:wrap;background:#F0F7FF;border:1px solid #CFE3FB;border-radius:11px;
+  padding:10px 13px;margin-bottom:12px}
+.chat-editbar-t{font:600 12px/1.5 var(--ff);color:#123A8C}
+
+/* 검진표 사진 등록 줄 — 질문 위젯 바로 위, 대화 내내 같은 자리에 있습니다.
+   질문에 하나씩 답하는 길 말고 '사진 한 장으로 한꺼번에' 라는 길이 늘
+   열려 있다는 것을 보여 주기 위해서입니다. */
+.chat-attach{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding-bottom:12px;margin-bottom:12px;border-bottom:1px dashed #DCE7F8}
+.chat-attach-btn{display:flex;align-items:center;gap:7px;
+  font:600 12.5px/1.4 var(--ff);color:#123A8C;background:#F4F9FF;
+  border:1px dashed #C3D6F2;border-radius:11px;padding:9px 14px;cursor:pointer;
+  transition:background .12s ease,border-color .12s ease}
+.chat-attach-btn:hover{background:#E8F1FF;border-color:#1D5FD6}
+.chat-attach-plus{font:700 15px/1 var(--ff);color:#1D5FD6}
+.chat-attach-t{font:600 12.5px/1.4 var(--ff);color:#123A8C}
+.chat-attach-hint{font:400 11.5px/1.5 var(--ff);color:#9CA3AF}
+.chat-attach-err{font:600 11.5px/1.5 var(--ff);color:#B91C1C;
+  background:#FDECEC;border:1px solid #F3D2D2;border-radius:8px;padding:6px 9px;
+  flex-basis:100%}
+.spin.sm{width:16px;height:16px;border-width:2px;flex:none}
+
+/* 검진표에서 저절로 채워진 답 — 사용자가 직접 친 답과 구분되어야 합니다.
+   무엇이 사진에서 온 값인지 알아야 잘못 읽힌 것을 찾아 고칠 수 있습니다. */
+.chat-msg.auto .chat-bubble{background:linear-gradient(135deg,#1D5FD6,#38BDF8)}
+.chat-auto{display:block;font:700 9.5px/1.4 var(--ff);font-style:normal;
+  letter-spacing:.04em;opacity:.75;margin-bottom:2px}
+
+.chat-inputrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.chat-textin{flex:1;min-width:160px;font:400 13.5px/1.4 var(--ff);
+  border:1px solid #D9E2F2;border-radius:11px;padding:12px 14px;background:#FFFFFF}
+.chat-textin:focus{outline:none;border-color:#1D5FD6;
+  box-shadow:0 0 0 3px rgba(29,95,214,.15)}
+.chat-textin.err{border-color:#DC2626;background:#FDECEC;box-shadow:none}
+.chat-textin.err::placeholder{color:#DC2626}
+.chat-chips{gap:8px}
+.chip-btn{font:600 13px/1.4 var(--ff);border:1px solid #DCE7F8;border-radius:999px;
+  padding:9px 16px;background:#FFFFFF;color:#374151;cursor:pointer;
+  transition:transform .12s ease,box-shadow .12s ease}
+.chip-btn:hover{background:#F0F7FF;border-color:#1D5FD6;color:#123A8C;
+  transform:translateY(-1px);box-shadow:0 6px 14px -8px rgba(18,58,140,.5)}
+.chip-btn.on{border-color:#1D5FD6;background:#E8F1FF;color:#123A8C;font-weight:700}
+.chat-sendrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.chat-card-inline{margin:0}
+.chat-summary{display:flex;flex-wrap:wrap;gap:8px}
+.btn-solid.sm{padding:9px 16px;font-size:12.5px}
+.btn-line.sm{padding:9px 16px;font-size:12.5px}
+
+/* 선택형 질문 아래 붙는 '문장으로 답하기' 한 줄 — 버튼과 구분되도록
+   점선으로 살짝 떼어 둡니다. */
+.chat-freerow{margin-top:10px;padding-top:10px;border-top:1px dashed #DCE7F8}
+.chat-fieldnote{display:block;margin:8px 0}
+
+@media (max-width:640px){
+  .chat-headrow,.chat-log,.chat-input-area{padding-left:16px;padding-right:16px}
+  .chat-edit{opacity:1}          /* 손가락으로는 hover 가 없습니다 */
+}
+
+@media print{.mode-toggle{display:none}}
+
+/* =========================================================================
+   [블록 -11] 메인(홈) 화면 — 상단바의 서비스 이름을 누르면 여기로 옵니다.
+   -------------------------------------------------------------------------
+   서비스의 메인 색: 짙은 남색 → 파란색 → 하늘색으로 이어지는 그라데이션에
+   흰색을 더해 '고급스러운 파랑·하늘색·흰색' 톤을 만듭니다. 나머지 화면
+   (입력·리포트 등)의 실용적인 톤은 그대로 두고, 첫인상을 주는 메인 화면만
+   더 공들여 꾸밉니다.
+   ========================================================================= */
+.tb-logo-btn{font:800 16px/1 var(--ff);color:#1E3A8A;background:none;
+  border:none;padding:4px 2px;cursor:pointer}
+.tb-logo-btn:hover{color:#15803D}
+
+.home-page{gap:24px}
+
+/* ---- 히어로: 그라데이션 배경 + 은은한 빛망울 장식 ------------------------- */
+.home-hero-wrap{position:relative;overflow:hidden;border-radius:var(--radius);
+  padding:64px 44px;display:flex;flex-direction:column;gap:18px;
+  background:linear-gradient(135deg,#0B1E4D 0%,#123A8C 32%,#1D5FD6 62%,#38BDF8 100%);
+  box-shadow:0 24px 60px -20px rgba(11,30,77,.55)}
+.home-hero-wrap::before,.home-hero-wrap::after{content:'';position:absolute;
+  border-radius:50%;filter:blur(70px);pointer-events:none}
+.home-hero-wrap::before{width:360px;height:360px;background:#7DD3FC;opacity:.35;
+  top:-140px;right:-100px}
+.home-hero-wrap::after{width:280px;height:280px;background:#60A5FA;opacity:.30;
+  bottom:-120px;left:-70px}
+.home-hero-inner{position:relative;z-index:1;display:flex;flex-direction:column;gap:16px;max-width:720px}
+.home-eyebrow{align-self:flex-start;background:rgba(255,255,255,.14);color:#FFFFFF;
+  border:1px solid rgba(255,255,255,.4);backdrop-filter:blur(3px)}
+.home-hero-inner .h1{color:#FFFFFF;font:800 34px/1.35 var(--ff);text-wrap:pretty;max-width:none}
+.home-hero-inner .sub{color:rgba(255,255,255,.86);font-size:14px;max-width:600px}
+.home-hero-inner .hero-meta span{color:#EAF3FF;background:rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:6px 12px}
+.home-hero-inner .hero-row{margin-top:6px}
+.home-cta-primary{font:800 14px/1.4 var(--ff);color:#123A8C;background:#FFFFFF;
+  border:none;border-radius:12px;padding:13px 22px;cursor:pointer;
+  box-shadow:0 10px 24px -6px rgba(6,15,40,.5)}
+.home-cta-primary:hover{background:#EAF3FF}
+.home-cta-ghost{font:700 14px/1.4 var(--ff);color:#FFFFFF;background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.55);border-radius:12px;padding:12px 21px;cursor:pointer}
+.home-cta-ghost:hover{background:rgba(255,255,255,.2)}
+
+/* ---- 섹션 공통 — 흰색과 옅은 하늘색 배경을 번갈아 써서 리듬을 만듭니다 --- */
+.home-sec{padding:34px 30px 36px;display:flex;flex-direction:column;gap:20px;
+  border-radius:var(--radius);background:#FFFFFF;border:1px solid var(--border);
+  box-shadow:0 1px 2px rgba(16,24,40,.04)}
+.home-sec.tint{background:#F0F7FF;border-color:#DCEBFF}
+.home-sec.plain{background:none;border:none;box-shadow:none;padding:30px 4px 6px}
+.home-sec-eyebrow{font:800 11px/1 var(--ff);letter-spacing:.04em;color:#1D5FD6}
+.home-sec-head{display:flex;flex-direction:column;gap:6px}
+.home-sec-head .h2{font-size:22px}
+
+.home-feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.home-feat{border:1px solid #E3ECFC;border-radius:14px;padding:20px 19px;
+  background:#FFFFFF;display:flex;flex-direction:column;gap:10px;
+  transition:transform .15s ease,box-shadow .15s ease}
+.home-feat:hover{transform:translateY(-3px);box-shadow:0 14px 28px -12px rgba(30,58,138,.25)}
+.home-badge{width:36px;height:36px;border-radius:11px;flex:none;
+  background:linear-gradient(135deg,#123A8C,#38BDF8);color:#FFFFFF;
+  display:flex;align-items:center;justify-content:center;font:800 13.5px/1 var(--ff)}
+.home-feat-t{font:700 14.5px/1.35 var(--ff)}
+.home-feat-d{margin:0;font:400 12px/1.7 var(--ff);color:#6B7280;text-wrap:pretty}
+
+.home-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.home-step{display:flex;flex-direction:column;gap:10px;position:relative}
+.home-step-t{font:700 14px/1.4 var(--ff)}
+.home-step-d{margin:0;font:400 12px/1.65 var(--ff);color:#6B7280;text-wrap:pretty}
+
+.home-usecase-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.home-usecase{border:1px solid #E3ECFC;border-radius:14px;padding:20px 19px;
+  background:#FFFFFF;display:flex;flex-direction:column;gap:10px}
+.home-usecase-t{font:700 14px/1.4 var(--ff);color:#123A8C}
+.home-usecase-d{margin:0;font:400 12px/1.7 var(--ff);color:#6B7280;text-wrap:pretty}
+
+.home-faq{border-color:#E3ECFC}
+.home-faq .sec-t{color:#0F2957}
+.home-faq .sec-body{padding:0 24px 20px}
+.home-faq[open]{box-shadow:0 10px 22px -14px rgba(30,58,138,.35)}
+
+@media (max-width:900px){
+  .home-feat-grid, .home-usecase-grid{grid-template-columns:repeat(2,1fr)}
+  .home-steps{grid-template-columns:repeat(2,1fr)}
+  .home-hero-wrap{padding:44px 28px}
+  .home-hero-inner .h1{font-size:26px}
+}
+@media (max-width:640px){
+  .home-feat-grid, .home-usecase-grid, .home-steps{grid-template-columns:1fr}
+  .home-sec{padding:26px 20px 28px}
+}
+

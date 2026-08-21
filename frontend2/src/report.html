@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MyHerb</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<!-- 화면 생김새는 전부 styles.css 에 있습니다. -->
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<!--
+  이 파일에는 뼈대만 있습니다. 아래 세 칸을 app.js 가 채웁니다.
+    topbar    상단바 (서비스 이름 · 로그인 / 계정 메뉴)
+    app       본문 — 메인 화면 · 입력 화면 · 리포트가 번갈아 들어갑니다
+    authModal 로그인 · 회원가입 창
+
+  ※ 세 파일(report.html · styles.css · app.js)은 같은 폴더에 함께 있어야
+    동작합니다. 하나만 옮기면 화면이 비어 보입니다.
+-->
+<header id="topbar" hidden></header>
+<div id="app"></div>
+<div id="authModal"></div>
+
+<!-- 목업(브라우저 안에서 판정을 흉내 내는 코드)이 들어 있는 개발용입니다.
+     실제 서버에 붙인 화면은 Live.html + live-app.js 입니다. -->
+<script src="app.js"></script>
+</body>
+</html>
