@@ -9,15 +9,18 @@ class State(TypedDict, total=False):
     ocr_text: str
     ocr_result: Dict[str, Any]
 
-    # Normalization
+    # Normalization (PII 원본 보존 + is_pii 태깅. 마스킹은 Compliance 단계에서만)
     normalized_data: Dict[str, Any]
+    target_nutrients: List[str]
 
-    # RAG
+    # RAG (Aggregator 단계에서 채움)
     rag_context: List[Dict[str, Any]]
 
     # Planning / Execution
     execution_plan: List[Dict[str, Any]]
     execution_results: List[Dict[str, Any]]
+    # 3회 재시도 소진 후 확정된 부분 실패 항목
+    failed_items: List[Dict[str, Any]]
 
     # Review
     review_status: Literal[

@@ -1,34 +1,23 @@
-import os
-import aiohttp
-from typing import Any, Dict, List
+from typing import Any, Dict
 
-MCP_SERVER_URL = os.getenv("MCP_SERVER_URL", "http://localhost:8080")
+from fastmcp import Client
+
+from config import MCP_SERVER_URL
+
+# FastMCP streamable-http 엔드포인트. MCP_SERVER_URL 뒤에 /mcp/ 경로를 붙인다.
+_MCP_ENDPOINT = MCP_SERVER_URL.rstrip("/") + "/mcp/"
+
 
 async def call_mcp_tool(tool_name: str, arguments: Dict[str, Any]) -> Any:
+    """로컬 MCP 서버(FastMCP)의 tool을 표준 MCP 프로토콜로 호출.
+
+    구조화 출력(tool이 반환한 dict)을 그대로 돌려준다.
+    서버 미구동/tool 오류 시 예외를 전파해 상위(executor)가 fallback 하도록 한다.
     """
-    http://localhost:8080에 구동중인 로컬 MCP 서버로 JSON-RPC 2.0 규격에 맞는 Tool Call을 보냅니다.
-    """
-    payload = {
-        "jsonrpc": "2.0",
-        "method": f"tools/{tool_name}",
-        "params": arguments,
-        "id": 1
-    }
-    
-    headers = {"Content-Type": "application/json"}
-    
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.post(f"{MCP_SERVER_URL}/", json=payload, headers=headers) as resp:
-                if resp.status == 200:
-                    data = await resp.json()
-                    if "error" in data:
-                        raise RuntimeError(f"MCP Tool error: {data['error']}")
-                    return data.get("result")
-                else:
-                    text = await resp.text()
-                    raise RuntimeError(f"MCP server HTTP error: {resp.status} - {text}")
+        async with Client(_MCP_ENDPOINT) as client:
+            result = await client.call_tool(tool_name, arguments)
+            return result.data
     except Exception as e:
         print(f"[MCP Warning] {tool_name} 호출 중 예외 발생, fallback 연산 수행: {str(e)}")
-        # 로컬 서버 미구동 시의 Fallback 연산을 위한 예외 전파
         raise e
