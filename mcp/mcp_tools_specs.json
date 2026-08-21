@@ -1,0 +1,251 @@
+{
+  "$comment": "Phase 2 MCP tool contracts. Sourced from shared/src/types.ts (zod schemas), mcp/src/server.ts (registered descriptions), and mcp/src/tools/*.ts (runtime IO). All nutrient amounts are in the nutrient's KDRI unit; nutrient identifiers are internal nutrient_code strings.",
+  "tools": [
+    {
+      "name": "calculate_dynamic_ri",
+      "description": "Compute the weight-adjusted recommended daily intake (RI) for the given target_nutrients from the user's age, gender, and weight. Call this first, once target nutrients are known, to establish personalized dose targets.",
+      "when_to_call": "First, before recommending any product — to establish personalized target amounts. Requires known age, gender, and weight_kg (blank-filled with cohort averages upstream if the user omitted them).",
+      "input": {
+        "type": "object",
+        "required": ["age", "gender", "weight_kg", "target_nutrients"],
+        "properties": {
+          "age": { "type": "integer", "minimum": 0, "description": "Age in years." },
+          "gender": { "type": "string", "enum": ["male", "female"] },
+          "weight_kg": { "type": "number", "exclusiveMinimum": 0, "description": "Body weight in kilograms." },
+          "target_nutrients": { "type": "array", "items": { "type": "string" }, "description": "nutrient_code list to compute RIs for." }
+        }
+      },
+      "output": {
+        "type": "object",
+        "required": ["custom_ri"],
+        "properties": {
+          "custom_ri": {
+            "type": "object",
+            "description": "Map keyed by nutrient_code. A code with no matching KDRI base row is omitted (never dosed at 0).",
+            "additionalProperties": {
+              "type": "object",
+              "required": ["base", "factor_per_kg", "value", "unit"],
+              "properties": {
+                "base": { "type": "number", "description": "KDRI base RI for the selected bracket." },
+                "factor_per_kg": { "type": ["number", "null"], "description": "Per-kg scaling factor; null when the nutrient is not weight-scaled." },
+                "value": { "type": "number", "description": "Final personalized RI (weight-scaled when factor_per_kg is present, else base)." },
+                "unit": { "type": "string", "description": "KDRI unit for this nutrient (e.g. mg, mcg, IU-derived)." }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "validate_ul_guardrail",
+      "description": "Check whether combined current+diet+proposed intake exceeds any nutrient's Tolerable Upper Intake Level (UL) and return the safe approved subset with any violations. Call once a proposed supplement set exists, before finalizing.",
+      "when_to_call": "Before finalizing recommendations — after a proposed supplement set exists, to guarantee no nutrient's combined intake breaches its UL.",
+      "input": {
+        "type": "object",
+        "required": ["current_supps_intake", "diet_estimated_intake", "proposed_supps_intake", "age", "gender", "weight_kg"],
+        "properties": {
+          "current_supps_intake": { "type": "object", "additionalProperties": { "type": "number" }, "description": "nutrient_code -> amount in KDRI unit, from the user's existing supplements." },
+          "diet_estimated_intake": { "type": "object", "additionalProperties": { "type": "number" }, "description": "nutrient_code -> estimated amount from diet." },
+          "proposed_supps_intake": { "type": "object", "additionalProperties": { "type": "number" }, "description": "nutrient_code -> amount from the recommendations being validated." },
+          "age": { "type": "integer" },
+          "gender": { "type": "string", "enum": ["male", "female"] },
+          "weight_kg": { "type": "number", "exclusiveMinimum": 0 }
+        }
+      },
+      "output": {
+        "type": "object",
+        "required": ["is_safe", "ul_violations", "approved_recommendations"],
+        "properties": {
+          "is_safe": { "type": "boolean", "description": "True when no nutrient total exceeds its UL." },
+          "ul_violations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["nutrient", "total_intake", "ul_limit", "status"],
+              "properties": {
+                "nutrient": { "type": "string", "description": "nutrient_code that breached." },
+                "total_intake": { "type": "number", "description": "Combined current+diet+proposed amount." },
+                "ul_limit": { "type": "number", "description": "The nutrient's UL." },
+                "status": { "type": "string", "const": "EXCEEDED" }
+              }
+            }
+          },
+          "approved_recommendations": {
+            "type": "array",
+            "items": { "type": "object", "additionalProperties": true },
+            "description": "Proposed items retained after dropping UL-breaching contributors."
+          }
+        }
+      }
+    },
+    {
+      "name": "check_nutrient_interactions",
+      "description": "Return conflict/synergy info and an AM/PM timing schedule that separates antagonistic pairs for the given nutrient_list. Call after choosing which nutrients to recommend.",
+      "when_to_call": "After choosing which nutrients to recommend — to split the day's doses into a non-conflicting morning/evening schedule and surface interaction cautions.",
+      "input": {
+        "type": "object",
+        "required": ["nutrient_list"],
+        "properties": {
+          "nutrient_list": { "type": "array", "items": { "type": "string" }, "description": "nutrient_code list to schedule and check." }
+        }
+      },
+      "output": {
+        "type": "object",
+        "required": ["conflicts_found", "time_separated_schedule", "cautions"],
+        "properties": {
+          "conflicts_found": { "type": "boolean", "description": "True when at least one antagonistic pair required separation." },
+          "time_separated_schedule": {
+            "type": "object",
+            "required": ["morning_AM", "evening_PM"],
+            "properties": {
+              "morning_AM": { "type": "array", "items": { "type": "string" }, "description": "nutrient_codes to take in the morning." },
+              "evening_PM": { "type": "array", "items": { "type": "string" }, "description": "nutrient_codes to take in the evening." }
+            }
+          },
+          "cautions": { "type": "array", "items": { "type": "string" }, "description": "Human-readable interaction notes; includes a best-effort caution when an odd-cycle conflict cannot be perfectly 2-colored." }
+        }
+      }
+    },
+    {
+      "name": "normalize_medical_data",
+      "description": "Standardize raw lab-test values and flag each low/normal/high against reference ranges. Call when the user provides health-checkup numbers that need interpretation.",
+      "when_to_call": "When the user provides health-checkup lab numbers (OCR'd or typed) that need interpretation before profiling.",
+      "input": {
+        "type": "object",
+        "required": ["raw_lab_results"],
+        "properties": {
+          "raw_lab_results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["test_name", "value", "unit"],
+              "properties": {
+                "test_name": { "type": "string", "description": "e.g. LDL, HDL, glucose (case-insensitive match)." },
+                "value": { "type": "number" },
+                "unit": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "output": {
+        "type": "object",
+        "required": ["results"],
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["test_name", "value", "unit", "flag"],
+              "properties": {
+                "test_name": { "type": "string" },
+                "value": { "type": "number" },
+                "unit": { "type": "string" },
+                "flag": { "type": "string", "enum": ["low", "normal", "high"] }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "search_products",
+      "description": "Find DSLD-catalog supplement products supplying the target_nutrients, with per-serving normalized content, ranked by coverage. Call after target RIs are known to pick concrete products.",
+      "when_to_call": "After target RIs are known — to pick concrete products that deliver the needed nutrients. Optionally filter by dosage form or exclude ingredients.",
+      "input": {
+        "type": "object",
+        "required": ["target_nutrients"],
+        "properties": {
+          "target_nutrients": { "type": "array", "items": { "type": "string" }, "description": "nutrient_code list the product should supply." },
+          "filters": {
+            "type": "object",
+            "properties": {
+              "form": { "type": "string", "description": "Dosage-form substring filter (ILIKE), e.g. capsule, tablet." },
+              "exclude": { "type": "array", "items": { "type": "string" }, "description": "Ingredient/nutrient codes to avoid." }
+            }
+          }
+        }
+      },
+      "output": {
+        "type": "object",
+        "required": ["products"],
+        "properties": {
+          "products": {
+            "type": "array",
+            "description": "Up to 50 products, ranked by target-nutrient coverage descending.",
+            "items": {
+              "type": "object",
+              "required": ["label_id", "product_name", "brand", "form", "nutrients"],
+              "properties": {
+                "label_id": { "type": "integer", "description": "DSLD label id." },
+                "product_name": { "type": "string" },
+                "brand": { "type": ["string", "null"] },
+                "form": { "type": ["string", "null"], "description": "Dosage form." },
+                "nutrients": {
+                  "type": "object",
+                  "description": "nutrient_code -> per-serving normalized amount (KDRI unit).",
+                  "additionalProperties": { "type": "number" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "search_evidence",
+      "description": "Retrieve cited nutrition/interaction evidence passages semantically similar to a query. Call to ground an explanation or recommendation with a source.",
+      "when_to_call": "When an explanation or recommendation needs a grounded, citable source. Provide a natural-language query (Korean or English).",
+      "input": {
+        "type": "object",
+        "required": ["query"],
+        "properties": {
+          "query": { "type": "string", "description": "Natural-language search query; embedded with input_type 'query'." },
+          "nutrient_code": { "type": "string", "description": "Optional; accepted for forward-compat but NOT used to filter (chunks have null nutrient_code)." },
+          "k": { "type": "integer", "default": 5, "description": "Number of top passages to return." }
+        }
+      },
+      "output": {
+        "type": "object",
+        "required": ["chunks"],
+        "properties": {
+          "chunks": {
+            "type": "array",
+            "description": "Top-k passages ordered by ascending cosine distance (most similar first).",
+            "items": {
+              "type": "object",
+              "required": ["content", "source", "citation", "url"],
+              "properties": {
+                "content": { "type": "string", "description": "Evidence passage text." },
+                "source": { "type": ["string", "null"], "description": "Source dataset/organization (e.g. NIH ODS, LPI)." },
+                "citation": { "type": ["string", "null"], "description": "Human-readable citation." },
+                "url": { "type": ["string", "null"], "description": "Source URL." }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "resolve_nutrient_codes",
+      "description": "Resolve free-text nutrient/supplement names (Korean or English) to canonical nutrient_code values, reporting the matched synonym and a confidence of exact/synonym/none.",
+      "when_to_call": "Once up front (Normalizer): turn the user's supplement list and abnormal-lab signals into nutrient_code strings before any other tool runs.",
+      "input": { "type": "object", "required": ["names"], "properties": { "names": { "type": "array", "items": { "type": "string" } } } },
+      "output": { "type": "object", "required": ["resolved"], "properties": { "resolved": { "type": "array", "items": { "type": "object", "required": ["input", "nutrient_code", "matched_synonym", "confidence"], "properties": { "input": { "type": "string" }, "nutrient_code": { "type": ["string", "null"] }, "matched_synonym": { "type": ["string", "null"] }, "confidence": { "type": "string", "enum": ["exact", "synonym", "none"] } } } } } }
+    },
+    {
+      "name": "fill_missing_profile",
+      "description": "Fill missing weight (cohort median-weight table) and missing current-intake (cohort RI base) and return an advisory listing exactly what was estimated.",
+      "when_to_call": "Normalizer, when the user omitted weight or current intake.",
+      "input": { "type": "object", "required": ["age", "gender"], "properties": { "age": { "type": "integer", "minimum": 0 }, "gender": { "type": "string", "enum": ["male", "female"] }, "weight_kg": { "type": "number", "exclusiveMinimum": 0 }, "current_intake": { "type": "object", "additionalProperties": { "type": "number" } }, "target_nutrients": { "type": "array", "items": { "type": "string" } } } },
+      "output": { "type": "object", "required": ["filled", "advisory"], "properties": { "filled": { "type": "object", "required": ["weight_kg", "current_intake"], "properties": { "weight_kg": { "type": "number" }, "current_intake": { "type": "object", "additionalProperties": { "type": "number" } } } }, "advisory": { "type": "array", "items": { "type": "string" } } } }
+    },
+    {
+      "name": "compute_intake_coverage",
+      "description": "Compare summed (current+diet+proposed) intake against each nutrient's personalized RI and classify it deficient/adequate/excess with a percentage.",
+      "when_to_call": "Reviewer, after a UL check, to detect whether dropping a product left any target nutrient deficient. Its result also feeds the Aggregator's intake visualization.",
+      "input": { "type": "object", "required": ["intake", "custom_ri"], "properties": { "intake": { "type": "object", "additionalProperties": { "type": "number" } }, "custom_ri": { "type": "object", "additionalProperties": { "type": "number" } } } },
+      "output": { "type": "object", "required": ["coverage"], "properties": { "coverage": { "type": "object", "additionalProperties": { "type": "object", "required": ["pct", "status"], "properties": { "pct": { "type": "number" }, "status": { "type": "string", "enum": ["deficient", "adequate", "excess"] } } } } } }
+    }
+  ]
+}

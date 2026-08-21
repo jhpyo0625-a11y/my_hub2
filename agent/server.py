@@ -35,9 +35,17 @@ async def recommend_nutrition(
         None,
         description="사용자 이름",
     ),
+    birth_date: Optional[str] = Form(
+        None,
+        description="생년월일 (YYYY-MM-DD)",
+    ),
     age: Optional[int] = Form(
         None,
         description="나이",
+    ),
+    gender: Optional[str] = Form(
+        None,
+        description="성별 (male/female)",
     ),
     weight_kg: Optional[float] = Form(
         None,
@@ -54,7 +62,9 @@ async def recommend_nutrition(
 
         user_input = {
             "name": name,
+            "birth_date": birth_date,
             "age": age,
+            "gender": gender,
             "weight_kg": weight_kg,
             "image_bytes": image_bytes,
             "filename": filename,
@@ -66,7 +76,8 @@ async def recommend_nutrition(
             "retry_count": 0,
         }
 
-        final_state = graph.invoke(
+        # 노드가 async이므로 ainvoke 사용.
+        final_state = await graph.ainvoke(
             initial_state
         )
 
@@ -91,7 +102,7 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(
-        "main:app",
+        "server:app",
         host="0.0.0.0",
         port=8000,
         reload=True,

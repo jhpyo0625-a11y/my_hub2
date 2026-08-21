@@ -16,7 +16,7 @@ uv sync
 
 # 5. RAG 데이터 준비
 # agent/data 폴더에 PDF, CSV 등의 파일이 있는지 확인하고, rag_store 폴더가 없다면 아래 명령어 실행
-# uv run rag_ingets.py
+# uv run rag_ingest.py
 
 # 6. 서버 실행
 uv run server.py
