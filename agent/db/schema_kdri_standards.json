@@ -1,0 +1,57 @@
+[{
+  "컬럼명": "id",
+  "데이터 타입": "integer",
+  "최대 길이": "-",
+  "Null 허용": "NO",
+  "기본값": "nextval('kdri_standards_id_seq'::regclass)",
+  "PK 여부": "YES"
+}, {
+  "컬럼명": "nutrient_code",
+  "데이터 타입": "character varying",
+  "최대 길이": "50",
+  "Null 허용": "NO",
+  "기본값": "-",
+  "PK 여부": "NO"
+}, {
+  "컬럼명": "age_min",
+  "데이터 타입": "integer",
+  "최대 길이": "-",
+  "Null 허용": "NO",
+  "기본값": "-",
+  "PK 여부": "NO"
+}, {
+  "컬럼명": "age_max",
+  "데이터 타입": "integer",
+  "최대 길이": "-",
+  "Null 허용": "NO",
+  "기본값": "-",
+  "PK 여부": "NO"
+}, {
+  "컬럼명": "gender",
+  "데이터 타입": "character varying",
+  "최대 길이": "10",
+  "Null 허용": "NO",
+  "기본값": "-",
+  "PK 여부": "NO"
+}, {
+  "컬럼명": "ri_base",
+  "데이터 타입": "numeric",
+  "최대 길이": "-",
+  "Null 허용": "YES",
+  "기본값": "-",
+  "PK 여부": "NO"
+}, {
+  "컬럼명": "ul_limit",
+  "데이터 타입": "numeric",
+  "최대 길이": "-",
+  "Null 허용": "YES",
+  "기본값": "-",
+  "PK 여부": "NO"
+}, {
+  "컬럼명": "is_weight_scaled",
+  "데이터 타입": "boolean",
+  "최대 길이": "-",
+  "Null 허용": "YES",
+  "기본값": "false",
+  "PK 여부": "NO"
+}]

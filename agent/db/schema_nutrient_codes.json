@@ -1,0 +1,78 @@
+[{
+  "컬럼명": "nutrient_code",
+  "데이터 타입": "character varying",
+  "최대 길이": "50",
+  "Null 허용": "NO",
+  "기본값": "-",
+  "PK 여부": "YES"
+}, {
+  "컬럼명": "nutrient_ko",
+  "데이터 타입": "character varying",
+  "최대 길이": "100",
+  "Null 허용": "NO",
+  "기본값": "-",
+  "PK 여부": "NO"
+}, {
+  "컬럼명": "group_name",
+  "데이터 타입": "character varying",
+  "최대 길이": "50",
+  "Null 허용": "NO",
+  "기본값": "-",
+  "PK 여부": "NO"
+}, {
+  "컬럼명": "kdri_unit",
+  "데이터 타입": "character varying",
+  "최대 길이": "30",
+  "Null 허용": "NO",
+  "기본값": "-",
+  "PK 여부": "NO"
+}, {
+  "컬럼명": "synonyms_ko_label",
+  "데이터 타입": "text",
+  "최대 길이": "-",
+  "Null 허용": "YES",
+  "기본값": "-",
+  "PK 여부": "NO"
+}, {
+  "컬럼명": "has_ear",
+  "데이터 타입": "boolean",
+  "최대 길이": "-",
+  "Null 허용": "YES",
+  "기본값": "false",
+  "PK 여부": "NO"
+}, {
+  "컬럼명": "has_rni",
+  "데이터 타입": "boolean",
+  "최대 길이": "-",
+  "Null 허용": "YES",
+  "기본값": "false",
+  "PK 여부": "NO"
+}, {
+  "컬럼명": "has_ai",
+  "데이터 타입": "boolean",
+  "최대 길이": "-",
+  "Null 허용": "YES",
+  "기본값": "false",
+  "PK 여부": "NO"
+}, {
+  "컬럼명": "has_ul",
+  "데이터 타입": "boolean",
+  "최대 길이": "-",
+  "Null 허용": "YES",
+  "기본값": "false",
+  "PK 여부": "NO"
+}, {
+  "컬럼명": "has_cdrr",
+  "데이터 타입": "boolean",
+  "최대 길이": "-",
+  "Null 허용": "YES",
+  "기본값": "false",
+  "PK 여부": "NO"
+}, {
+  "컬럼명": "kdri_version",
+  "데이터 타입": "integer",
+  "최대 길이": "-",
+  "Null 허용": "YES",
+  "기본값": "2025",
+  "PK 여부": "NO"
+}]

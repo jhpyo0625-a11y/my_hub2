@@ -1,0 +1,43 @@
+[{
+  "컬럼명": "id",
+  "데이터 타입": "integer",
+  "최대 길이": "-",
+  "Null 허용": "NO",
+  "기본값": "nextval('prescription_histories_id_seq'::regclass)",
+  "PK 여부": "YES"
+}, {
+  "컬럼명": "user_id",
+  "데이터 타입": "character varying",
+  "최대 길이": "50",
+  "Null 허용": "NO",
+  "기본값": "-",
+  "PK 여부": "NO"
+}, {
+  "컬럼명": "title",
+  "데이터 타입": "character varying",
+  "최대 길이": "255",
+  "Null 허용": "NO",
+  "기본값": "-",
+  "PK 여부": "NO"
+}, {
+  "컬럼명": "user_health_preset_id",
+  "데이터 타입": "jsonb",
+  "최대 길이": "-",
+  "Null 허용": "NO",
+  "기본값": "-",
+  "PK 여부": "NO"
+}, {
+  "컬럼명": "output_report",
+  "데이터 타입": "jsonb",
+  "최대 길이": "-",
+  "Null 허용": "NO",
+  "기본값": "-",
+  "PK 여부": "NO"
+}, {
+  "컬럼명": "created_at",
+  "데이터 타입": "timestamp without time zone",
+  "최대 길이": "-",
+  "Null 허용": "YES",
+  "기본값": "CURRENT_TIMESTAMP",
+  "PK 여부": "NO"
+}]
