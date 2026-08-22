@@ -1,4 +1,5 @@
 from schemas.state import State
+from schemas.models import AggregatedReport
 
 
 def _rag_search(queries: list[str]) -> list[dict]:
@@ -74,4 +75,6 @@ async def aggregator_node(state: State) -> State:
         "failed_items": state.get("failed_items", []),
         "guidelines": guidelines,
     }
+    state["aggregated_report"] = AggregatedReport.model_validate(
+        state["aggregated_report"]).model_dump()
     return state

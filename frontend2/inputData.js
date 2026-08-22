@@ -41,6 +41,67 @@
    1. 타입 정의 (JSDoc)
    ========================================================================= */
 
+/* ---- 경계를 넘는 값들 -------------------------------------------------
+   아래 여섯 개는 백엔드(agent/schemas/models.py)와 **같은 값**을 씁니다.
+   한쪽만 고치면 조용히 어긋나므로, 고칠 때는 양쪽을 함께 고치세요.
+   대응표: schema/matrix.md
+   ---------------------------------------------------------------------- */
+
+/**
+ * 성별. 화면은 한글, 에이전트는 영문을 씁니다.
+ * 변환은 frontend2/schema_bridge.py 한 곳에서만 합니다.
+ * @typedef {''|'남성'|'여성'} Sex
+ */
+
+/**
+ * 에이전트·DB 쪽 성별 표기.
+ * @typedef {'male'|'female'} Gender
+ */
+
+/**
+ * 충족률 상태. MCP compute_intake_coverage 가 씁니다.
+ * ★ Level 과 합치지 마세요 — Level 은 '상한/권장 대비 어디쯤'(6단계),
+ *   이쪽은 '부족/적정/과잉'(3단계)으로 축이 다릅니다.
+ * @typedef {'deficient'|'adequate'|'excess'} CoverageStatus
+ */
+
+/**
+ * 검사실 정상범위 플래그. MCP normalize_medical_data 가 씁니다.
+ * ★ JudgeCode(국가검진 판정)와 다른 축이라 둘 다 유지합니다.
+ * @typedef {'low'|'normal'|'high'} LabFlag
+ */
+
+/**
+ * 에이전트 API 응답 상태.
+ * blocked 는 안전 가드레일이 막은 것으로, 다시 시도해도 같은 결과입니다.
+ * @typedef {'success'|'fail'|'blocked'} ResponseStatus
+ */
+
+/**
+ * 에이전트 응답 봉투. 실패해도 HTTP 200 으로 오므로 status 를 봐야 합니다.
+ * @typedef  {Object} ApiEnvelope
+ * @property {ResponseStatus} status
+ * @property {string}         message
+ * @property {Object}         [data]       status 가 blocked 면 없습니다
+ * @property {string}         [disclaimer]
+ */
+
+/**
+ * 상한 초과 한 건. 화면 Issue 와 달리 숫자 근거를 갖고 있습니다.
+ * @typedef  {Object} UlViolation
+ * @property {string} nutrient     영양소 코드 (예: 'vitamin_d')
+ * @property {number} total_intake 합산 섭취량
+ * @property {number} ul_limit     상한
+ * @property {'EXCEEDED'} status
+ */
+
+/**
+ * 함께 먹으면 안 되는 성분을 나눈 복용 시간표.
+ * @typedef  {Object} TimeSeparatedSchedule
+ * @property {string[]} morning_AM 아침에 먹을 영양소 코드
+ * @property {string[]} evening_PM 저녁에 먹을 영양소 코드
+ */
+
 /**
  * 색 토큰 이름. 실제 색값은 프런트(app.js 의 TONE)가 정합니다.
  * @typedef {'green'|'orange'|'red'|'crit'|'blue'|'gray'} Tone
@@ -299,7 +360,8 @@
  * GET /api/me · POST /api/login · POST /api/signup 의 응답.
  * @typedef  {Object} SessionUser
  * @property {string} name
- * @property {string} email
+ * @property {string} email 로그인 아이디. 백엔드에서는 users.id 로 부릅니다
+ * @property {string} [id]  email 과 같은 값. 백엔드 규격과 맞추기 위한 별칭
  */
 
 /**

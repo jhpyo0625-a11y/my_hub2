@@ -1,6 +1,7 @@
 import html as html_lib
 
 from schemas.state import State
+from schemas.models import FinalReport
 
 DISCLAIMER = (
     "본 추천 리포트는 AI 분석에 기반한 참고용 영양 정보이며, "
@@ -114,4 +115,6 @@ async def legal_compliance_node(state: State) -> State:
         "partial_failure": bool(failed),
         "compliance_checked": True,
     }
+    state["final_report"] = FinalReport.model_validate(
+        state["final_report"]).model_dump()
     return state

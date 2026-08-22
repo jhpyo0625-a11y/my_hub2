@@ -1,0 +1,284 @@
+{
+  "aggregated_report": {
+    "container": "{title:string, user_profile:{units_normalized:boolean, name:string, birth_date:null, age:integer, gender:string, weight_kg:number…}, health_indicators:{}, calculated_target:{custom_ri:object}, timing_",
+    "seen_in_runs": "3/3",
+    "fields": {
+      "calculated_target": {
+        "type": "{custom_ri:{vitamin_d:object, calcium:object, magnesium:object}}",
+        "required": true,
+        "seen": "3/3"
+      },
+      "failed_items": {
+        "type": "array(비어 있음)",
+        "required": true,
+        "seen": "3/3"
+      },
+      "guidelines": {
+        "type": "array(비어 있음)",
+        "required": true,
+        "seen": "3/3"
+      },
+      "health_indicators": {
+        "type": "{}",
+        "required": true,
+        "seen": "3/3"
+      },
+      "products": {
+        "type": "array(비어 있음)",
+        "required": true,
+        "seen": "3/3"
+      },
+      "timing_guidance": {
+        "type": "{conflicts_found:boolean, time_separated_schedule:{morning_AM:array<string>, evening_PM:array<string>}, cautions:array<string>}",
+        "required": true,
+        "seen": "3/3"
+      },
+      "title": {
+        "type": "string",
+        "required": true,
+        "seen": "3/3"
+      },
+      "ul_check": {
+        "type": "{is_safe:boolean, ul_violations:array(비어 있음), approved_recommendations:array(비어 있음)}",
+        "required": true,
+        "seen": "3/3"
+      },
+      "user_profile": {
+        "type": "{units_normalized:boolean, name:string, birth_date:null, age:integer, gender:string, weight_kg:number…}",
+        "required": true,
+        "seen": "3/3"
+      }
+    }
+  },
+  "execution_plan": {
+    "container": "array<{step:integer, task_name:string, tool_name:string, args:object, description:string, parallel_group:null}>",
+    "seen_in_runs": "3/3",
+    "fields": {
+      "[].args": {
+        "type": "{age:integer, gender:string, weight_kg:number, target_nutrients:array<string>} | {current_supps_intake:{}, diet_estimated_intake:{}, proposed_supps_intake:{}, age:integer, gender:string, weight_kg:number} | {nutrient_list:array<string>} | {target_nutrients:array<string>}",
+        "required": true,
+        "seen": "12/3"
+      },
+      "[].description": {
+        "type": "string",
+        "required": true,
+        "seen": "12/3"
+      },
+      "[].parallel_group": {
+        "type": "integer | null",
+        "required": true,
+        "seen": "12/3"
+      },
+      "[].step": {
+        "type": "integer",
+        "required": true,
+        "seen": "12/3"
+      },
+      "[].task_name": {
+        "type": "string",
+        "required": true,
+        "seen": "12/3"
+      },
+      "[].tool_name": {
+        "type": "string",
+        "required": true,
+        "seen": "12/3"
+      }
+    }
+  },
+  "execution_results": {
+    "container": "array<{step:integer, task_name:string, tool_name:string, status:string, result:object, output:object}>",
+    "seen_in_runs": "3/3",
+    "fields": {
+      "[].output": {
+        "type": "{conflicts_found:boolean, time_separated_schedule:{morning_AM:array<string>, evening_PM:array<string>}, cautions:array<string>} | {custom_ri:{vitamin_d:object, calcium:object, magnesium:object}} | {is_safe:boolean, ul_violations:array(비어 있음), approved_recommendations:array(비어 있음)} | {products:array(비어 있음)}",
+        "required": true,
+        "seen": "12/3"
+      },
+      "[].result": {
+        "type": "{conflicts_found:boolean, time_separated_schedule:{morning_AM:array<string>, evening_PM:array<string>}, cautions:array<string>} | {custom_ri:{vitamin_d:object, calcium:object, magnesium:object}} | {is_safe:boolean, ul_violations:array(비어 있음), approved_recommendations:array(비어 있음)} | {products:array(비어 있음)}",
+        "required": true,
+        "seen": "12/3"
+      },
+      "[].status": {
+        "type": "string",
+        "required": true,
+        "seen": "12/3"
+      },
+      "[].step": {
+        "type": "integer",
+        "required": true,
+        "seen": "12/3"
+      },
+      "[].task_name": {
+        "type": "string",
+        "required": true,
+        "seen": "12/3"
+      },
+      "[].tool_name": {
+        "type": "string",
+        "required": true,
+        "seen": "12/3"
+      }
+    }
+  },
+  "final_report": {
+    "container": "{html:string, user_profile:{units_normalized:boolean, name:string, birth_date:null, age:integer, gender:string, weight_kg:number…}, disclaimer:string, partial_failure:boolean, compliance_checked:boole",
+    "seen_in_runs": "3/3",
+    "fields": {
+      "compliance_checked": {
+        "type": "boolean",
+        "required": true,
+        "seen": "3/3"
+      },
+      "disclaimer": {
+        "type": "string",
+        "required": true,
+        "seen": "3/3"
+      },
+      "html": {
+        "type": "string",
+        "required": true,
+        "seen": "3/3"
+      },
+      "partial_failure": {
+        "type": "boolean",
+        "required": true,
+        "seen": "3/3"
+      },
+      "user_profile": {
+        "type": "{units_normalized:boolean, name:string, birth_date:null, age:integer, gender:string, weight_kg:number…}",
+        "required": true,
+        "seen": "3/3"
+      }
+    }
+  },
+  "normalized_data": {
+    "container": "{units_normalized:boolean, name:string, birth_date:null, age:integer, gender:string, weight_kg:number…}",
+    "seen_in_runs": "3/3",
+    "fields": {
+      "age": {
+        "type": "integer",
+        "required": true,
+        "seen": "3/3"
+      },
+      "age_defaulted": {
+        "type": "boolean",
+        "required": true,
+        "seen": "3/3"
+      },
+      "birth_date": {
+        "type": "null",
+        "required": true,
+        "seen": "3/3"
+      },
+      "current_supplements": {
+        "type": "array(비어 있음)",
+        "required": true,
+        "seen": "3/3"
+      },
+      "gender": {
+        "type": "string",
+        "required": true,
+        "seen": "3/3"
+      },
+      "gender_defaulted": {
+        "type": "boolean",
+        "required": true,
+        "seen": "3/3"
+      },
+      "is_pii": {
+        "type": "{name:boolean, birth_date:boolean}",
+        "required": true,
+        "seen": "3/3"
+      },
+      "name": {
+        "type": "string",
+        "required": true,
+        "seen": "3/3"
+      },
+      "units_normalized": {
+        "type": "boolean",
+        "required": true,
+        "seen": "3/3"
+      },
+      "weight_kg": {
+        "type": "number",
+        "required": true,
+        "seen": "3/3"
+      }
+    }
+  },
+  "ocr_result": {
+    "container": "{extracted_indicators:{}}",
+    "seen_in_runs": "3/3",
+    "fields": {
+      "extracted_indicators": {
+        "type": "{}",
+        "required": true,
+        "seen": "3/3"
+      }
+    }
+  },
+  "ocr_text": {
+    "container": "string",
+    "seen_in_runs": "3/3",
+    "fields": {}
+  },
+  "rag_context": {
+    "container": "array(비어 있음)",
+    "seen_in_runs": "3/3",
+    "fields": {}
+  },
+  "retry_count": {
+    "container": "integer",
+    "seen_in_runs": "3/3",
+    "fields": {}
+  },
+  "review_feedback": {
+    "container": "string",
+    "seen_in_runs": "3/3",
+    "fields": {}
+  },
+  "review_status": {
+    "container": "string",
+    "seen_in_runs": "3/3",
+    "fields": {}
+  },
+  "target_nutrients": {
+    "container": "array<string>",
+    "seen_in_runs": "3/3",
+    "fields": {}
+  },
+  "user_input": {
+    "container": "{name:string, age:integer, gender:string, weight_kg:number, current_supplements:array(비어 있음)}",
+    "seen_in_runs": "3/3",
+    "fields": {
+      "age": {
+        "type": "integer",
+        "required": true,
+        "seen": "3/3"
+      },
+      "current_supplements": {
+        "type": "array(비어 있음)",
+        "required": true,
+        "seen": "3/3"
+      },
+      "gender": {
+        "type": "string",
+        "required": true,
+        "seen": "3/3"
+      },
+      "name": {
+        "type": "string",
+        "required": true,
+        "seen": "3/3"
+      },
+      "weight_kg": {
+        "type": "number",
+        "required": true,
+        "seen": "3/3"
+      }
+    }
+  }
+}

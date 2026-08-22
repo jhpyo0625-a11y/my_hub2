@@ -38,6 +38,8 @@ from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from analyze import report_info, summary_line, to_report
+from schema_bridge import (BLOCKED, FAIL, looks_like_internal_error,
+                           to_recommend_form, to_session_user, to_user_id)
 from standards import nut_hints
 from vision import MAX_IMAGE_BYTES, read_exam_image, sniff_image
 
@@ -124,17 +126,17 @@ async def call_agent(path: str, fields: dict, timeout: float, file=None) -> dict
     # 에이전트가 준 안내 문구를 그대로 사용자에게 전달합니다.
     # 이 응답에는 data 가 없어서, 그냥 통과시키면 빈 리포트가 되어 엉뚱한
     # 서버 오류처럼 보입니다.
-    if body.get("status") == "blocked":
+    if body.get("status") == BLOCKED:
         raise HTTPException(400, (body.get("message") or "").strip()
                             or "안전 검증에서 문제가 발견되어 리포트를 제공할 수 없습니다. "
                                "전문가와 상담하시기를 권장드립니다.")
 
-    if body.get("status") == "fail":
+    if body.get("status") == FAIL:
         msg = (body.get("message") or "").strip()
         # 에이전트가 파이썬 예외를 그대로 문자열로 내보내는 경우가 있습니다
         # (예: KeyError 는 "'pwd'" 로 옵니다). 그대로 보여 주면 사용자가
         # 무슨 말인지 알 수 없으므로 일반 문구로 바꿉니다.
-        if not msg or (msg.startswith("'") and msg.endswith("'")):
+        if looks_like_internal_error(msg):
             msg = "요청을 처리하지 못했습니다."
         # ★ 401 을 쓰면 안 됩니다. 이 서비스에서 401 은 '세션이 끊겼다' 는
         #   뜻이라, 화면이 재로그인 창을 다시 띄우는 무한 반복이 됩니다.
@@ -329,16 +331,11 @@ def _adopt_agent_user(response: Response, data: dict, fallback_email: str,
     (쿠키도 토큰도 내려주지 않습니다), 여기서 세션을 만들지 않으면
     임시저장(draft)과 지난 리포트(reports)가 전부 동작하지 않습니다.
     """
-    au = data.get("user") or {}
-    key = norm_email(au.get("id") or fallback_email)
-    if not key:
-        key = "guest@myherb.local"
+    su = to_session_user(data, fallback_email, fallback_name)
+    key = su["id"] or "guest@myherb.local"
+    name = su["name"] or (USERS[key]["name"] if key in USERS else key.split("@")[0])
 
-    existing = USERS.get(key)
-    name = (au.get("name") or fallback_name or "").strip()
-    if not name:
-        name = existing["name"] if existing else key.split("@")[0]
-
+    # 화면은 {name, email} 을 기대합니다. id 는 같은 값의 다른 이름입니다.
     user = {"name": name, "email": key}
     USERS[key] = user
     start_session(response, user)
@@ -449,20 +446,10 @@ async def analyze(request: Request):
 
     state = normalize_input(body)
 
-    exam = state.get("exam") or {}
+    # 화면 규격 → 에이전트 규격 변환은 schema_bridge 한 곳에서만 합니다.
     data = await call_agent(
         "/api/v1/recommend",
-        {
-            "name": state.get("name"),
-            # 에이전트가 int/float 로 받으므로 숫자로 읽히는 값만 보냅니다.
-            # 숫자가 아니면 아예 빼서 보냅니다(둘 다 Optional 입니다) —
-            # 나이 한 칸 때문에 분석 전체가 422 로 막히면 안 됩니다.
-            "age": _as_number(state.get("age"), int),
-            # 에이전트는 male/female 로 받습니다. 화면은 남성/여성 입니다.
-            "gender": {"남성": "male", "여성": "female"}.get(state.get("sex")),
-            "weight_kg": _as_number(exam.get("weight"), float),
-            # birth_date 는 화면에서 모으지 않습니다(검진일과 다른 값입니다).
-        },
+        to_recommend_form(state),
         AGENT_TIMEOUT_RECOMMEND,
         file=upload,
     )

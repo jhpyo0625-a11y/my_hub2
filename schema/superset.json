@@ -1,0 +1,1868 @@
+{
+  "User": {
+    "base": "db:users",
+    "sources": [
+      "frontend2:SessionUser",
+      "db:users"
+    ],
+    "fields": {
+      "email": {
+        "types": {
+          "frontend2:SessionUser": "string"
+        },
+        "in": [
+          "frontend2:SessionUser"
+        ]
+      },
+      "id": {
+        "types": {
+          "frontend2:SessionUser": "string (optional)",
+          "db:users": "character varying(100)"
+        },
+        "in": [
+          "frontend2:SessionUser",
+          "db:users"
+        ]
+      },
+      "name": {
+        "types": {
+          "frontend2:SessionUser": "string",
+          "db:users": "character varying(100)"
+        },
+        "in": [
+          "frontend2:SessionUser",
+          "db:users"
+        ]
+      },
+      "created_at": {
+        "types": {
+          "db:users": "timestamp with time zone"
+        },
+        "in": [
+          "db:users"
+        ]
+      },
+      "pwd_hash": {
+        "types": {
+          "db:users": "character varying(255)"
+        },
+        "in": [
+          "db:users"
+        ]
+      },
+      "updated_at": {
+        "types": {
+          "db:users": "timestamp with time zone"
+        },
+        "in": [
+          "db:users"
+        ]
+      }
+    }
+  },
+  "AnalysisInput": {
+    "base": "rt:normalized_data",
+    "sources": [
+      "frontend2:AnalysisInput",
+      "rt:user_input",
+      "rt:normalized_data",
+      "mcp:fill_missing_profile.input"
+    ],
+    "fields": {
+      "age": {
+        "types": {
+          "frontend2:AnalysisInput": "string",
+          "rt:user_input": "integer",
+          "rt:normalized_data": "integer",
+          "mcp:fill_missing_profile.input": "integer *필수"
+        },
+        "in": [
+          "frontend2:AnalysisInput",
+          "rt:user_input",
+          "rt:normalized_data",
+          "mcp:fill_missing_profile.input"
+        ]
+      },
+      "chronic": {
+        "types": {
+          "frontend2:AnalysisInput": "string[]"
+        },
+        "in": [
+          "frontend2:AnalysisInput"
+        ]
+      },
+      "countMeal": {
+        "types": {
+          "frontend2:AnalysisInput": "boolean"
+        },
+        "in": [
+          "frontend2:AnalysisInput"
+        ]
+      },
+      "date": {
+        "types": {
+          "frontend2:AnalysisInput": "string"
+        },
+        "in": [
+          "frontend2:AnalysisInput"
+        ]
+      },
+      "exam": {
+        "types": {
+          "frontend2:AnalysisInput": "ExamValues"
+        },
+        "in": [
+          "frontend2:AnalysisInput"
+        ]
+      },
+      "meds": {
+        "types": {
+          "frontend2:AnalysisInput": "Med[]"
+        },
+        "in": [
+          "frontend2:AnalysisInput"
+        ]
+      },
+      "name": {
+        "types": {
+          "frontend2:AnalysisInput": "string",
+          "rt:user_input": "string",
+          "rt:normalized_data": "string"
+        },
+        "in": [
+          "frontend2:AnalysisInput",
+          "rt:user_input",
+          "rt:normalized_data"
+        ]
+      },
+      "products": {
+        "types": {
+          "frontend2:AnalysisInput": "Product[]"
+        },
+        "in": [
+          "frontend2:AnalysisInput"
+        ]
+      },
+      "sex": {
+        "types": {
+          "frontend2:AnalysisInput": "''|'남성'|'여성'"
+        },
+        "in": [
+          "frontend2:AnalysisInput"
+        ]
+      },
+      "current_supplements": {
+        "types": {
+          "rt:user_input": "array(비어 있음)",
+          "rt:normalized_data": "array(비어 있음)"
+        },
+        "in": [
+          "rt:user_input",
+          "rt:normalized_data"
+        ]
+      },
+      "gender": {
+        "types": {
+          "rt:user_input": "string",
+          "rt:normalized_data": "string",
+          "mcp:fill_missing_profile.input": "string enum=['male', 'female'] *필수"
+        },
+        "in": [
+          "rt:user_input",
+          "rt:normalized_data",
+          "mcp:fill_missing_profile.input"
+        ]
+      },
+      "weight_kg": {
+        "types": {
+          "rt:user_input": "number",
+          "rt:normalized_data": "number",
+          "mcp:fill_missing_profile.input": "number"
+        },
+        "in": [
+          "rt:user_input",
+          "rt:normalized_data",
+          "mcp:fill_missing_profile.input"
+        ]
+      },
+      "age_defaulted": {
+        "types": {
+          "rt:normalized_data": "boolean"
+        },
+        "in": [
+          "rt:normalized_data"
+        ]
+      },
+      "birth_date": {
+        "types": {
+          "rt:normalized_data": "null"
+        },
+        "in": [
+          "rt:normalized_data"
+        ]
+      },
+      "gender_defaulted": {
+        "types": {
+          "rt:normalized_data": "boolean"
+        },
+        "in": [
+          "rt:normalized_data"
+        ]
+      },
+      "is_pii": {
+        "types": {
+          "rt:normalized_data": "{name:boolean, birth_date:boolean}"
+        },
+        "in": [
+          "rt:normalized_data"
+        ]
+      },
+      "units_normalized": {
+        "types": {
+          "rt:normalized_data": "boolean"
+        },
+        "in": [
+          "rt:normalized_data"
+        ]
+      },
+      "current_intake": {
+        "types": {
+          "mcp:fill_missing_profile.input": "object (map→number)"
+        },
+        "in": [
+          "mcp:fill_missing_profile.input"
+        ]
+      },
+      "target_nutrients": {
+        "types": {
+          "mcp:fill_missing_profile.input": "array of string"
+        },
+        "in": [
+          "mcp:fill_missing_profile.input"
+        ]
+      }
+    }
+  },
+  "ExamValues": {
+    "base": "frontend2:ExamValues",
+    "sources": [
+      "frontend2:ExamValues",
+      "frontend2:ExamReading",
+      "rt:ocr_result",
+      "mcp:normalize_medical_data.output"
+    ],
+    "fields": {
+      "alt": {
+        "types": {
+          "frontend2:ExamValues": "string (optional)"
+        },
+        "in": [
+          "frontend2:ExamValues"
+        ]
+      },
+      "ast": {
+        "types": {
+          "frontend2:ExamValues": "string (optional)"
+        },
+        "in": [
+          "frontend2:ExamValues"
+        ]
+      },
+      "cr": {
+        "types": {
+          "frontend2:ExamValues": "string (optional)"
+        },
+        "in": [
+          "frontend2:ExamValues"
+        ]
+      },
+      "cxr": {
+        "types": {
+          "frontend2:ExamValues": "string (optional)"
+        },
+        "in": [
+          "frontend2:ExamValues"
+        ]
+      },
+      "dbp": {
+        "types": {
+          "frontend2:ExamValues": "string (optional)"
+        },
+        "in": [
+          "frontend2:ExamValues"
+        ]
+      },
+      "egfr": {
+        "types": {
+          "frontend2:ExamValues": "string (optional)"
+        },
+        "in": [
+          "frontend2:ExamValues"
+        ]
+      },
+      "ggt": {
+        "types": {
+          "frontend2:ExamValues": "string (optional)"
+        },
+        "in": [
+          "frontend2:ExamValues"
+        ]
+      },
+      "glu": {
+        "types": {
+          "frontend2:ExamValues": "string (optional)"
+        },
+        "in": [
+          "frontend2:ExamValues"
+        ]
+      },
+      "hb": {
+        "types": {
+          "frontend2:ExamValues": "string (optional)"
+        },
+        "in": [
+          "frontend2:ExamValues"
+        ]
+      },
+      "hdl": {
+        "types": {
+          "frontend2:ExamValues": "string (optional)"
+        },
+        "in": [
+          "frontend2:ExamValues"
+        ]
+      },
+      "height": {
+        "types": {
+          "frontend2:ExamValues": "string (optional)"
+        },
+        "in": [
+          "frontend2:ExamValues"
+        ]
+      },
+      "ldl": {
+        "types": {
+          "frontend2:ExamValues": "string (optional)"
+        },
+        "in": [
+          "frontend2:ExamValues"
+        ]
+      },
+      "sbp": {
+        "types": {
+          "frontend2:ExamValues": "string (optional)"
+        },
+        "in": [
+          "frontend2:ExamValues"
+        ]
+      },
+      "tc": {
+        "types": {
+          "frontend2:ExamValues": "string (optional)"
+        },
+        "in": [
+          "frontend2:ExamValues"
+        ]
+      },
+      "tg": {
+        "types": {
+          "frontend2:ExamValues": "string (optional)"
+        },
+        "in": [
+          "frontend2:ExamValues"
+        ]
+      },
+      "tscore": {
+        "types": {
+          "frontend2:ExamValues": "string (optional)"
+        },
+        "in": [
+          "frontend2:ExamValues"
+        ]
+      },
+      "upro": {
+        "types": {
+          "frontend2:ExamValues": "string (optional)"
+        },
+        "in": [
+          "frontend2:ExamValues"
+        ]
+      },
+      "waist": {
+        "types": {
+          "frontend2:ExamValues": "string (optional)"
+        },
+        "in": [
+          "frontend2:ExamValues"
+        ]
+      },
+      "weight": {
+        "types": {
+          "frontend2:ExamValues": "string (optional)"
+        },
+        "in": [
+          "frontend2:ExamValues"
+        ]
+      },
+      "age": {
+        "types": {
+          "frontend2:ExamReading": "string"
+        },
+        "in": [
+          "frontend2:ExamReading"
+        ]
+      },
+      "chronic": {
+        "types": {
+          "frontend2:ExamReading": "string[]"
+        },
+        "in": [
+          "frontend2:ExamReading"
+        ]
+      },
+      "date": {
+        "types": {
+          "frontend2:ExamReading": "string"
+        },
+        "in": [
+          "frontend2:ExamReading"
+        ]
+      },
+      "exam": {
+        "types": {
+          "frontend2:ExamReading": "ExamValues"
+        },
+        "in": [
+          "frontend2:ExamReading"
+        ]
+      },
+      "groups": {
+        "types": {
+          "frontend2:ExamReading": "string[]"
+        },
+        "in": [
+          "frontend2:ExamReading"
+        ]
+      },
+      "name": {
+        "types": {
+          "frontend2:ExamReading": "string"
+        },
+        "in": [
+          "frontend2:ExamReading"
+        ]
+      },
+      "sex": {
+        "types": {
+          "frontend2:ExamReading": "string"
+        },
+        "in": [
+          "frontend2:ExamReading"
+        ]
+      },
+      "source": {
+        "types": {
+          "frontend2:ExamReading": "'demo'|'model'"
+        },
+        "in": [
+          "frontend2:ExamReading"
+        ]
+      },
+      "extracted_indicators": {
+        "types": {
+          "rt:ocr_result": "{}"
+        },
+        "in": [
+          "rt:ocr_result"
+        ]
+      },
+      "results": {
+        "types": {
+          "mcp:normalize_medical_data.output": "array *필수"
+        },
+        "in": [
+          "mcp:normalize_medical_data.output"
+        ]
+      },
+      "results[].flag": {
+        "types": {
+          "mcp:normalize_medical_data.output": "string enum=['low', 'normal', 'high']"
+        },
+        "in": [
+          "mcp:normalize_medical_data.output"
+        ]
+      },
+      "results[].test_name": {
+        "types": {
+          "mcp:normalize_medical_data.output": "string"
+        },
+        "in": [
+          "mcp:normalize_medical_data.output"
+        ]
+      },
+      "results[].unit": {
+        "types": {
+          "mcp:normalize_medical_data.output": "string"
+        },
+        "in": [
+          "mcp:normalize_medical_data.output"
+        ]
+      },
+      "results[].value": {
+        "types": {
+          "mcp:normalize_medical_data.output": "number"
+        },
+        "in": [
+          "mcp:normalize_medical_data.output"
+        ]
+      }
+    }
+  },
+  "Nutrient": {
+    "base": "frontend2:Nutrient",
+    "sources": [
+      "frontend2:Nutrient",
+      "frontend2:StdListEntry",
+      "mcp:calculate_dynamic_ri.output",
+      "mcp:compute_intake_coverage.output",
+      "db:kdri_standards",
+      "db:nutrient_codes"
+    ],
+    "fields": {
+      "bar": {
+        "types": {
+          "frontend2:Nutrient": "NutrientBar"
+        },
+        "in": [
+          "frontend2:Nutrient"
+        ]
+      },
+      "basis": {
+        "types": {
+          "frontend2:Nutrient": "string"
+        },
+        "in": [
+          "frontend2:Nutrient"
+        ]
+      },
+      "caption": {
+        "types": {
+          "frontend2:Nutrient": "string"
+        },
+        "in": [
+          "frontend2:Nutrient"
+        ]
+      },
+      "gauge": {
+        "types": {
+          "frontend2:Nutrient": "NutrientGauge"
+        },
+        "in": [
+          "frontend2:Nutrient"
+        ]
+      },
+      "hasStd": {
+        "types": {
+          "frontend2:Nutrient": "boolean"
+        },
+        "in": [
+          "frontend2:Nutrient"
+        ]
+      },
+      "key": {
+        "types": {
+          "frontend2:Nutrient": "string"
+        },
+        "in": [
+          "frontend2:Nutrient"
+        ]
+      },
+      "level": {
+        "types": {
+          "frontend2:Nutrient": "Level"
+        },
+        "in": [
+          "frontend2:Nutrient"
+        ]
+      },
+      "meal": {
+        "types": {
+          "frontend2:Nutrient": "number",
+          "frontend2:StdListEntry": "int"
+        },
+        "in": [
+          "frontend2:Nutrient",
+          "frontend2:StdListEntry"
+        ]
+      },
+      "name": {
+        "types": {
+          "frontend2:Nutrient": "string",
+          "frontend2:StdListEntry": "str"
+        },
+        "in": [
+          "frontend2:Nutrient",
+          "frontend2:StdListEntry"
+        ]
+      },
+      "note": {
+        "types": {
+          "frontend2:Nutrient": "NutrientNote"
+        },
+        "in": [
+          "frontend2:Nutrient"
+        ]
+      },
+      "rda": {
+        "types": {
+          "frontend2:Nutrient": "number|null",
+          "frontend2:StdListEntry": "int"
+        },
+        "in": [
+          "frontend2:Nutrient",
+          "frontend2:StdListEntry"
+        ]
+      },
+      "sources": {
+        "types": {
+          "frontend2:Nutrient": "string[]"
+        },
+        "in": [
+          "frontend2:Nutrient"
+        ]
+      },
+      "supp": {
+        "types": {
+          "frontend2:Nutrient": "number"
+        },
+        "in": [
+          "frontend2:Nutrient"
+        ]
+      },
+      "total": {
+        "types": {
+          "frontend2:Nutrient": "number"
+        },
+        "in": [
+          "frontend2:Nutrient"
+        ]
+      },
+      "ul": {
+        "types": {
+          "frontend2:Nutrient": "number|null",
+          "frontend2:StdListEntry": "int"
+        },
+        "in": [
+          "frontend2:Nutrient",
+          "frontend2:StdListEntry"
+        ]
+      },
+      "ulAmount": {
+        "types": {
+          "frontend2:Nutrient": "number"
+        },
+        "in": [
+          "frontend2:Nutrient"
+        ]
+      },
+      "ulSuppOnly": {
+        "types": {
+          "frontend2:Nutrient": "boolean"
+        },
+        "in": [
+          "frontend2:Nutrient"
+        ]
+      },
+      "unit": {
+        "types": {
+          "frontend2:Nutrient": "string",
+          "frontend2:StdListEntry": "str"
+        },
+        "in": [
+          "frontend2:Nutrient",
+          "frontend2:StdListEntry"
+        ]
+      },
+      "unmapped": {
+        "types": {
+          "frontend2:Nutrient": "string[]"
+        },
+        "in": [
+          "frontend2:Nutrient"
+        ]
+      },
+      "alias": {
+        "types": {
+          "frontend2:StdListEntry": "list"
+        },
+        "in": [
+          "frontend2:StdListEntry"
+        ]
+      },
+      "iu": {
+        "types": {
+          "frontend2:StdListEntry": "float"
+        },
+        "in": [
+          "frontend2:StdListEntry"
+        ]
+      },
+      "ul_basis": {
+        "types": {
+          "frontend2:StdListEntry": "str"
+        },
+        "in": [
+          "frontend2:StdListEntry"
+        ]
+      },
+      "custom_ri": {
+        "types": {
+          "mcp:calculate_dynamic_ri.output": "object (map→object) *필수"
+        },
+        "in": [
+          "mcp:calculate_dynamic_ri.output"
+        ]
+      },
+      "coverage": {
+        "types": {
+          "mcp:compute_intake_coverage.output": "object (map→object) *필수"
+        },
+        "in": [
+          "mcp:compute_intake_coverage.output"
+        ]
+      },
+      "age_max": {
+        "types": {
+          "db:kdri_standards": "integer"
+        },
+        "in": [
+          "db:kdri_standards"
+        ]
+      },
+      "age_min": {
+        "types": {
+          "db:kdri_standards": "integer"
+        },
+        "in": [
+          "db:kdri_standards"
+        ]
+      },
+      "gender": {
+        "types": {
+          "db:kdri_standards": "character varying(10)"
+        },
+        "in": [
+          "db:kdri_standards"
+        ]
+      },
+      "id": {
+        "types": {
+          "db:kdri_standards": "integer"
+        },
+        "in": [
+          "db:kdri_standards"
+        ]
+      },
+      "is_weight_scaled": {
+        "types": {
+          "db:kdri_standards": "boolean nullable"
+        },
+        "in": [
+          "db:kdri_standards"
+        ]
+      },
+      "nutrient_code": {
+        "types": {
+          "db:kdri_standards": "character varying(50)",
+          "db:nutrient_codes": "character varying(50)"
+        },
+        "in": [
+          "db:kdri_standards",
+          "db:nutrient_codes"
+        ]
+      },
+      "ri_base": {
+        "types": {
+          "db:kdri_standards": "numeric nullable"
+        },
+        "in": [
+          "db:kdri_standards"
+        ]
+      },
+      "ul_limit": {
+        "types": {
+          "db:kdri_standards": "numeric nullable"
+        },
+        "in": [
+          "db:kdri_standards"
+        ]
+      },
+      "group_name": {
+        "types": {
+          "db:nutrient_codes": "character varying(50)"
+        },
+        "in": [
+          "db:nutrient_codes"
+        ]
+      },
+      "has_ai": {
+        "types": {
+          "db:nutrient_codes": "boolean nullable"
+        },
+        "in": [
+          "db:nutrient_codes"
+        ]
+      },
+      "has_cdrr": {
+        "types": {
+          "db:nutrient_codes": "boolean nullable"
+        },
+        "in": [
+          "db:nutrient_codes"
+        ]
+      },
+      "has_ear": {
+        "types": {
+          "db:nutrient_codes": "boolean nullable"
+        },
+        "in": [
+          "db:nutrient_codes"
+        ]
+      },
+      "has_rni": {
+        "types": {
+          "db:nutrient_codes": "boolean nullable"
+        },
+        "in": [
+          "db:nutrient_codes"
+        ]
+      },
+      "has_ul": {
+        "types": {
+          "db:nutrient_codes": "boolean nullable"
+        },
+        "in": [
+          "db:nutrient_codes"
+        ]
+      },
+      "kdri_unit": {
+        "types": {
+          "db:nutrient_codes": "character varying(30)"
+        },
+        "in": [
+          "db:nutrient_codes"
+        ]
+      },
+      "kdri_version": {
+        "types": {
+          "db:nutrient_codes": "integer nullable"
+        },
+        "in": [
+          "db:nutrient_codes"
+        ]
+      },
+      "nutrient_ko": {
+        "types": {
+          "db:nutrient_codes": "character varying(100)"
+        },
+        "in": [
+          "db:nutrient_codes"
+        ]
+      },
+      "synonyms_ko_label": {
+        "types": {
+          "db:nutrient_codes": "text nullable"
+        },
+        "in": [
+          "db:nutrient_codes"
+        ]
+      }
+    }
+  },
+  "Product": {
+    "base": "mcp:search_products.output",
+    "sources": [
+      "frontend2:Product",
+      "frontend2:ProductItem",
+      "mcp:search_products.output",
+      "db:product_ingredients_master"
+    ],
+    "fields": {
+      "items": {
+        "types": {
+          "frontend2:Product": "ProductItem[]"
+        },
+        "in": [
+          "frontend2:Product"
+        ]
+      },
+      "name": {
+        "types": {
+          "frontend2:Product": "string",
+          "frontend2:ProductItem": "string"
+        },
+        "in": [
+          "frontend2:Product",
+          "frontend2:ProductItem"
+        ]
+      },
+      "amount": {
+        "types": {
+          "frontend2:ProductItem": "number|string"
+        },
+        "in": [
+          "frontend2:ProductItem"
+        ]
+      },
+      "unit": {
+        "types": {
+          "frontend2:ProductItem": "string",
+          "db:product_ingredients_master": "character varying(20)"
+        },
+        "in": [
+          "frontend2:ProductItem",
+          "db:product_ingredients_master"
+        ]
+      },
+      "products": {
+        "types": {
+          "mcp:search_products.output": "array *필수"
+        },
+        "in": [
+          "mcp:search_products.output"
+        ]
+      },
+      "products[].brand": {
+        "types": {
+          "mcp:search_products.output": "string|null"
+        },
+        "in": [
+          "mcp:search_products.output"
+        ]
+      },
+      "products[].form": {
+        "types": {
+          "mcp:search_products.output": "string|null"
+        },
+        "in": [
+          "mcp:search_products.output"
+        ]
+      },
+      "products[].label_id": {
+        "types": {
+          "mcp:search_products.output": "integer"
+        },
+        "in": [
+          "mcp:search_products.output"
+        ]
+      },
+      "products[].nutrients": {
+        "types": {
+          "mcp:search_products.output": "object (map→number)"
+        },
+        "in": [
+          "mcp:search_products.output"
+        ]
+      },
+      "products[].product_name": {
+        "types": {
+          "mcp:search_products.output": "string"
+        },
+        "in": [
+          "mcp:search_products.output"
+        ]
+      },
+      "amount_per_serving": {
+        "types": {
+          "db:product_ingredients_master": "numeric"
+        },
+        "in": [
+          "db:product_ingredients_master"
+        ]
+      },
+      "id": {
+        "types": {
+          "db:product_ingredients_master": "integer"
+        },
+        "in": [
+          "db:product_ingredients_master"
+        ]
+      },
+      "nutrient_code": {
+        "types": {
+          "db:product_ingredients_master": "character varying(50)"
+        },
+        "in": [
+          "db:product_ingredients_master"
+        ]
+      },
+      "product_id": {
+        "types": {
+          "db:product_ingredients_master": "character varying(50)"
+        },
+        "in": [
+          "db:product_ingredients_master"
+        ]
+      },
+      "product_name": {
+        "types": {
+          "db:product_ingredients_master": "character varying(255)"
+        },
+        "in": [
+          "db:product_ingredients_master"
+        ]
+      }
+    }
+  },
+  "Issue": {
+    "base": "mcp:validate_ul_guardrail.output",
+    "sources": [
+      "frontend2:Issue",
+      "frontend2:MedRule",
+      "mcp:validate_ul_guardrail.output",
+      "mcp:check_nutrient_interactions.output"
+    ],
+    "fields": {
+      "kind": {
+        "types": {
+          "frontend2:Issue": "string",
+          "frontend2:MedRule": "str"
+        },
+        "in": [
+          "frontend2:Issue",
+          "frontend2:MedRule"
+        ]
+      },
+      "med": {
+        "types": {
+          "frontend2:Issue": "string (optional)",
+          "frontend2:MedRule": "list"
+        },
+        "in": [
+          "frontend2:Issue",
+          "frontend2:MedRule"
+        ]
+      },
+      "text": {
+        "types": {
+          "frontend2:Issue": "string",
+          "frontend2:MedRule": "str"
+        },
+        "in": [
+          "frontend2:Issue",
+          "frontend2:MedRule"
+        ]
+      },
+      "tone": {
+        "types": {
+          "frontend2:Issue": "Tone",
+          "frontend2:MedRule": "str"
+        },
+        "in": [
+          "frontend2:Issue",
+          "frontend2:MedRule"
+        ]
+      },
+      "nut": {
+        "types": {
+          "frontend2:MedRule": "str"
+        },
+        "in": [
+          "frontend2:MedRule"
+        ]
+      },
+      "approved_recommendations": {
+        "types": {
+          "mcp:validate_ul_guardrail.output": "array of object *필수"
+        },
+        "in": [
+          "mcp:validate_ul_guardrail.output"
+        ]
+      },
+      "is_safe": {
+        "types": {
+          "mcp:validate_ul_guardrail.output": "boolean *필수"
+        },
+        "in": [
+          "mcp:validate_ul_guardrail.output"
+        ]
+      },
+      "ul_violations": {
+        "types": {
+          "mcp:validate_ul_guardrail.output": "array *필수"
+        },
+        "in": [
+          "mcp:validate_ul_guardrail.output"
+        ]
+      },
+      "ul_violations[].nutrient": {
+        "types": {
+          "mcp:validate_ul_guardrail.output": "string"
+        },
+        "in": [
+          "mcp:validate_ul_guardrail.output"
+        ]
+      },
+      "ul_violations[].status": {
+        "types": {
+          "mcp:validate_ul_guardrail.output": "string const=EXCEEDED"
+        },
+        "in": [
+          "mcp:validate_ul_guardrail.output"
+        ]
+      },
+      "ul_violations[].total_intake": {
+        "types": {
+          "mcp:validate_ul_guardrail.output": "number"
+        },
+        "in": [
+          "mcp:validate_ul_guardrail.output"
+        ]
+      },
+      "ul_violations[].ul_limit": {
+        "types": {
+          "mcp:validate_ul_guardrail.output": "number"
+        },
+        "in": [
+          "mcp:validate_ul_guardrail.output"
+        ]
+      },
+      "cautions": {
+        "types": {
+          "mcp:check_nutrient_interactions.output": "array of string *필수"
+        },
+        "in": [
+          "mcp:check_nutrient_interactions.output"
+        ]
+      },
+      "conflicts_found": {
+        "types": {
+          "mcp:check_nutrient_interactions.output": "boolean *필수"
+        },
+        "in": [
+          "mcp:check_nutrient_interactions.output"
+        ]
+      },
+      "time_separated_schedule": {
+        "types": {
+          "mcp:check_nutrient_interactions.output": "object *필수"
+        },
+        "in": [
+          "mcp:check_nutrient_interactions.output"
+        ]
+      },
+      "time_separated_schedule.evening_PM": {
+        "types": {
+          "mcp:check_nutrient_interactions.output": "array of string"
+        },
+        "in": [
+          "mcp:check_nutrient_interactions.output"
+        ]
+      },
+      "time_separated_schedule.morning_AM": {
+        "types": {
+          "mcp:check_nutrient_interactions.output": "array of string"
+        },
+        "in": [
+          "mcp:check_nutrient_interactions.output"
+        ]
+      }
+    }
+  },
+  "Report": {
+    "base": "frontend2:Report",
+    "sources": [
+      "frontend2:Report",
+      "rt:aggregated_report",
+      "rt:final_report",
+      "db:prescription_histories"
+    ],
+    "fields": {
+      "badges": {
+        "types": {
+          "frontend2:Report": "Badge[]"
+        },
+        "in": [
+          "frontend2:Report"
+        ]
+      },
+      "cols": {
+        "types": {
+          "frontend2:Report": "number"
+        },
+        "in": [
+          "frontend2:Report"
+        ]
+      },
+      "exam": {
+        "types": {
+          "frontend2:Report": "ExamModel"
+        },
+        "in": [
+          "frontend2:Report"
+        ]
+      },
+      "hasSupp": {
+        "types": {
+          "frontend2:Report": "boolean"
+        },
+        "in": [
+          "frontend2:Report"
+        ]
+      },
+      "input": {
+        "types": {
+          "frontend2:Report": "AnalysisInput"
+        },
+        "in": [
+          "frontend2:Report"
+        ]
+      },
+      "issues": {
+        "types": {
+          "frontend2:Report": "Issue[]"
+        },
+        "in": [
+          "frontend2:Report"
+        ]
+      },
+      "mealOnly": {
+        "types": {
+          "frontend2:Report": "boolean"
+        },
+        "in": [
+          "frontend2:Report"
+        ]
+      },
+      "meta": {
+        "types": {
+          "frontend2:Report": "ReportMeta"
+        },
+        "in": [
+          "frontend2:Report"
+        ]
+      },
+      "nutrients": {
+        "types": {
+          "frontend2:Report": "Nutrient[]"
+        },
+        "in": [
+          "frontend2:Report"
+        ]
+      },
+      "recommend": {
+        "types": {
+          "frontend2:Report": "Recommend|null"
+        },
+        "in": [
+          "frontend2:Report"
+        ]
+      },
+      "summary": {
+        "types": {
+          "frontend2:Report": "Summary"
+        },
+        "in": [
+          "frontend2:Report"
+        ]
+      },
+      "worst": {
+        "types": {
+          "frontend2:Report": "Level"
+        },
+        "in": [
+          "frontend2:Report"
+        ]
+      },
+      "calculated_target": {
+        "types": {
+          "rt:aggregated_report": "{custom_ri:{vitamin_d:object, calcium:object, magnesium:object}}"
+        },
+        "in": [
+          "rt:aggregated_report"
+        ]
+      },
+      "failed_items": {
+        "types": {
+          "rt:aggregated_report": "array(비어 있음)"
+        },
+        "in": [
+          "rt:aggregated_report"
+        ]
+      },
+      "guidelines": {
+        "types": {
+          "rt:aggregated_report": "array(비어 있음)"
+        },
+        "in": [
+          "rt:aggregated_report"
+        ]
+      },
+      "health_indicators": {
+        "types": {
+          "rt:aggregated_report": "{}"
+        },
+        "in": [
+          "rt:aggregated_report"
+        ]
+      },
+      "products": {
+        "types": {
+          "rt:aggregated_report": "array(비어 있음)"
+        },
+        "in": [
+          "rt:aggregated_report"
+        ]
+      },
+      "timing_guidance": {
+        "types": {
+          "rt:aggregated_report": "{conflicts_found:boolean, time_separated_schedule:{morning_AM:array<string>, evening_PM:array<string>}, cautions:array<string>}"
+        },
+        "in": [
+          "rt:aggregated_report"
+        ]
+      },
+      "title": {
+        "types": {
+          "rt:aggregated_report": "string",
+          "db:prescription_histories": "character varying(255)"
+        },
+        "in": [
+          "rt:aggregated_report",
+          "db:prescription_histories"
+        ]
+      },
+      "ul_check": {
+        "types": {
+          "rt:aggregated_report": "{is_safe:boolean, ul_violations:array(비어 있음), approved_recommendations:array(비어 있음)}"
+        },
+        "in": [
+          "rt:aggregated_report"
+        ]
+      },
+      "user_profile": {
+        "types": {
+          "rt:aggregated_report": "{units_normalized:boolean, name:string, birth_date:null, age:integer, gender:string, weight_kg:number…}",
+          "rt:final_report": "{units_normalized:boolean, name:string, birth_date:null, age:integer, gender:string, weight_kg:number…}"
+        },
+        "in": [
+          "rt:aggregated_report",
+          "rt:final_report"
+        ]
+      },
+      "compliance_checked": {
+        "types": {
+          "rt:final_report": "boolean"
+        },
+        "in": [
+          "rt:final_report"
+        ]
+      },
+      "disclaimer": {
+        "types": {
+          "rt:final_report": "string"
+        },
+        "in": [
+          "rt:final_report"
+        ]
+      },
+      "html": {
+        "types": {
+          "rt:final_report": "string"
+        },
+        "in": [
+          "rt:final_report"
+        ]
+      },
+      "partial_failure": {
+        "types": {
+          "rt:final_report": "boolean"
+        },
+        "in": [
+          "rt:final_report"
+        ]
+      },
+      "created_at": {
+        "types": {
+          "db:prescription_histories": "timestamp without time zone nullable"
+        },
+        "in": [
+          "db:prescription_histories"
+        ]
+      },
+      "id": {
+        "types": {
+          "db:prescription_histories": "integer"
+        },
+        "in": [
+          "db:prescription_histories"
+        ]
+      },
+      "output_report": {
+        "types": {
+          "db:prescription_histories": "jsonb"
+        },
+        "in": [
+          "db:prescription_histories"
+        ]
+      },
+      "user_health_preset_id": {
+        "types": {
+          "db:prescription_histories": "jsonb"
+        },
+        "in": [
+          "db:prescription_histories"
+        ]
+      },
+      "user_id": {
+        "types": {
+          "db:prescription_histories": "character varying(50)"
+        },
+        "in": [
+          "db:prescription_histories"
+        ]
+      }
+    }
+  },
+  "ExamJudgement": {
+    "base": "frontend2:ExamModel",
+    "sources": [
+      "frontend2:ExamModel",
+      "frontend2:ExamRow",
+      "frontend2:ExamGroup",
+      "frontend2:ExamJudge",
+      "frontend2:ExamOverall"
+    ],
+    "fields": {
+      "abnormal": {
+        "types": {
+          "frontend2:ExamModel": "ExamRow[]"
+        },
+        "in": [
+          "frontend2:ExamModel"
+        ]
+      },
+      "filled": {
+        "types": {
+          "frontend2:ExamModel": "number"
+        },
+        "in": [
+          "frontend2:ExamModel"
+        ]
+      },
+      "groups": {
+        "types": {
+          "frontend2:ExamModel": "ExamGroup[]"
+        },
+        "in": [
+          "frontend2:ExamModel"
+        ]
+      },
+      "overall": {
+        "types": {
+          "frontend2:ExamModel": "ExamOverall"
+        },
+        "in": [
+          "frontend2:ExamModel"
+        ]
+      },
+      "rows": {
+        "types": {
+          "frontend2:ExamModel": "ExamRow[]",
+          "frontend2:ExamGroup": "ExamRow[]"
+        },
+        "in": [
+          "frontend2:ExamModel",
+          "frontend2:ExamGroup"
+        ]
+      },
+      "judge": {
+        "types": {
+          "frontend2:ExamRow": "ExamJudge"
+        },
+        "in": [
+          "frontend2:ExamRow"
+        ]
+      },
+      "key": {
+        "types": {
+          "frontend2:ExamRow": "string"
+        },
+        "in": [
+          "frontend2:ExamRow"
+        ]
+      },
+      "name": {
+        "types": {
+          "frontend2:ExamRow": "string"
+        },
+        "in": [
+          "frontend2:ExamRow"
+        ]
+      },
+      "ref": {
+        "types": {
+          "frontend2:ExamRow": "string"
+        },
+        "in": [
+          "frontend2:ExamRow"
+        ]
+      },
+      "value": {
+        "types": {
+          "frontend2:ExamRow": "string"
+        },
+        "in": [
+          "frontend2:ExamRow"
+        ]
+      },
+      "group": {
+        "types": {
+          "frontend2:ExamGroup": "string"
+        },
+        "in": [
+          "frontend2:ExamGroup"
+        ]
+      },
+      "advice": {
+        "types": {
+          "frontend2:ExamJudge": "string (optional)"
+        },
+        "in": [
+          "frontend2:ExamJudge"
+        ]
+      },
+      "code": {
+        "types": {
+          "frontend2:ExamJudge": "JudgeCode"
+        },
+        "in": [
+          "frontend2:ExamJudge"
+        ]
+      },
+      "text": {
+        "types": {
+          "frontend2:ExamJudge": "string"
+        },
+        "in": [
+          "frontend2:ExamJudge"
+        ]
+      },
+      "tone": {
+        "types": {
+          "frontend2:ExamJudge": "Tone",
+          "frontend2:ExamOverall": "Tone"
+        },
+        "in": [
+          "frontend2:ExamJudge",
+          "frontend2:ExamOverall"
+        ]
+      },
+      "desc": {
+        "types": {
+          "frontend2:ExamOverall": "string"
+        },
+        "in": [
+          "frontend2:ExamOverall"
+        ]
+      },
+      "label": {
+        "types": {
+          "frontend2:ExamOverall": "string"
+        },
+        "in": [
+          "frontend2:ExamOverall"
+        ]
+      }
+    }
+  },
+  "Plan": {
+    "base": "agent:PlanStep",
+    "sources": [
+      "agent:PlanStep",
+      "agent:ExecutionPlan",
+      "rt:execution_plan",
+      "rt:execution_results"
+    ],
+    "fields": {
+      "args": {
+        "types": {
+          "agent:PlanStep": "dict[str, Any]"
+        },
+        "in": [
+          "agent:PlanStep"
+        ]
+      },
+      "description": {
+        "types": {
+          "agent:PlanStep": "str"
+        },
+        "in": [
+          "agent:PlanStep"
+        ]
+      },
+      "parallel_group": {
+        "types": {
+          "agent:PlanStep": "int | None"
+        },
+        "in": [
+          "agent:PlanStep"
+        ]
+      },
+      "step": {
+        "types": {
+          "agent:PlanStep": "int"
+        },
+        "in": [
+          "agent:PlanStep"
+        ]
+      },
+      "task_name": {
+        "types": {
+          "agent:PlanStep": "str"
+        },
+        "in": [
+          "agent:PlanStep"
+        ]
+      },
+      "tool_name": {
+        "types": {
+          "agent:PlanStep": "ToolName"
+        },
+        "in": [
+          "agent:PlanStep"
+        ]
+      },
+      "steps": {
+        "types": {
+          "agent:ExecutionPlan": "list[PlanStep]"
+        },
+        "in": [
+          "agent:ExecutionPlan"
+        ]
+      },
+      "[].args": {
+        "types": {
+          "rt:execution_plan": "{age:integer, gender:string, weight_kg:number, target_nutrients:array<string>} | {current_supps_intake:{}, diet_estimated_intake:{}, proposed_supps_intake:{}, age:integer, gender:string, weight_kg:number} | {nutrient_list:array<string>} | {target_nutrients:array<string>}"
+        },
+        "in": [
+          "rt:execution_plan"
+        ]
+      },
+      "[].description": {
+        "types": {
+          "rt:execution_plan": "string"
+        },
+        "in": [
+          "rt:execution_plan"
+        ]
+      },
+      "[].parallel_group": {
+        "types": {
+          "rt:execution_plan": "integer | null"
+        },
+        "in": [
+          "rt:execution_plan"
+        ]
+      },
+      "[].step": {
+        "types": {
+          "rt:execution_plan": "integer",
+          "rt:execution_results": "integer"
+        },
+        "in": [
+          "rt:execution_plan",
+          "rt:execution_results"
+        ]
+      },
+      "[].task_name": {
+        "types": {
+          "rt:execution_plan": "string",
+          "rt:execution_results": "string"
+        },
+        "in": [
+          "rt:execution_plan",
+          "rt:execution_results"
+        ]
+      },
+      "[].tool_name": {
+        "types": {
+          "rt:execution_plan": "string",
+          "rt:execution_results": "string"
+        },
+        "in": [
+          "rt:execution_plan",
+          "rt:execution_results"
+        ]
+      },
+      "[].output": {
+        "types": {
+          "rt:execution_results": "{conflicts_found:boolean, time_separated_schedule:{morning_AM:array<string>, evening_PM:array<string>}, cautions:array<string>} | {custom_ri:{vitamin_d:object, calcium:object, magnesium:object}} | {is_safe:boolean, ul_violations:array(비어 있음), approved_recommendations:array(비어 있음)} | {products:array(비어 있음)}"
+        },
+        "in": [
+          "rt:execution_results"
+        ]
+      },
+      "[].result": {
+        "types": {
+          "rt:execution_results": "{conflicts_found:boolean, time_separated_schedule:{morning_AM:array<string>, evening_PM:array<string>}, cautions:array<string>} | {custom_ri:{vitamin_d:object, calcium:object, magnesium:object}} | {is_safe:boolean, ul_violations:array(비어 있음), approved_recommendations:array(비어 있음)} | {products:array(비어 있음)}"
+        },
+        "in": [
+          "rt:execution_results"
+        ]
+      },
+      "[].status": {
+        "types": {
+          "rt:execution_results": "string"
+        },
+        "in": [
+          "rt:execution_results"
+        ]
+      }
+    }
+  },
+  "PipelineState": {
+    "base": "agent:State",
+    "sources": [
+      "agent:State",
+      "rt:review_status",
+      "rt:review_feedback",
+      "rt:retry_count",
+      "rt:target_nutrients",
+      "rt:rag_context",
+      "rt:ocr_text"
+    ],
+    "fields": {
+      "aggregated_report": {
+        "types": {
+          "agent:State": "Dict[str, Any]"
+        },
+        "in": [
+          "agent:State"
+        ]
+      },
+      "execution_plan": {
+        "types": {
+          "agent:State": "List[Dict[str, Any]]"
+        },
+        "in": [
+          "agent:State"
+        ]
+      },
+      "execution_results": {
+        "types": {
+          "agent:State": "List[Dict[str, Any]]"
+        },
+        "in": [
+          "agent:State"
+        ]
+      },
+      "failed_items": {
+        "types": {
+          "agent:State": "List[Dict[str, Any]]"
+        },
+        "in": [
+          "agent:State"
+        ]
+      },
+      "final_report": {
+        "types": {
+          "agent:State": "Dict[str, Any]"
+        },
+        "in": [
+          "agent:State"
+        ]
+      },
+      "normalized_data": {
+        "types": {
+          "agent:State": "Dict[str, Any]"
+        },
+        "in": [
+          "agent:State"
+        ]
+      },
+      "ocr_result": {
+        "types": {
+          "agent:State": "Dict[str, Any]"
+        },
+        "in": [
+          "agent:State"
+        ]
+      },
+      "ocr_text": {
+        "types": {
+          "agent:State": "str"
+        },
+        "in": [
+          "agent:State"
+        ]
+      },
+      "rag_context": {
+        "types": {
+          "agent:State": "List[Dict[str, Any]]"
+        },
+        "in": [
+          "agent:State"
+        ]
+      },
+      "retry_count": {
+        "types": {
+          "agent:State": "int"
+        },
+        "in": [
+          "agent:State"
+        ]
+      },
+      "review_feedback": {
+        "types": {
+          "agent:State": "str"
+        },
+        "in": [
+          "agent:State"
+        ]
+      },
+      "review_status": {
+        "types": {
+          "agent:State": "Literal['pass', 'reject_to_executor', 'reject_to_planner']"
+        },
+        "in": [
+          "agent:State"
+        ]
+      },
+      "target_nutrients": {
+        "types": {
+          "agent:State": "List[str]"
+        },
+        "in": [
+          "agent:State"
+        ]
+      },
+      "user_input": {
+        "types": {
+          "agent:State": "Dict[str, Any]"
+        },
+        "in": [
+          "agent:State"
+        ]
+      },
+      "(스칼라)": {
+        "types": {
+          "rt:review_status": "string",
+          "rt:review_feedback": "string",
+          "rt:retry_count": "integer",
+          "rt:target_nutrients": "array<string>",
+          "rt:rag_context": "array(비어 있음)",
+          "rt:ocr_text": "string"
+        },
+        "in": [
+          "rt:review_status",
+          "rt:review_feedback",
+          "rt:retry_count",
+          "rt:target_nutrients",
+          "rt:rag_context",
+          "rt:ocr_text"
+        ]
+      }
+    }
+  }
+}

@@ -1,5 +1,6 @@
 from schemas.state import State
 from services.ocr import run_ocr_pipeline
+from schemas.models import NormalizedData
 
 
 # OCR 지표명 → 내부 nutrient_code 매핑(베스트 에포트).
@@ -65,6 +66,13 @@ async def input_normalization_node(state: State) -> State:
         # Compliance 마스킹 단계가 식별할 PII 필드 목록.
         "is_pii": {"name": True, "birth_date": True},
     }
+
+    # 통합 스키마로 확인하고 되돌려 담습니다. 기본값이 채워지고, 형태가
+    # 어긋나면 여기서 멈춥니다 — 파이프라인 한참 뒤에서 KeyError 로
+    # 터지는 것보다 원인을 짚기 쉽습니다.
+    # (딕셔너리로 되돌리므로 아래 state["..."] 접근 방식은 그대로입니다)
+    state["normalized_data"] = NormalizedData.model_validate(
+        state["normalized_data"]).model_dump()
 
     # 타깃 영양소: 이상 지표(deficient/warning) + 코어 셋.
     targets = list(_DEFAULT_TARGETS)

@@ -1,0 +1,1302 @@
+{
+  "agent-node:aggregated_report": {
+    "entity": "aggregated_report",
+    "fields": {
+      "calculated_target": "(리터럴) by_task.get('calculate_dynamic_ri', {})",
+      "failed_items": "(리터럴) state.get('failed_items', [])",
+      "guidelines": "(리터럴) guidelines",
+      "health_indicators": "(리터럴) indicators",
+      "products": "(리터럴) by_task.get('search_products', {}).get('products', [])",
+      "timing_guidance": "(리터럴) by_task.get('check_nutrient_interactions', {})",
+      "title": "(리터럴) '개인 맞춤형 정밀 영양 리포트'",
+      "ul_check": "(리터럴) by_task.get('validate_ul_guardrail', {})",
+      "user_profile": "(리터럴) state.get('normalized_data', {})"
+    },
+    "kind": "dict",
+    "note": "aggregator.py · 정적 추출",
+    "source": "agent-node"
+  },
+  "agent-node:final_report": {
+    "entity": "final_report",
+    "fields": {
+      "compliance_checked": "(리터럴) True",
+      "disclaimer": "(리터럴) DISCLAIMER",
+      "html": "(리터럴) html",
+      "partial_failure": "(리터럴) bool(failed)",
+      "user_profile": "(리터럴) masked_profile"
+    },
+    "kind": "dict",
+    "note": "compliance.py · 정적 추출",
+    "source": "agent-node"
+  },
+  "agent-node:normalized_data": {
+    "entity": "normalized_data",
+    "fields": {
+      "age": "(리터럴) age",
+      "age_defaulted": "(리터럴) age_defaulted",
+      "birth_date": "(리터럴) user_input.get('birth_date')",
+      "current_supplements": "(리터럴) user_input.get('current_supplements', [])",
+      "gender": "(리터럴) gender",
+      "gender_defaulted": "(리터럴) gender_defaulted",
+      "is_pii": "(리터럴) {'name': True, 'birth_date': True}",
+      "name": "(리터럴) user_input.get('name') or '익명'",
+      "units_normalized": "(리터럴) True",
+      "weight_kg": "(리터럴) user_input.get('weight_kg') or 60.0"
+    },
+    "kind": "dict",
+    "note": "normalizer.py · 정적 추출",
+    "source": "agent-node"
+  },
+  "agent-node:ocr_result": {
+    "entity": "ocr_result",
+    "fields": {
+      "extracted_indicators": "(리터럴) {}"
+    },
+    "kind": "dict",
+    "note": "normalizer.py · 정적 추출",
+    "source": "agent-node"
+  },
+  "agent:AggregatedReport": {
+    "entity": "AggregatedReport",
+    "fields": {
+      "calculated_target": "dict[str, Any]",
+      "failed_items": "list[dict[str, Any]]",
+      "guidelines": "list[Any]",
+      "health_indicators": "dict[str, Any]",
+      "products": "list[dict[str, Any]]",
+      "timing_guidance": "dict[str, Any]",
+      "title": "str",
+      "ul_check": "dict[str, Any]",
+      "user_profile": "dict[str, Any]"
+    },
+    "kind": "Pydantic",
+    "note": "models.py · bases=['Base']",
+    "source": "agent"
+  },
+  "agent:CoverageStatus": {
+    "entity": "CoverageStatus",
+    "fields": {
+      "(값)": "Literal['deficient', 'adequate', 'excess']"
+    },
+    "kind": "enum",
+    "note": "models.py",
+    "source": "agent"
+  },
+  "agent:ExamValues": {
+    "entity": "ExamValues",
+    "fields": {
+      "alt": "str",
+      "ast": "str",
+      "cr": "str",
+      "cxr": "str",
+      "dbp": "str",
+      "egfr": "str",
+      "ggt": "str",
+      "glu": "str",
+      "hb": "str",
+      "hdl": "str",
+      "height": "str",
+      "ldl": "str",
+      "sbp": "str",
+      "tc": "str",
+      "tg": "str",
+      "tscore": "str",
+      "upro": "str",
+      "waist": "str",
+      "weight": "str"
+    },
+    "kind": "Pydantic",
+    "note": "models.py · bases=['Base']",
+    "source": "agent"
+  },
+  "agent:ExecutionPlan": {
+    "entity": "ExecutionPlan",
+    "fields": {
+      "steps": "list[PlanStep]"
+    },
+    "kind": "Pydantic",
+    "note": "planner.py · bases=['BaseModel']",
+    "source": "agent"
+  },
+  "agent:FinalReport": {
+    "entity": "FinalReport",
+    "fields": {
+      "compliance_checked": "bool",
+      "disclaimer": "str",
+      "html": "str",
+      "partial_failure": "bool",
+      "user_profile": "dict[str, Any]"
+    },
+    "kind": "Pydantic",
+    "note": "models.py · bases=['Base']",
+    "source": "agent"
+  },
+  "agent:Gender": {
+    "entity": "Gender",
+    "fields": {
+      "(값)": "Literal['male', 'female']"
+    },
+    "kind": "enum",
+    "note": "models.py",
+    "source": "agent"
+  },
+  "agent:InteractionResult": {
+    "entity": "InteractionResult",
+    "fields": {
+      "cautions": "list[str]",
+      "conflicts_found": "bool",
+      "time_separated_schedule": "TimeSeparatedSchedule"
+    },
+    "kind": "Pydantic",
+    "note": "models.py · bases=['Base']",
+    "source": "agent"
+  },
+  "agent:JudgeCode": {
+    "entity": "JudgeCode",
+    "fields": {
+      "(값)": "Literal['A', 'B', 'D', '']"
+    },
+    "kind": "enum",
+    "note": "models.py",
+    "source": "agent"
+  },
+  "agent:LabFlag": {
+    "entity": "LabFlag",
+    "fields": {
+      "(값)": "Literal['low', 'normal', 'high']"
+    },
+    "kind": "enum",
+    "note": "models.py",
+    "source": "agent"
+  },
+  "agent:LabResult": {
+    "entity": "LabResult",
+    "fields": {
+      "flag": "LabFlag",
+      "test_name": "str",
+      "unit": "str",
+      "value": "float"
+    },
+    "kind": "Pydantic",
+    "note": "models.py · bases=['Base']",
+    "source": "agent"
+  },
+  "agent:Level": {
+    "entity": "Level",
+    "fields": {
+      "(값)": "Literal['over', 'near', 'low', 'none', 'unknown', 'met']"
+    },
+    "kind": "enum",
+    "note": "models.py",
+    "source": "agent"
+  },
+  "agent:NormalizedData": {
+    "entity": "NormalizedData",
+    "fields": {
+      "age": "int",
+      "age_defaulted": "bool",
+      "birth_date": "str | None",
+      "current_supplements": "list[dict[str, Any]]",
+      "gender": "Gender",
+      "gender_defaulted": "bool",
+      "is_pii": "dict[str, bool]",
+      "name": "str",
+      "units_normalized": "bool",
+      "weight_kg": "float"
+    },
+    "kind": "Pydantic",
+    "note": "models.py · bases=['Base']",
+    "source": "agent"
+  },
+  "agent:NutrientCoverage": {
+    "entity": "NutrientCoverage",
+    "fields": {
+      "pct": "float",
+      "status": "CoverageStatus"
+    },
+    "kind": "Pydantic",
+    "note": "models.py · bases=['Base']",
+    "source": "agent"
+  },
+  "agent:NutrientTarget": {
+    "entity": "NutrientTarget",
+    "fields": {
+      "base": "float | None",
+      "factor_per_kg": "float | None",
+      "unit": "str",
+      "value": "float"
+    },
+    "kind": "Pydantic",
+    "note": "models.py · bases=['Base']",
+    "source": "agent"
+  },
+  "agent:PlanStep": {
+    "entity": "PlanStep",
+    "fields": {
+      "args": "dict[str, Any]",
+      "description": "str",
+      "parallel_group": "int | None",
+      "step": "int",
+      "task_name": "str",
+      "tool_name": "ToolName"
+    },
+    "kind": "Pydantic",
+    "note": "planner.py · bases=['BaseModel']",
+    "source": "agent"
+  },
+  "agent:ResponseStatus": {
+    "entity": "ResponseStatus",
+    "fields": {
+      "(값)": "Literal['success', 'fail', 'blocked']"
+    },
+    "kind": "enum",
+    "note": "models.py",
+    "source": "agent"
+  },
+  "agent:ReviewStatus": {
+    "entity": "ReviewStatus",
+    "fields": {
+      "(값)": "Literal['pass', 'reject_to_executor', 'reject_to_planner']"
+    },
+    "kind": "enum",
+    "note": "models.py",
+    "source": "agent"
+  },
+  "agent:SessionUser": {
+    "entity": "SessionUser",
+    "fields": {
+      "email": "str | None",
+      "id": "str",
+      "name": "str"
+    },
+    "kind": "Pydantic",
+    "note": "models.py · bases=['Base']",
+    "source": "agent"
+  },
+  "agent:State": {
+    "entity": "State",
+    "fields": {
+      "aggregated_report": "Dict[str, Any]",
+      "execution_plan": "List[Dict[str, Any]]",
+      "execution_results": "List[Dict[str, Any]]",
+      "failed_items": "List[Dict[str, Any]]",
+      "final_report": "Dict[str, Any]",
+      "normalized_data": "Dict[str, Any]",
+      "ocr_result": "Dict[str, Any]",
+      "ocr_text": "str",
+      "rag_context": "List[Dict[str, Any]]",
+      "retry_count": "int",
+      "review_feedback": "str",
+      "review_status": "Literal['pass', 'reject_to_executor', 'reject_to_planner']",
+      "target_nutrients": "List[str]",
+      "user_input": "Dict[str, Any]"
+    },
+    "kind": "TypedDict",
+    "note": "state.py · bases=['TypedDict']",
+    "source": "agent"
+  },
+  "agent:TimeSeparatedSchedule": {
+    "entity": "TimeSeparatedSchedule",
+    "fields": {
+      "evening_PM": "list[str]",
+      "morning_AM": "list[str]"
+    },
+    "kind": "Pydantic",
+    "note": "models.py · bases=['Base']",
+    "source": "agent"
+  },
+  "agent:Tone": {
+    "entity": "Tone",
+    "fields": {
+      "(값)": "Literal['green', 'orange', 'red', 'crit', 'blue', 'gray']"
+    },
+    "kind": "enum",
+    "note": "models.py",
+    "source": "agent"
+  },
+  "agent:ToolName": {
+    "entity": "ToolName",
+    "fields": {
+      "(값)": "Literal['calculate_dynamic_ri', 'validate_ul_guardrail', 'check_nutrient_interactions', 'search_products']"
+    },
+    "kind": "enum",
+    "note": "planner.py",
+    "source": "agent"
+  },
+  "agent:UlCheckResult": {
+    "entity": "UlCheckResult",
+    "fields": {
+      "approved_recommendations": "list[dict[str, Any]]",
+      "is_safe": "bool",
+      "ul_violations": "list[UlViolation]"
+    },
+    "kind": "Pydantic",
+    "note": "models.py · bases=['Base']",
+    "source": "agent"
+  },
+  "agent:UlViolation": {
+    "entity": "UlViolation",
+    "fields": {
+      "nutrient": "str",
+      "status": "Literal['EXCEEDED']",
+      "total_intake": "float",
+      "ul_limit": "float"
+    },
+    "kind": "Pydantic",
+    "note": "models.py · bases=['Base']",
+    "source": "agent"
+  },
+  "agent:UserInput": {
+    "entity": "UserInput",
+    "fields": {
+      "age": "int",
+      "birth_date": "str | None",
+      "current_supplements": "list[dict[str, Any]]",
+      "filename": "str | None",
+      "gender": "Gender",
+      "image_bytes": "bytes | None",
+      "name": "str | None",
+      "weight_kg": "float | None"
+    },
+    "kind": "Pydantic",
+    "note": "models.py · bases=['Base']",
+    "source": "agent"
+  },
+  "db:kdri_standards": {
+    "entity": "kdri_standards",
+    "fields": {
+      "age_max": "integer",
+      "age_min": "integer",
+      "gender": "character varying(10)",
+      "id": "integer",
+      "is_weight_scaled": "boolean nullable",
+      "nutrient_code": "character varying(50)",
+      "ri_base": "numeric nullable",
+      "ul_limit": "numeric nullable"
+    },
+    "kind": "table",
+    "note": "",
+    "source": "db"
+  },
+  "db:nutrient_codes": {
+    "entity": "nutrient_codes",
+    "fields": {
+      "group_name": "character varying(50)",
+      "has_ai": "boolean nullable",
+      "has_cdrr": "boolean nullable",
+      "has_ear": "boolean nullable",
+      "has_rni": "boolean nullable",
+      "has_ul": "boolean nullable",
+      "kdri_unit": "character varying(30)",
+      "kdri_version": "integer nullable",
+      "nutrient_code": "character varying(50)",
+      "nutrient_ko": "character varying(100)",
+      "synonyms_ko_label": "text nullable"
+    },
+    "kind": "table",
+    "note": "",
+    "source": "db"
+  },
+  "db:prescription_histories": {
+    "entity": "prescription_histories",
+    "fields": {
+      "created_at": "timestamp without time zone nullable",
+      "id": "integer",
+      "output_report": "jsonb",
+      "title": "character varying(255)",
+      "user_health_preset_id": "jsonb",
+      "user_id": "character varying(50)"
+    },
+    "kind": "table",
+    "note": "",
+    "source": "db"
+  },
+  "db:product_ingredients_master": {
+    "entity": "product_ingredients_master",
+    "fields": {
+      "amount_per_serving": "numeric",
+      "id": "integer",
+      "nutrient_code": "character varying(50)",
+      "product_id": "character varying(50)",
+      "product_name": "character varying(255)",
+      "unit": "character varying(20)"
+    },
+    "kind": "table",
+    "note": "",
+    "source": "db"
+  },
+  "db:user_health_presets": {
+    "entity": "user_health_presets",
+    "fields": {
+      "activity_level": "character varying(30) nullable",
+      "age": "integer",
+      "allergies_conditions": "jsonb nullable",
+      "gender": "character varying(10)",
+      "id": "integer",
+      "latest_checkup_data": "jsonb nullable",
+      "routine_supplements": "jsonb nullable",
+      "updated_at": "timestamp without time zone nullable",
+      "user_id": "character varying(50)",
+      "weight_kg": "numeric"
+    },
+    "kind": "table",
+    "note": "",
+    "source": "db"
+  },
+  "db:users": {
+    "entity": "users",
+    "fields": {
+      "created_at": "timestamp with time zone",
+      "id": "character varying(100)",
+      "name": "character varying(100)",
+      "pwd_hash": "character varying(255)",
+      "updated_at": "timestamp with time zone"
+    },
+    "kind": "table",
+    "note": "",
+    "source": "db"
+  },
+  "frontend2:AnalysisInput": {
+    "entity": "AnalysisInput",
+    "fields": {
+      "age": "string",
+      "chronic": "string[]",
+      "countMeal": "boolean",
+      "date": "string",
+      "exam": "ExamValues",
+      "meds": "Med[]",
+      "name": "string",
+      "products": "Product[]",
+      "sex": "''|'남성'|'여성'"
+    },
+    "kind": "model",
+    "note": "",
+    "source": "frontend2"
+  },
+  "frontend2:ApiEnvelope": {
+    "entity": "ApiEnvelope",
+    "fields": {
+      "data": "Object (optional)",
+      "disclaimer": "string (optional)",
+      "message": "string",
+      "status": "ResponseStatus"
+    },
+    "kind": "model",
+    "note": "",
+    "source": "frontend2"
+  },
+  "frontend2:Badge": {
+    "entity": "Badge",
+    "fields": {
+      "text": "string",
+      "tone": "Tone"
+    },
+    "kind": "model",
+    "note": "",
+    "source": "frontend2"
+  },
+  "frontend2:Bootstrap": {
+    "entity": "Bootstrap",
+    "fields": {
+      "nutHints": "string[]",
+      "unverified": "boolean"
+    },
+    "kind": "model",
+    "note": "",
+    "source": "frontend2"
+  },
+  "frontend2:BrandCopy": {
+    "entity": "BrandCopy",
+    "fields": {
+      "fontCssUrl": "string",
+      "lang": "string",
+      "logoAlt": "string",
+      "logoImageUrl": "string|null",
+      "pageTitle": "string",
+      "serviceName": "string",
+      "stylesheet": "string"
+    },
+    "kind": "model",
+    "note": "",
+    "source": "frontend2"
+  },
+  "frontend2:CHRONIC": {
+    "entity": "CHRONIC",
+    "fields": {
+      "(값)": "['고혈압', '당뇨병', '이상지질혈증', '폐결핵', '우울증', '조기정신증', 'C형간염', '만성폐쇄성폐질환']"
+    },
+    "kind": "enum",
+    "note": "standards.py",
+    "source": "frontend2"
+  },
+  "frontend2:CoverageStatus": {
+    "entity": "CoverageStatus",
+    "fields": {
+      "(값)": "'deficient'|'adequate'|'excess'"
+    },
+    "kind": "enum",
+    "note": "",
+    "source": "frontend2"
+  },
+  "frontend2:ExamGroup": {
+    "entity": "ExamGroup",
+    "fields": {
+      "group": "string",
+      "rows": "ExamRow[]"
+    },
+    "kind": "model",
+    "note": "",
+    "source": "frontend2"
+  },
+  "frontend2:ExamJudge": {
+    "entity": "ExamJudge",
+    "fields": {
+      "advice": "string (optional)",
+      "code": "JudgeCode",
+      "text": "string",
+      "tone": "Tone"
+    },
+    "kind": "model",
+    "note": "",
+    "source": "frontend2"
+  },
+  "frontend2:ExamModel": {
+    "entity": "ExamModel",
+    "fields": {
+      "abnormal": "ExamRow[]",
+      "filled": "number",
+      "groups": "ExamGroup[]",
+      "overall": "ExamOverall",
+      "rows": "ExamRow[]"
+    },
+    "kind": "model",
+    "note": "",
+    "source": "frontend2"
+  },
+  "frontend2:ExamOverall": {
+    "entity": "ExamOverall",
+    "fields": {
+      "desc": "string",
+      "label": "string",
+      "tone": "Tone"
+    },
+    "kind": "model",
+    "note": "",
+    "source": "frontend2"
+  },
+  "frontend2:ExamReading": {
+    "entity": "ExamReading",
+    "fields": {
+      "age": "string",
+      "chronic": "string[]",
+      "date": "string",
+      "exam": "ExamValues",
+      "groups": "string[]",
+      "name": "string",
+      "sex": "string",
+      "source": "'demo'|'model'"
+    },
+    "kind": "model",
+    "note": "",
+    "source": "frontend2"
+  },
+  "frontend2:ExamRow": {
+    "entity": "ExamRow",
+    "fields": {
+      "judge": "ExamJudge",
+      "key": "string",
+      "name": "string",
+      "ref": "string",
+      "value": "string"
+    },
+    "kind": "model",
+    "note": "",
+    "source": "frontend2"
+  },
+  "frontend2:ExamValues": {
+    "entity": "ExamValues",
+    "fields": {
+      "alt": "string (optional)",
+      "ast": "string (optional)",
+      "cr": "string (optional)",
+      "cxr": "string (optional)",
+      "dbp": "string (optional)",
+      "egfr": "string (optional)",
+      "ggt": "string (optional)",
+      "glu": "string (optional)",
+      "hb": "string (optional)",
+      "hdl": "string (optional)",
+      "height": "string (optional)",
+      "ldl": "string (optional)",
+      "sbp": "string (optional)",
+      "tc": "string (optional)",
+      "tg": "string (optional)",
+      "tscore": "string (optional)",
+      "upro": "string (optional)",
+      "waist": "string (optional)",
+      "weight": "string (optional)"
+    },
+    "kind": "model",
+    "note": "",
+    "source": "frontend2"
+  },
+  "frontend2:Gender": {
+    "entity": "Gender",
+    "fields": {
+      "(값)": "'male'|'female'"
+    },
+    "kind": "enum",
+    "note": "",
+    "source": "frontend2"
+  },
+  "frontend2:Issue": {
+    "entity": "Issue",
+    "fields": {
+      "kind": "string",
+      "med": "string (optional)",
+      "text": "string",
+      "tone": "Tone"
+    },
+    "kind": "model",
+    "note": "",
+    "source": "frontend2"
+  },
+  "frontend2:JudgeCode": {
+    "entity": "JudgeCode",
+    "fields": {
+      "(값)": "'A'|'B'|'D'|''"
+    },
+    "kind": "enum",
+    "note": "",
+    "source": "frontend2"
+  },
+  "frontend2:LEVEL_RANK": {
+    "entity": "LEVEL_RANK",
+    "fields": {
+      "(값)": "{'over': 5, 'near': 4, 'low': 3, 'none': 2, 'unknown': 1, 'met': 0}"
+    },
+    "kind": "enum",
+    "note": "standards.py",
+    "source": "frontend2"
+  },
+  "frontend2:LabFlag": {
+    "entity": "LabFlag",
+    "fields": {
+      "(값)": "'low'|'normal'|'high'"
+    },
+    "kind": "enum",
+    "note": "",
+    "source": "frontend2"
+  },
+  "frontend2:Level": {
+    "entity": "Level",
+    "fields": {
+      "(값)": "'over'|'near'|'low'|'none'|'unknown'|'met'"
+    },
+    "kind": "enum",
+    "note": "",
+    "source": "frontend2"
+  },
+  "frontend2:Med": {
+    "entity": "Med",
+    "fields": {
+      "desc": "string",
+      "name": "string"
+    },
+    "kind": "model",
+    "note": "",
+    "source": "frontend2"
+  },
+  "frontend2:MedRule": {
+    "entity": "MedRule",
+    "fields": {
+      "kind": "str",
+      "med": "list",
+      "nut": "str",
+      "text": "str",
+      "tone": "str"
+    },
+    "kind": "const",
+    "note": "standards.MED_RULES · 8건",
+    "source": "frontend2"
+  },
+  "frontend2:Nutrient": {
+    "entity": "Nutrient",
+    "fields": {
+      "bar": "NutrientBar",
+      "basis": "string",
+      "caption": "string",
+      "gauge": "NutrientGauge",
+      "hasStd": "boolean",
+      "key": "string",
+      "level": "Level",
+      "meal": "number",
+      "name": "string",
+      "note": "NutrientNote",
+      "rda": "number|null",
+      "sources": "string[]",
+      "supp": "number",
+      "total": "number",
+      "ul": "number|null",
+      "ulAmount": "number",
+      "ulSuppOnly": "boolean",
+      "unit": "string",
+      "unmapped": "string[]"
+    },
+    "kind": "model",
+    "note": "",
+    "source": "frontend2"
+  },
+  "frontend2:NutrientBar": {
+    "entity": "NutrientBar",
+    "fields": {
+      "meal": "number",
+      "rdaMark": "number|null",
+      "supp": "number",
+      "ulMark": "number|null"
+    },
+    "kind": "model",
+    "note": "",
+    "source": "frontend2"
+  },
+  "frontend2:NutrientGauge": {
+    "entity": "NutrientGauge",
+    "fields": {
+      "rda": "number|null",
+      "ul": "number|null"
+    },
+    "kind": "model",
+    "note": "",
+    "source": "frontend2"
+  },
+  "frontend2:NutrientNote": {
+    "entity": "NutrientNote",
+    "fields": {
+      "body": "string",
+      "title": "string"
+    },
+    "kind": "model",
+    "note": "",
+    "source": "frontend2"
+  },
+  "frontend2:Product": {
+    "entity": "Product",
+    "fields": {
+      "items": "ProductItem[]",
+      "name": "string"
+    },
+    "kind": "model",
+    "note": "",
+    "source": "frontend2"
+  },
+  "frontend2:ProductItem": {
+    "entity": "ProductItem",
+    "fields": {
+      "amount": "number|string",
+      "name": "string",
+      "unit": "string"
+    },
+    "kind": "model",
+    "note": "",
+    "source": "frontend2"
+  },
+  "frontend2:Recommend": {
+    "entity": "Recommend",
+    "fields": {
+      "advice": "string",
+      "desc": "string",
+      "items": "RecommendItem[]",
+      "more": "number",
+      "moreText": "string",
+      "note": "string",
+      "title": "string"
+    },
+    "kind": "model",
+    "note": "",
+    "source": "frontend2"
+  },
+  "frontend2:RecommendItem": {
+    "entity": "RecommendItem",
+    "fields": {
+      "amount": "string",
+      "caution": "string",
+      "name": "string",
+      "reason": "string",
+      "tone": "Tone"
+    },
+    "kind": "model",
+    "note": "",
+    "source": "frontend2"
+  },
+  "frontend2:Report": {
+    "entity": "Report",
+    "fields": {
+      "badges": "Badge[]",
+      "cols": "number",
+      "exam": "ExamModel",
+      "hasSupp": "boolean",
+      "input": "AnalysisInput",
+      "issues": "Issue[]",
+      "mealOnly": "boolean",
+      "meta": "ReportMeta",
+      "nutrients": "Nutrient[]",
+      "recommend": "Recommend|null",
+      "summary": "Summary",
+      "worst": "Level"
+    },
+    "kind": "model",
+    "note": "",
+    "source": "frontend2"
+  },
+  "frontend2:ReportInfo": {
+    "entity": "ReportInfo",
+    "fields": {
+      "age": "string",
+      "chronic": "string[]",
+      "countMeal": "boolean",
+      "date": "string",
+      "examCount": "number",
+      "examOverall": "string",
+      "medCount": "number",
+      "meds": "string[]",
+      "name": "string",
+      "nutrientCount": "number",
+      "productCount": "number",
+      "products": "string[]",
+      "sex": "string"
+    },
+    "kind": "model",
+    "note": "",
+    "source": "frontend2"
+  },
+  "frontend2:ReportListItem": {
+    "entity": "ReportListItem",
+    "fields": {
+      "badges": "Badge[]",
+      "createdAt": "string",
+      "id": "string",
+      "info": "ReportInfo",
+      "summaryLine": "string",
+      "worst": "Level"
+    },
+    "kind": "model",
+    "note": "",
+    "source": "frontend2"
+  },
+  "frontend2:ReportMeta": {
+    "entity": "ReportMeta",
+    "fields": {
+      "engine": "string",
+      "generatedAt": "string",
+      "source": "'mock'|'server'"
+    },
+    "kind": "model",
+    "note": "",
+    "source": "frontend2"
+  },
+  "frontend2:ResponseStatus": {
+    "entity": "ResponseStatus",
+    "fields": {
+      "(값)": "'success'|'fail'|'blocked'"
+    },
+    "kind": "enum",
+    "note": "",
+    "source": "frontend2"
+  },
+  "frontend2:SessionUser": {
+    "entity": "SessionUser",
+    "fields": {
+      "email": "string",
+      "id": "string (optional)",
+      "name": "string"
+    },
+    "kind": "model",
+    "note": "",
+    "source": "frontend2"
+  },
+  "frontend2:Sex": {
+    "entity": "Sex",
+    "fields": {
+      "(값)": "''|'남성'|'여성'"
+    },
+    "kind": "enum",
+    "note": "",
+    "source": "frontend2"
+  },
+  "frontend2:StdListEntry": {
+    "entity": "StdListEntry",
+    "fields": {
+      "alias": "list",
+      "iu": "float",
+      "meal": "int",
+      "name": "str",
+      "rda": "int",
+      "ul": "int",
+      "ul_basis": "str",
+      "unit": "str"
+    },
+    "kind": "const",
+    "note": "standards.STD_LIST · 18종",
+    "source": "frontend2"
+  },
+  "frontend2:Summary": {
+    "entity": "Summary",
+    "fields": {
+      "chips": "Badge[]",
+      "text": "string"
+    },
+    "kind": "model",
+    "note": "",
+    "source": "frontend2"
+  },
+  "frontend2:TimeSeparatedSchedule": {
+    "entity": "TimeSeparatedSchedule",
+    "fields": {
+      "evening_PM": "string[]",
+      "morning_AM": "string[]"
+    },
+    "kind": "model",
+    "note": "",
+    "source": "frontend2"
+  },
+  "frontend2:Tone": {
+    "entity": "Tone",
+    "fields": {
+      "(값)": "'green'|'orange'|'red'|'crit'|'blue'|'gray'"
+    },
+    "kind": "enum",
+    "note": "",
+    "source": "frontend2"
+  },
+  "frontend2:UNITS": {
+    "entity": "UNITS",
+    "fields": {
+      "(값)": "['mg', 'µg', 'g', 'IU', 'mL', '억CFU']"
+    },
+    "kind": "enum",
+    "note": "standards.py",
+    "source": "frontend2"
+  },
+  "frontend2:UlViolation": {
+    "entity": "UlViolation",
+    "fields": {
+      "nutrient": "string",
+      "status": "'EXCEEDED'",
+      "total_intake": "number",
+      "ul_limit": "number"
+    },
+    "kind": "model",
+    "note": "",
+    "source": "frontend2"
+  },
+  "mcp-impl:calculate_dynamic_ri.signature": {
+    "entity": "calculate_dynamic_ri.signature",
+    "fields": {
+      "age": "int",
+      "gender": "str",
+      "target_nutrients": "list[str]",
+      "weight_kg": "float"
+    },
+    "kind": "signature",
+    "note": "main.py 실제 구현",
+    "source": "mcp-impl"
+  },
+  "mcp-impl:check_nutrient_interactions.signature": {
+    "entity": "check_nutrient_interactions.signature",
+    "fields": {
+      "nutrient_list": "list[str]"
+    },
+    "kind": "signature",
+    "note": "main.py 실제 구현",
+    "source": "mcp-impl"
+  },
+  "mcp-impl:compute_intake_coverage.signature": {
+    "entity": "compute_intake_coverage.signature",
+    "fields": {
+      "custom_ri": "dict",
+      "intake": "dict[str, float]"
+    },
+    "kind": "signature",
+    "note": "main.py 실제 구현",
+    "source": "mcp-impl"
+  },
+  "mcp-impl:fill_missing_profile.signature": {
+    "entity": "fill_missing_profile.signature",
+    "fields": {
+      "age": "int",
+      "current_intake": "dict[str, float] | None",
+      "gender": "str",
+      "target_nutrients": "list[str] | None",
+      "weight_kg": "float | None"
+    },
+    "kind": "signature",
+    "note": "main.py 실제 구현",
+    "source": "mcp-impl"
+  },
+  "mcp-impl:normalize_medical_data.signature": {
+    "entity": "normalize_medical_data.signature",
+    "fields": {
+      "raw_lab_results": "list[dict]"
+    },
+    "kind": "signature",
+    "note": "main.py 실제 구현",
+    "source": "mcp-impl"
+  },
+  "mcp-impl:resolve_nutrient_codes.signature": {
+    "entity": "resolve_nutrient_codes.signature",
+    "fields": {
+      "names": "list[str]"
+    },
+    "kind": "signature",
+    "note": "main.py 실제 구현",
+    "source": "mcp-impl"
+  },
+  "mcp-impl:search_evidence.signature": {
+    "entity": "search_evidence.signature",
+    "fields": {
+      "k": "int",
+      "nutrient_code": "str | None",
+      "query": "str"
+    },
+    "kind": "signature",
+    "note": "main.py 실제 구현",
+    "source": "mcp-impl"
+  },
+  "mcp-impl:search_products.signature": {
+    "entity": "search_products.signature",
+    "fields": {
+      "filters": "dict | None",
+      "target_nutrients": "list[str]"
+    },
+    "kind": "signature",
+    "note": "main.py 실제 구현",
+    "source": "mcp-impl"
+  },
+  "mcp-impl:validate_ul_guardrail.signature": {
+    "entity": "validate_ul_guardrail.signature",
+    "fields": {
+      "age": "int",
+      "current_supps_intake": "dict[str, float]",
+      "diet_estimated_intake": "dict[str, float]",
+      "gender": "str",
+      "proposed_supps_intake": "dict[str, float]",
+      "weight_kg": "float"
+    },
+    "kind": "signature",
+    "note": "main.py 실제 구현",
+    "source": "mcp-impl"
+  },
+  "mcp:calculate_dynamic_ri.input": {
+    "entity": "calculate_dynamic_ri.input",
+    "fields": {
+      "age": "integer *필수",
+      "gender": "string enum=['male', 'female'] *필수",
+      "target_nutrients": "array of string *필수",
+      "weight_kg": "number *필수"
+    },
+    "kind": "JSONSchema",
+    "note": "",
+    "source": "mcp"
+  },
+  "mcp:calculate_dynamic_ri.output": {
+    "entity": "calculate_dynamic_ri.output",
+    "fields": {
+      "custom_ri": "object (map→object) *필수"
+    },
+    "kind": "JSONSchema",
+    "note": "",
+    "source": "mcp"
+  },
+  "mcp:check_nutrient_interactions.input": {
+    "entity": "check_nutrient_interactions.input",
+    "fields": {
+      "nutrient_list": "array of string *필수"
+    },
+    "kind": "JSONSchema",
+    "note": "",
+    "source": "mcp"
+  },
+  "mcp:check_nutrient_interactions.output": {
+    "entity": "check_nutrient_interactions.output",
+    "fields": {
+      "cautions": "array of string *필수",
+      "conflicts_found": "boolean *필수",
+      "time_separated_schedule": "object *필수",
+      "time_separated_schedule.evening_PM": "array of string",
+      "time_separated_schedule.morning_AM": "array of string"
+    },
+    "kind": "JSONSchema",
+    "note": "",
+    "source": "mcp"
+  },
+  "mcp:compute_intake_coverage.input": {
+    "entity": "compute_intake_coverage.input",
+    "fields": {
+      "custom_ri": "object (map→number) *필수",
+      "intake": "object (map→number) *필수"
+    },
+    "kind": "JSONSchema",
+    "note": "",
+    "source": "mcp"
+  },
+  "mcp:compute_intake_coverage.output": {
+    "entity": "compute_intake_coverage.output",
+    "fields": {
+      "coverage": "object (map→object) *필수"
+    },
+    "kind": "JSONSchema",
+    "note": "",
+    "source": "mcp"
+  },
+  "mcp:fill_missing_profile.input": {
+    "entity": "fill_missing_profile.input",
+    "fields": {
+      "age": "integer *필수",
+      "current_intake": "object (map→number)",
+      "gender": "string enum=['male', 'female'] *필수",
+      "target_nutrients": "array of string",
+      "weight_kg": "number"
+    },
+    "kind": "JSONSchema",
+    "note": "",
+    "source": "mcp"
+  },
+  "mcp:fill_missing_profile.output": {
+    "entity": "fill_missing_profile.output",
+    "fields": {
+      "advisory": "array of string *필수",
+      "filled": "object *필수",
+      "filled.current_intake": "object (map→number)",
+      "filled.weight_kg": "number"
+    },
+    "kind": "JSONSchema",
+    "note": "",
+    "source": "mcp"
+  },
+  "mcp:normalize_medical_data.input": {
+    "entity": "normalize_medical_data.input",
+    "fields": {
+      "raw_lab_results": "array *필수",
+      "raw_lab_results[].test_name": "string",
+      "raw_lab_results[].unit": "string",
+      "raw_lab_results[].value": "number"
+    },
+    "kind": "JSONSchema",
+    "note": "",
+    "source": "mcp"
+  },
+  "mcp:normalize_medical_data.output": {
+    "entity": "normalize_medical_data.output",
+    "fields": {
+      "results": "array *필수",
+      "results[].flag": "string enum=['low', 'normal', 'high']",
+      "results[].test_name": "string",
+      "results[].unit": "string",
+      "results[].value": "number"
+    },
+    "kind": "JSONSchema",
+    "note": "",
+    "source": "mcp"
+  },
+  "mcp:resolve_nutrient_codes.input": {
+    "entity": "resolve_nutrient_codes.input",
+    "fields": {
+      "names": "array of string *필수"
+    },
+    "kind": "JSONSchema",
+    "note": "",
+    "source": "mcp"
+  },
+  "mcp:resolve_nutrient_codes.output": {
+    "entity": "resolve_nutrient_codes.output",
+    "fields": {
+      "resolved": "array *필수",
+      "resolved[].confidence": "string enum=['exact', 'synonym', 'none']",
+      "resolved[].input": "string",
+      "resolved[].matched_synonym": "string|null",
+      "resolved[].nutrient_code": "string|null"
+    },
+    "kind": "JSONSchema",
+    "note": "",
+    "source": "mcp"
+  },
+  "mcp:search_evidence.input": {
+    "entity": "search_evidence.input",
+    "fields": {
+      "k": "integer",
+      "nutrient_code": "string",
+      "query": "string *필수"
+    },
+    "kind": "JSONSchema",
+    "note": "",
+    "source": "mcp"
+  },
+  "mcp:search_evidence.output": {
+    "entity": "search_evidence.output",
+    "fields": {
+      "chunks": "array *필수",
+      "chunks[].citation": "string|null",
+      "chunks[].content": "string",
+      "chunks[].source": "string|null",
+      "chunks[].url": "string|null"
+    },
+    "kind": "JSONSchema",
+    "note": "",
+    "source": "mcp"
+  },
+  "mcp:search_products.input": {
+    "entity": "search_products.input",
+    "fields": {
+      "filters": "object",
+      "filters.exclude": "array of string",
+      "filters.form": "string",
+      "target_nutrients": "array of string *필수"
+    },
+    "kind": "JSONSchema",
+    "note": "",
+    "source": "mcp"
+  },
+  "mcp:search_products.output": {
+    "entity": "search_products.output",
+    "fields": {
+      "products": "array *필수",
+      "products[].brand": "string|null",
+      "products[].form": "string|null",
+      "products[].label_id": "integer",
+      "products[].nutrients": "object (map→number)",
+      "products[].product_name": "string"
+    },
+    "kind": "JSONSchema",
+    "note": "",
+    "source": "mcp"
+  },
+  "mcp:validate_ul_guardrail.input": {
+    "entity": "validate_ul_guardrail.input",
+    "fields": {
+      "age": "integer *필수",
+      "current_supps_intake": "object (map→number) *필수",
+      "diet_estimated_intake": "object (map→number) *필수",
+      "gender": "string enum=['male', 'female'] *필수",
+      "proposed_supps_intake": "object (map→number) *필수",
+      "weight_kg": "number *필수"
+    },
+    "kind": "JSONSchema",
+    "note": "",
+    "source": "mcp"
+  },
+  "mcp:validate_ul_guardrail.output": {
+    "entity": "validate_ul_guardrail.output",
+    "fields": {
+      "approved_recommendations": "array of object *필수",
+      "is_safe": "boolean *필수",
+      "ul_violations": "array *필수",
+      "ul_violations[].nutrient": "string",
+      "ul_violations[].status": "string const=EXCEEDED",
+      "ul_violations[].total_intake": "number",
+      "ul_violations[].ul_limit": "number"
+    },
+    "kind": "JSONSchema",
+    "note": "",
+    "source": "mcp"
+  }
+}
