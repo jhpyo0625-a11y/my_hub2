@@ -119,6 +119,16 @@ async def call_agent(path: str, fields: dict, timeout: float, file=None) -> dict
     except ValueError:
         raise HTTPException(502, "분석 서버가 알 수 없는 형식으로 응답했습니다.")
 
+    # 'blocked' 는 에이전트의 안전 가드레일(agent/guardrails)이 리포트 제공을
+    # 막았다는 뜻입니다. 실패와 달리 **다시 시도해도 같은 결과**이므로,
+    # 에이전트가 준 안내 문구를 그대로 사용자에게 전달합니다.
+    # 이 응답에는 data 가 없어서, 그냥 통과시키면 빈 리포트가 되어 엉뚱한
+    # 서버 오류처럼 보입니다.
+    if body.get("status") == "blocked":
+        raise HTTPException(400, (body.get("message") or "").strip()
+                            or "안전 검증에서 문제가 발견되어 리포트를 제공할 수 없습니다. "
+                               "전문가와 상담하시기를 권장드립니다.")
+
     if body.get("status") == "fail":
         msg = (body.get("message") or "").strip()
         # 에이전트가 파이썬 예외를 그대로 문자열로 내보내는 경우가 있습니다
