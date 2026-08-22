@@ -13,7 +13,9 @@ from graph.workflow import graph
 
 from guardrails.harness import GuardViolation
 from nodes.compliance import DISCLAIMER
+from dotenv import load_dotenv
 
+load_dotenv()
 
 app = FastAPI(
     title="AI 영양제 추천 서비스 API",
