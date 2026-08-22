@@ -1,0 +1,146 @@
+{
+  "비타민 A": {
+    "unit": "µg",
+    "rda": 700,
+    "ul": 3000,
+    "meal": 500,
+    "iu": 0.3,
+    "ul_basis": null
+  },
+  "비타민 B1": {
+    "unit": "mg",
+    "rda": 1.2,
+    "ul": null,
+    "meal": 1.1,
+    "iu": null,
+    "ul_basis": null
+  },
+  "비타민 B2": {
+    "unit": "mg",
+    "rda": 1.4,
+    "ul": null,
+    "meal": 1.3,
+    "iu": null,
+    "ul_basis": null
+  },
+  "나이아신": {
+    "unit": "mg",
+    "rda": 15,
+    "ul": 35,
+    "meal": 15,
+    "iu": null,
+    "ul_basis": "supp"
+  },
+  "비타민 B6": {
+    "unit": "mg",
+    "rda": 1.5,
+    "ul": 100,
+    "meal": 1.6,
+    "iu": null,
+    "ul_basis": null
+  },
+  "엽산": {
+    "unit": "µg",
+    "rda": 400,
+    "ul": 1000,
+    "meal": 300,
+    "iu": null,
+    "ul_basis": "supp"
+  },
+  "비타민 B12": {
+    "unit": "µg",
+    "rda": 2.4,
+    "ul": null,
+    "meal": 4,
+    "iu": null,
+    "ul_basis": null
+  },
+  "비타민 C": {
+    "unit": "mg",
+    "rda": 100,
+    "ul": 2000,
+    "meal": 65,
+    "iu": null,
+    "ul_basis": null
+  },
+  "비타민 D": {
+    "unit": "µg",
+    "rda": 10,
+    "ul": 100,
+    "meal": 3,
+    "iu": 0.025,
+    "ul_basis": null
+  },
+  "비타민 E": {
+    "unit": "mg",
+    "rda": 12,
+    "ul": 540,
+    "meal": 9,
+    "iu": 0.67,
+    "ul_basis": null
+  },
+  "비타민 K": {
+    "unit": "µg",
+    "rda": 70,
+    "ul": null,
+    "meal": 90,
+    "iu": null,
+    "ul_basis": null
+  },
+  "칼슘": {
+    "unit": "mg",
+    "rda": 800,
+    "ul": 2500,
+    "meal": 490,
+    "iu": null,
+    "ul_basis": null
+  },
+  "마그네슘": {
+    "unit": "mg",
+    "rda": 350,
+    "ul": 350,
+    "meal": 280,
+    "iu": null,
+    "ul_basis": "supp"
+  },
+  "철": {
+    "unit": "mg",
+    "rda": 12,
+    "ul": 45,
+    "meal": 9,
+    "iu": null,
+    "ul_basis": null
+  },
+  "아연": {
+    "unit": "mg",
+    "rda": 10,
+    "ul": 35,
+    "meal": 8,
+    "iu": null,
+    "ul_basis": null
+  },
+  "셀레늄": {
+    "unit": "µg",
+    "rda": 60,
+    "ul": 400,
+    "meal": 55,
+    "iu": null,
+    "ul_basis": null
+  },
+  "오메가3": {
+    "unit": "mg",
+    "rda": 1000,
+    "ul": null,
+    "meal": 320,
+    "iu": null,
+    "ul_basis": null
+  },
+  "루테인": {
+    "unit": "mg",
+    "rda": 10,
+    "ul": 20,
+    "meal": 1,
+    "iu": null,
+    "ul_basis": null
+  }
+}

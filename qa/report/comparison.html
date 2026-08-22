@@ -1,0 +1,419 @@
+<title>영양 리포트 품질 점검</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+:root{
+  --ground:#FBFCFE;
+  --panel:#FFFFFF;
+  --panel-2:#F3F6FB;
+  --ink:#16202E;
+  --ink-2:#41505F;
+  --muted:#6B7A8C;
+  --line:#DDE5EF;
+  --line-2:#C6D3E3;
+  --accent:#16478A;
+  --accent-soft:#E7EFFA;
+  --pass:#0F7355;
+  --pass-soft:#E3F3ED;
+  --fail:#B3261E;
+  --fail-soft:#FBE9E7;
+  --warn:#A05A08;
+  --warn-soft:#FBF0DF;
+  --shadow:0 1px 2px rgba(22,32,46,.05), 0 8px 24px -18px rgba(22,32,46,.35);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0E141C;
+    --panel:#151D28;
+    --panel-2:#1B2531;
+    --ink:#E7EDF5;
+    --ink-2:#B4C1D0;
+    --muted:#8494A6;
+    --line:#26313F;
+    --line-2:#33404F;
+    --accent:#7FAEEB;
+    --accent-soft:#1B2A3E;
+    --pass:#57C79E;
+    --pass-soft:#142C25;
+    --fail:#F2887F;
+    --fail-soft:#33191A;
+    --warn:#E0A960;
+    --warn-soft:#2E2314;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -18px rgba(0,0,0,.8);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0E141C;
+  --panel:#151D28;
+  --panel-2:#1B2531;
+  --ink:#E7EDF5;
+  --ink-2:#B4C1D0;
+  --muted:#8494A6;
+  --line:#26313F;
+  --line-2:#33404F;
+  --accent:#7FAEEB;
+  --accent-soft:#1B2A3E;
+  --pass:#57C79E;
+  --pass-soft:#142C25;
+  --fail:#F2887F;
+  --fail-soft:#33191A;
+  --warn:#E0A960;
+  --warn-soft:#2E2314;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -18px rgba(0,0,0,.8);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--ground);
+  color:var(--ink);
+  font:400 15px/1.75 "IBM Plex Sans KR", system-ui, "Malgun Gothic", sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:940px;margin:0 auto;padding:56px 24px 96px;display:flex;flex-direction:column;gap:0}
+
+/* ---- 머리말 ---- */
+.eyebrow{
+  font:600 11.5px/1 "IBM Plex Mono", monospace;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--accent);
+}
+h1{
+  font:700 clamp(28px,4.4vw,40px)/1.22 "IBM Plex Sans KR", sans-serif;
+  letter-spacing:-.02em;margin:14px 0 0;text-wrap:balance;
+}
+.lede{font-size:16.5px;color:var(--ink-2);max-width:62ch;margin:14px 0 0}
+.meta{
+  display:flex;flex-wrap:wrap;gap:8px;margin-top:22px;
+  font:500 12px/1 "IBM Plex Mono", monospace;color:var(--muted);
+}
+.meta span{background:var(--panel-2);border:1px solid var(--line);border-radius:999px;padding:7px 12px}
+
+/* ---- 핵심 결론 ---- */
+.verdict{
+  margin-top:36px;background:var(--panel);border:1px solid var(--line);
+  border-left:3px solid var(--accent);border-radius:4px;
+  padding:24px 26px;box-shadow:var(--shadow);
+}
+.verdict p{margin:0;font-size:16px;color:var(--ink)}
+.verdict p + p{margin-top:10px;color:var(--ink-2);font-size:15px}
+.verdict b{color:var(--accent)}
+
+/* ---- 섹션 ---- */
+section{margin-top:56px}
+.sec-head{display:flex;align-items:baseline;gap:12px;padding-bottom:12px;border-bottom:1px solid var(--line-2)}
+.sec-num{
+  font:600 12px/1 "IBM Plex Mono", monospace;color:var(--accent);
+  background:var(--accent-soft);border-radius:3px;padding:6px 8px;flex:none;
+}
+h2{font:600 20px/1.35 "IBM Plex Sans KR", sans-serif;margin:0;letter-spacing:-.01em}
+.sec-sub{margin:14px 0 0;color:var(--ink-2)}
+h3{font:600 15px/1.4 "IBM Plex Sans KR", sans-serif;margin:30px 0 12px}
+
+/* ---- 지표 ---- */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:22px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:5px;padding:18px 18px 16px}
+.stat-k{font:500 11.5px/1 "IBM Plex Mono", monospace;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.stat-v{font:600 27px/1.15 "IBM Plex Mono", monospace;margin-top:10px;font-variant-numeric:tabular-nums}
+.stat-n{font-size:13px;color:var(--ink-2);margin-top:6px}
+.stat.good .stat-v{color:var(--pass)}
+.stat.bad  .stat-v{color:var(--fail)}
+
+/* ---- 표 ---- */
+.scroll{overflow-x:auto;margin-top:20px;border:1px solid var(--line);border-radius:5px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:520px}
+th,td{padding:11px 14px;text-align:left;border-bottom:1px solid var(--line)}
+th{
+  background:var(--panel-2);font:600 11.5px/1.4 "IBM Plex Mono", monospace;
+  letter-spacing:.05em;text-transform:uppercase;color:var(--muted);white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.num{font-family:"IBM Plex Mono", monospace;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tag{
+  display:inline-block;font:600 11px/1 "IBM Plex Mono", monospace;
+  padding:5px 8px;border-radius:3px;white-space:nowrap;
+}
+.tag.pass{background:var(--pass-soft);color:var(--pass)}
+.tag.fail{background:var(--fail-soft);color:var(--fail)}
+.tag.warn{background:var(--warn-soft);color:var(--warn)}
+
+/* ---- 전후 비교 ---- */
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:22px}
+@media (max-width:680px){.ba{grid-template-columns:1fr}}
+.ba-col{background:var(--panel);border:1px solid var(--line);border-radius:5px;overflow:hidden}
+.ba-col.after{border-color:var(--pass)}
+.ba-head{
+  padding:12px 16px;border-bottom:1px solid var(--line);
+  font:600 11.5px/1 "IBM Plex Mono", monospace;letter-spacing:.08em;text-transform:uppercase;
+}
+.ba-col.before .ba-head{background:var(--fail-soft);color:var(--fail)}
+.ba-col.after  .ba-head{background:var(--pass-soft);color:var(--pass)}
+.ba-body{padding:16px}
+.ba-body ul{margin:0;padding-left:18px;font-size:13.5px;color:var(--ink-2)}
+.ba-body li{margin:5px 0}
+.ba-body .none{color:var(--muted);font-style:italic;font-size:13.5px;margin:0}
+
+/* ---- 인용 ---- */
+.quote{
+  margin:20px 0 0;padding:16px 18px;background:var(--panel-2);
+  border:1px solid var(--line);border-radius:5px;
+  font-size:13.5px;color:var(--ink-2);
+}
+.quote b{color:var(--fail);font-weight:600}
+code{
+  font:500 12.5px/1.5 "IBM Plex Mono", monospace;
+  background:var(--panel-2);border:1px solid var(--line);
+  border-radius:3px;padding:1px 5px;
+}
+.note{margin-top:16px;font-size:13.5px;color:var(--muted)}
+footer{
+  margin-top:64px;padding-top:20px;border-top:1px solid var(--line);
+  font-size:12.5px;color:var(--muted);
+}
+</style>
+
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">테스트 시나리오 · 품질 점검 · 개선</div>
+    <h1>영양 리포트 품질 점검</h1>
+    <p class="lede">
+      실제 검진표에 나올 법한 케이스 4개를 만들어 리포트가 어떻게 나오는지 확인했습니다.
+      판정 로직은 정확했지만, 그 판정이 화면까지 도달하지 않고 있었습니다.
+    </p>
+    <div class="meta">
+      <span>케이스 4개</span>
+      <span>검증 68항목</span>
+      <span>대상 · frontend2 판정 엔진</span>
+    </div>
+  </header>
+
+  <div class="verdict">
+    <p>판정 정확성은 <b>68/68 전 항목 통과</b>입니다. 계산이 틀린 곳은 없었습니다.</p>
+    <p>문제는 다른 곳에 있었습니다. 사용자가 입력한 영양제·복용 약·검진 수치가
+       리포트에 <b>전혀 반영되지 않고</b> 있었습니다. 와파린과 오메가3를 함께
+       적어도 출혈 주의 안내가 화면에 나오지 않았습니다.</p>
+  </div>
+
+  <!-- 1 -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-num">01</span>
+      <h2>테스트 시나리오</h2>
+    </div>
+    <p class="sec-sub">
+      입력 규격(<code>inputData.js</code>)을 기준으로 4개를 만들었습니다.
+      값은 실제 검진표에 나올 법한 조합이되, 4개가 서로 다른 판정 경로를
+      밟도록 제약을 걸었습니다. 정상 범위에만 몰린 케이스는 그럴듯해 보여도
+      판정 로직을 거의 지나가지 않기 때문입니다.
+    </p>
+
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>케이스</th><th>페르소나</th><th>확인하려는 것</th><th>채점</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>case1</td>
+            <td>45세 여성 · 검진 정상 · 영양제 없음</td>
+            <td>최소 입력만으로 결과가 나오는가</td>
+            <td class="num"><span class="tag pass">21/21</span></td>
+          </tr>
+          <tr>
+            <td>case2</td>
+            <td>58세 남성 · 대사증후군 · 영양제 3종</td>
+            <td>상한 초과와 제품 간 성분 중복</td>
+            <td class="num"><span class="tag pass">19/19</span></td>
+          </tr>
+          <tr>
+            <td>case3</td>
+            <td>62세 여성 · 와파린 복용</td>
+            <td>약과 성분이 부딪히는지</td>
+            <td class="num"><span class="tag pass">14/14</span></td>
+          </tr>
+          <tr>
+            <td>case4</td>
+            <td>35세 남성 · 일부 항목 미측정</td>
+            <td>경계값 · 결측 · 단위 환산 실패</td>
+            <td class="num"><span class="tag pass">14/14</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>검토 과정에서 바로잡은 것</h3>
+    <p class="sec-sub">
+      엔진을 돌리기 전에 기준값을 보고 정답을 손으로 계산해 두었습니다.
+      그 결과 <b>제가 적어둔 정답 3건이 틀렸고, 엔진이 맞았습니다.</b>
+    </p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>항목</th><th>제 초안</th><th>실제</th><th>사유</th></tr></thead>
+        <tbody>
+          <tr><td>case3 칼슘</td><td class="num">low</td><td class="num">met</td>
+              <td>500 + 식사 490 = 990 ≥ 권장 800</td></tr>
+          <tr><td>case4 BMI</td><td class="num">B</td><td class="num">A</td>
+              <td>76 ÷ 1.78² = 23.99 로 정상 범위</td></tr>
+          <tr><td>case4 미등록 성분</td><td>환산 실패로 분류</td><td>기준 없음으로 분류</td>
+              <td>이름을 모르는 것과 양을 환산 못 한 것은 다른 상태</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">
+      세 번째 항목 덕분에 “기준표에 없는 성분이 조용히 사라지지 않는다”는 점을
+      확인했고, 이를 별도 검증 항목으로 추가했습니다.
+    </p>
+  </section>
+
+  <!-- 2 -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-num">02</span>
+      <h2>품질 확인 결과</h2>
+    </div>
+    <p class="sec-sub">
+      판정은 정확했습니다. 그래서 같은 케이스로 <em>입력한 것 중 얼마나
+      리포트에 쓰이는지</em>를 셌더니, 여기서 문제가 드러났습니다.
+    </p>
+
+    <div class="stats">
+      <div class="stat good">
+        <div class="stat-k">판정 정확성</div>
+        <div class="stat-v">68 / 68</div>
+        <div class="stat-n">계산 오류 없음</div>
+      </div>
+      <div class="stat bad">
+        <div class="stat-k">입력 반영률</div>
+        <div class="stat-v">14–21%</div>
+        <div class="stat-n">나머지는 버려짐</div>
+      </div>
+      <div class="stat bad">
+        <div class="stat-k">놓친 안내</div>
+        <div class="stat-v">29건</div>
+        <div class="stat-n">상한 3 · 점검 10 · 검진 16</div>
+      </div>
+    </div>
+
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>케이스</th><th>입력 항목</th><th>리포트에 전달</th><th>반영률</th><th>버려지는 것</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>case1</td><td class="num">22</td><td class="num">4</td>
+              <td class="num"><span class="tag warn">18%</span></td><td>검진 17</td></tr>
+          <tr><td>case2</td><td class="num">29</td><td class="num">4</td>
+              <td class="num"><span class="tag fail">14%</span></td><td>검진 17 · 성분 6 · 질환 1</td></tr>
+          <tr><td>case3</td><td class="num">27</td><td class="num">4</td>
+              <td class="num"><span class="tag fail">15%</span></td><td>검진 18 · 성분 3 · 약 1</td></tr>
+          <tr><td>case4</td><td class="num">19</td><td class="num">4</td>
+              <td class="num"><span class="tag warn">21%</span></td><td>검진 8 · 성분 5</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="note">
+      원인은 구조적입니다. 결과보기를 처리하는 분석 서버가 받는 값은
+      이름·나이·성별·체중 네 가지뿐이라, 영양제·약·검진 수치를 실어 보낼
+      자리가 아예 없습니다.
+    </p>
+
+    <div class="quote">
+      case3 에서 사용자는 <b>와파린</b>을 복용 중이라고 적었고
+      <b>오메가3</b>와 <b>비타민 K</b>를 먹는다고 입력했습니다.
+      판정 엔진은 출혈 주의와 복약 주의를 정확히 찾아냈지만,
+      그 경고는 <b>화면에 표시되지 않았습니다.</b>
+      사용자에게는 “경고가 없다”로 읽힙니다.
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-num">03</span>
+      <h2>개선</h2>
+    </div>
+    <p class="sec-sub">
+      판정 결과는 이미 서버 응답 안에 함께 들어 있었습니다. 화면이 그리지
+      않고 버리고 있었을 뿐입니다. 그래서 분석 서버 리포트는 그대로 두고,
+      그 아래에 <strong>“입력하신 영양제 · 약 · 검진 결과로 확인한 내용”</strong>
+      구역을 덧붙였습니다.
+    </p>
+    <p class="note">
+      새로 호출하는 API 도, 새로 계산하는 값도 없습니다. 이미 받아 둔
+      데이터를 보여주기만 합니다. 분석 서버가 보낸 리포트는 손대지 않으므로
+      되돌리기도 쉽습니다.
+    </p>
+  </section>
+
+  <!-- 4 -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-num">04</span>
+      <h2>개선 전후</h2>
+    </div>
+    <p class="sec-sub">case3 · 62세 여성 · 와파린 복용 중 — 같은 입력, 같은 분석 결과</p>
+
+    <div class="ba">
+      <div class="ba-col before">
+        <div class="ba-head">개선 전 — 화면에 보이는 것</div>
+        <div class="ba-body">
+          <ul>
+            <li>맞춤 권장 섭취량 (4줄)</li>
+            <li>복용 시간</li>
+            <li>추천 제품 — 없음</li>
+          </ul>
+          <p class="none">복약 주의 · 출혈 주의 · 골밀도 이상 — 표시 안 됨</p>
+        </div>
+      </div>
+      <div class="ba-col after">
+        <div class="ba-head">개선 후 — 화면에 보이는 것</div>
+        <div class="ba-body">
+          <ul>
+            <li>맞춤 권장 섭취량 (4줄)</li>
+            <li>복용 시간</li>
+            <li>추천 제품 — 없음</li>
+            <li><strong>복약 주의</strong> — 와파린 ↔ 비타민 K</li>
+            <li><strong>출혈 주의</strong> — 와파린 ↔ 오메가3</li>
+            <li><strong>검진 이상 2건</strong></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>화면에 표시되는 안내</th><th>개선 전</th><th>개선 후</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>상한 초과 경고</td>
+              <td class="num"><span class="tag fail">0 / 3</span></td>
+              <td class="num"><span class="tag pass">3 / 3</span></td></tr>
+          <tr><td>상호작용 · 성분 중복 점검</td>
+              <td class="num"><span class="tag fail">0 / 10</span></td>
+              <td class="num"><span class="tag pass">10 / 10</span></td></tr>
+          <tr><td>검진 이상 소견</td>
+              <td class="num"><span class="tag fail">0 / 16</span></td>
+              <td class="num"><span class="tag pass">16 / 16</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>남은 과제</h3>
+    <p class="sec-sub">
+      이번 개선은 <em>이미 계산된 결과를 보여주는</em> 것까지입니다.
+      분석 서버가 영양제·약·검진을 받아 <em>스스로 판단</em>하게 하려면
+      <code>/api/v1/recommend</code> 에 입력 항목을 늘려야 하고,
+      이는 분석 서버 쪽 작업입니다.
+    </p>
+  </section>
+
+  <footer>
+    검증 스크립트와 케이스는 <code>qa/</code> 폴더에 있습니다 ·
+    <code>python qa/run_local.py</code> 로 재현할 수 있습니다
+  </footer>
+
+</div>

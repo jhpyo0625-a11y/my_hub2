@@ -1,0 +1,1731 @@
+{
+  "meta": {
+    "generatedAt": "2026-08-22T05:04:30.931846Z",
+    "source": "server",
+    "engine": "python (예시 기준값)"
+  },
+  "input": {
+    "name": "정우석",
+    "age": "35",
+    "sex": "남성",
+    "date": "2026-06-01",
+    "countMeal": true,
+    "exam": {
+      "height": "178",
+      "weight": "76",
+      "waist": "86",
+      "glu": "100",
+      "tc": "205",
+      "hdl": "52",
+      "ast": "30",
+      "alt": "33",
+      "upro": "약양성(±)"
+    },
+    "chronic": [],
+    "meds": [],
+    "products": [
+      {
+        "name": "마그네슘 350",
+        "items": [
+          {
+            "name": "마그네슘",
+            "amount": 350,
+            "unit": "mg"
+          }
+        ]
+      },
+      {
+        "name": "엽산 1000",
+        "items": [
+          {
+            "name": "엽산",
+            "amount": 1000,
+            "unit": "µg"
+          }
+        ]
+      },
+      {
+        "name": "눈에 좋은 비타민A",
+        "items": [
+          {
+            "name": "비타민 A",
+            "amount": 10000,
+            "unit": "IU"
+          }
+        ]
+      },
+      {
+        "name": "장에 좋은 유산균",
+        "items": [
+          {
+            "name": "코엔자임Q10",
+            "amount": 100,
+            "unit": "mg"
+          },
+          {
+            "name": "프로바이오틱스",
+            "amount": 100,
+            "unit": "억CFU"
+          }
+        ]
+      }
+    ]
+  },
+  "hasSupp": true,
+  "mealOnly": false,
+  "cols": 4,
+  "worst": "over",
+  "badges": [
+    {
+      "text": "정상B(경계)",
+      "tone": "orange"
+    },
+    {
+      "text": "영양제 4종",
+      "tone": "green"
+    },
+    {
+      "text": "성분 상한 초과",
+      "tone": "red"
+    },
+    {
+      "text": "보충 권장 6",
+      "tone": "blue"
+    }
+  ],
+  "exam": {
+    "groups": [
+      {
+        "group": "폐결핵·기타흉부질환",
+        "rows": [
+          {
+            "key": "cxr",
+            "name": "흉부방사선촬영",
+            "ref": "정상",
+            "value": "—",
+            "judge": {
+              "code": "",
+              "text": "미입력",
+              "tone": "gray"
+            }
+          }
+        ]
+      },
+      {
+        "group": "고혈압",
+        "rows": [
+          {
+            "key": "bp",
+            "name": "혈압",
+            "ref": "120/80 미만",
+            "value": "—",
+            "judge": {
+              "code": "",
+              "text": "미입력",
+              "tone": "gray"
+            }
+          }
+        ]
+      },
+      {
+        "group": "비만",
+        "rows": [
+          {
+            "key": "bmi",
+            "name": "체질량지수(BMI)",
+            "ref": "18.5~24.9",
+            "value": "24.0 kg/m²",
+            "judge": {
+              "code": "A",
+              "text": "정상A",
+              "tone": "green"
+            }
+          },
+          {
+            "key": "waist",
+            "name": "허리둘레",
+            "ref": "90 미만",
+            "value": "86 cm",
+            "judge": {
+              "code": "A",
+              "text": "정상A",
+              "tone": "green"
+            }
+          }
+        ]
+      },
+      {
+        "group": "빈혈",
+        "rows": [
+          {
+            "key": "hb",
+            "name": "혈색소",
+            "ref": "13.0~16.5",
+            "value": "—",
+            "judge": {
+              "code": "",
+              "text": "미입력",
+              "tone": "gray"
+            }
+          }
+        ]
+      },
+      {
+        "group": "당뇨병",
+        "rows": [
+          {
+            "key": "glu",
+            "name": "공복혈당",
+            "ref": "100 미만",
+            "value": "100 mg/dL",
+            "judge": {
+              "code": "B",
+              "text": "경계",
+              "tone": "orange"
+            }
+          }
+        ]
+      },
+      {
+        "group": "이상지질혈증",
+        "rows": [
+          {
+            "key": "tc",
+            "name": "총콜레스테롤",
+            "ref": "200 미만",
+            "value": "205 mg/dL",
+            "judge": {
+              "code": "B",
+              "text": "경계",
+              "tone": "orange"
+            }
+          },
+          {
+            "key": "hdl",
+            "name": "HDL 콜레스테롤",
+            "ref": "60 이상",
+            "value": "52 mg/dL",
+            "judge": {
+              "code": "B",
+              "text": "경계",
+              "tone": "orange"
+            }
+          },
+          {
+            "key": "tg",
+            "name": "중성지방",
+            "ref": "150 미만",
+            "value": "—",
+            "judge": {
+              "code": "",
+              "text": "미입력",
+              "tone": "gray"
+            }
+          },
+          {
+            "key": "ldl",
+            "name": "LDL 콜레스테롤",
+            "ref": "130 미만",
+            "value": "—",
+            "judge": {
+              "code": "",
+              "text": "미입력",
+              "tone": "gray"
+            }
+          }
+        ]
+      },
+      {
+        "group": "간장질환",
+        "rows": [
+          {
+            "key": "ast",
+            "name": "AST(SGOT)",
+            "ref": "40 이하",
+            "value": "30 U/L",
+            "judge": {
+              "code": "A",
+              "text": "정상A",
+              "tone": "green"
+            }
+          },
+          {
+            "key": "alt",
+            "name": "ALT(SGPT)",
+            "ref": "35 이하",
+            "value": "33 U/L",
+            "judge": {
+              "code": "A",
+              "text": "정상A",
+              "tone": "green"
+            }
+          },
+          {
+            "key": "ggt",
+            "name": "γ-GTP",
+            "ref": "11~63",
+            "value": "—",
+            "judge": {
+              "code": "",
+              "text": "미입력",
+              "tone": "gray"
+            }
+          }
+        ]
+      },
+      {
+        "group": "신장질환",
+        "rows": [
+          {
+            "key": "upro",
+            "name": "요단백",
+            "ref": "음성(-)",
+            "value": "약양성(±)",
+            "judge": {
+              "code": "B",
+              "text": "경계",
+              "tone": "orange"
+            }
+          },
+          {
+            "key": "cr",
+            "name": "혈청크레아티닌",
+            "ref": "1.5 이하",
+            "value": "—",
+            "judge": {
+              "code": "",
+              "text": "미입력",
+              "tone": "gray"
+            }
+          },
+          {
+            "key": "egfr",
+            "name": "신사구체여과율(e-GFR)",
+            "ref": "60 이상",
+            "value": "—",
+            "judge": {
+              "code": "",
+              "text": "미입력",
+              "tone": "gray"
+            }
+          }
+        ]
+      },
+      {
+        "group": "골다공증",
+        "rows": [
+          {
+            "key": "tscore",
+            "name": "골밀도 T-score",
+            "ref": "-1 이상",
+            "value": "—",
+            "judge": {
+              "code": "",
+              "text": "미입력",
+              "tone": "gray"
+            }
+          },
+          {
+            "key": "bmd",
+            "name": "골밀도(정량)",
+            "ref": "120 초과",
+            "value": "—",
+            "judge": {
+              "code": "",
+              "text": "미입력",
+              "tone": "gray"
+            }
+          }
+        ]
+      },
+      {
+        "group": "노인 신체기능",
+        "rows": [
+          {
+            "key": "leg",
+            "name": "하지기능",
+            "ref": "10초 이내",
+            "value": "—",
+            "judge": {
+              "code": "",
+              "text": "미입력",
+              "tone": "gray"
+            }
+          },
+          {
+            "key": "balC",
+            "name": "평형성(눈 감은 상태)",
+            "ref": "15초 이상",
+            "value": "—",
+            "judge": {
+              "code": "",
+              "text": "미입력",
+              "tone": "gray"
+            }
+          },
+          {
+            "key": "balO",
+            "name": "평형성(눈 뜬 상태)",
+            "ref": "20초 이상",
+            "value": "—",
+            "judge": {
+              "code": "",
+              "text": "미입력",
+              "tone": "gray"
+            }
+          }
+        ]
+      },
+      {
+        "group": "정신건강·인지",
+        "rows": [
+          {
+            "key": "phq9",
+            "name": "우울증(PHQ-9)",
+            "ref": "0~4점",
+            "value": "—",
+            "judge": {
+              "code": "",
+              "text": "미입력",
+              "tone": "gray"
+            }
+          },
+          {
+            "key": "cape",
+            "name": "조기정신증(CAPE-15)",
+            "ref": "각 0~5점",
+            "value": "—",
+            "judge": {
+              "code": "",
+              "text": "미입력",
+              "tone": "gray"
+            }
+          },
+          {
+            "key": "kdsq",
+            "name": "인지기능(KDSQ-C)",
+            "ref": "0~5점",
+            "value": "—",
+            "judge": {
+              "code": "",
+              "text": "미입력",
+              "tone": "gray"
+            }
+          }
+        ]
+      },
+      {
+        "group": "청력",
+        "rows": [
+          {
+            "key": "pta",
+            "name": "순음청력검사",
+            "ref": "40dB 미만",
+            "value": "—",
+            "judge": {
+              "code": "",
+              "text": "미입력",
+              "tone": "gray"
+            }
+          },
+          {
+            "key": "whisper",
+            "name": "귓속말 검사",
+            "ref": "양쪽 3개 이상",
+            "value": "—",
+            "judge": {
+              "code": "",
+              "text": "미입력",
+              "tone": "gray"
+            }
+          }
+        ]
+      },
+      {
+        "group": "만성폐쇄성폐질환",
+        "rows": [
+          {
+            "key": "spiro",
+            "name": "폐기능검사",
+            "ref": "FEV1/FVC 70 이상",
+            "value": "—",
+            "judge": {
+              "code": "",
+              "text": "미입력",
+              "tone": "gray"
+            }
+          }
+        ]
+      },
+      {
+        "group": "구강",
+        "rows": [
+          {
+            "key": "caries",
+            "name": "우식치아",
+            "ref": "없음",
+            "value": "—",
+            "judge": {
+              "code": "",
+              "text": "미입력",
+              "tone": "gray"
+            }
+          },
+          {
+            "key": "suspect",
+            "name": "우식의심치아",
+            "ref": "없음",
+            "value": "—",
+            "judge": {
+              "code": "",
+              "text": "미입력",
+              "tone": "gray"
+            }
+          },
+          {
+            "key": "filled",
+            "name": "수복치아",
+            "ref": "없음",
+            "value": "—",
+            "judge": {
+              "code": "",
+              "text": "미입력",
+              "tone": "gray"
+            }
+          },
+          {
+            "key": "lost",
+            "name": "상실치아",
+            "ref": "없음",
+            "value": "—",
+            "judge": {
+              "code": "",
+              "text": "미입력",
+              "tone": "gray"
+            }
+          },
+          {
+            "key": "gingiva",
+            "name": "치은염증",
+            "ref": "없음",
+            "value": "—",
+            "judge": {
+              "code": "",
+              "text": "미입력",
+              "tone": "gray"
+            }
+          },
+          {
+            "key": "calculus",
+            "name": "치석",
+            "ref": "없음",
+            "value": "—",
+            "judge": {
+              "code": "",
+              "text": "미입력",
+              "tone": "gray"
+            }
+          },
+          {
+            "key": "plaque",
+            "name": "치면세균막검사",
+            "ref": "1점 미만",
+            "value": "—",
+            "judge": {
+              "code": "",
+              "text": "미입력",
+              "tone": "gray"
+            }
+          }
+        ]
+      }
+    ],
+    "rows": [
+      {
+        "key": "cxr",
+        "name": "흉부방사선촬영",
+        "ref": "정상",
+        "value": "—",
+        "judge": {
+          "code": "",
+          "text": "미입력",
+          "tone": "gray"
+        }
+      },
+      {
+        "key": "bp",
+        "name": "혈압",
+        "ref": "120/80 미만",
+        "value": "—",
+        "judge": {
+          "code": "",
+          "text": "미입력",
+          "tone": "gray"
+        }
+      },
+      {
+        "key": "bmi",
+        "name": "체질량지수(BMI)",
+        "ref": "18.5~24.9",
+        "value": "24.0 kg/m²",
+        "judge": {
+          "code": "A",
+          "text": "정상A",
+          "tone": "green"
+        }
+      },
+      {
+        "key": "waist",
+        "name": "허리둘레",
+        "ref": "90 미만",
+        "value": "86 cm",
+        "judge": {
+          "code": "A",
+          "text": "정상A",
+          "tone": "green"
+        }
+      },
+      {
+        "key": "hb",
+        "name": "혈색소",
+        "ref": "13.0~16.5",
+        "value": "—",
+        "judge": {
+          "code": "",
+          "text": "미입력",
+          "tone": "gray"
+        }
+      },
+      {
+        "key": "glu",
+        "name": "공복혈당",
+        "ref": "100 미만",
+        "value": "100 mg/dL",
+        "judge": {
+          "code": "B",
+          "text": "경계",
+          "tone": "orange"
+        }
+      },
+      {
+        "key": "tc",
+        "name": "총콜레스테롤",
+        "ref": "200 미만",
+        "value": "205 mg/dL",
+        "judge": {
+          "code": "B",
+          "text": "경계",
+          "tone": "orange"
+        }
+      },
+      {
+        "key": "hdl",
+        "name": "HDL 콜레스테롤",
+        "ref": "60 이상",
+        "value": "52 mg/dL",
+        "judge": {
+          "code": "B",
+          "text": "경계",
+          "tone": "orange"
+        }
+      },
+      {
+        "key": "tg",
+        "name": "중성지방",
+        "ref": "150 미만",
+        "value": "—",
+        "judge": {
+          "code": "",
+          "text": "미입력",
+          "tone": "gray"
+        }
+      },
+      {
+        "key": "ldl",
+        "name": "LDL 콜레스테롤",
+        "ref": "130 미만",
+        "value": "—",
+        "judge": {
+          "code": "",
+          "text": "미입력",
+          "tone": "gray"
+        }
+      },
+      {
+        "key": "ast",
+        "name": "AST(SGOT)",
+        "ref": "40 이하",
+        "value": "30 U/L",
+        "judge": {
+          "code": "A",
+          "text": "정상A",
+          "tone": "green"
+        }
+      },
+      {
+        "key": "alt",
+        "name": "ALT(SGPT)",
+        "ref": "35 이하",
+        "value": "33 U/L",
+        "judge": {
+          "code": "A",
+          "text": "정상A",
+          "tone": "green"
+        }
+      },
+      {
+        "key": "ggt",
+        "name": "γ-GTP",
+        "ref": "11~63",
+        "value": "—",
+        "judge": {
+          "code": "",
+          "text": "미입력",
+          "tone": "gray"
+        }
+      },
+      {
+        "key": "upro",
+        "name": "요단백",
+        "ref": "음성(-)",
+        "value": "약양성(±)",
+        "judge": {
+          "code": "B",
+          "text": "경계",
+          "tone": "orange"
+        }
+      },
+      {
+        "key": "cr",
+        "name": "혈청크레아티닌",
+        "ref": "1.5 이하",
+        "value": "—",
+        "judge": {
+          "code": "",
+          "text": "미입력",
+          "tone": "gray"
+        }
+      },
+      {
+        "key": "egfr",
+        "name": "신사구체여과율(e-GFR)",
+        "ref": "60 이상",
+        "value": "—",
+        "judge": {
+          "code": "",
+          "text": "미입력",
+          "tone": "gray"
+        }
+      },
+      {
+        "key": "tscore",
+        "name": "골밀도 T-score",
+        "ref": "-1 이상",
+        "value": "—",
+        "judge": {
+          "code": "",
+          "text": "미입력",
+          "tone": "gray"
+        }
+      },
+      {
+        "key": "bmd",
+        "name": "골밀도(정량)",
+        "ref": "120 초과",
+        "value": "—",
+        "judge": {
+          "code": "",
+          "text": "미입력",
+          "tone": "gray"
+        }
+      },
+      {
+        "key": "leg",
+        "name": "하지기능",
+        "ref": "10초 이내",
+        "value": "—",
+        "judge": {
+          "code": "",
+          "text": "미입력",
+          "tone": "gray"
+        }
+      },
+      {
+        "key": "balC",
+        "name": "평형성(눈 감은 상태)",
+        "ref": "15초 이상",
+        "value": "—",
+        "judge": {
+          "code": "",
+          "text": "미입력",
+          "tone": "gray"
+        }
+      },
+      {
+        "key": "balO",
+        "name": "평형성(눈 뜬 상태)",
+        "ref": "20초 이상",
+        "value": "—",
+        "judge": {
+          "code": "",
+          "text": "미입력",
+          "tone": "gray"
+        }
+      },
+      {
+        "key": "phq9",
+        "name": "우울증(PHQ-9)",
+        "ref": "0~4점",
+        "value": "—",
+        "judge": {
+          "code": "",
+          "text": "미입력",
+          "tone": "gray"
+        }
+      },
+      {
+        "key": "cape",
+        "name": "조기정신증(CAPE-15)",
+        "ref": "각 0~5점",
+        "value": "—",
+        "judge": {
+          "code": "",
+          "text": "미입력",
+          "tone": "gray"
+        }
+      },
+      {
+        "key": "kdsq",
+        "name": "인지기능(KDSQ-C)",
+        "ref": "0~5점",
+        "value": "—",
+        "judge": {
+          "code": "",
+          "text": "미입력",
+          "tone": "gray"
+        }
+      },
+      {
+        "key": "pta",
+        "name": "순음청력검사",
+        "ref": "40dB 미만",
+        "value": "—",
+        "judge": {
+          "code": "",
+          "text": "미입력",
+          "tone": "gray"
+        }
+      },
+      {
+        "key": "whisper",
+        "name": "귓속말 검사",
+        "ref": "양쪽 3개 이상",
+        "value": "—",
+        "judge": {
+          "code": "",
+          "text": "미입력",
+          "tone": "gray"
+        }
+      },
+      {
+        "key": "spiro",
+        "name": "폐기능검사",
+        "ref": "FEV1/FVC 70 이상",
+        "value": "—",
+        "judge": {
+          "code": "",
+          "text": "미입력",
+          "tone": "gray"
+        }
+      },
+      {
+        "key": "caries",
+        "name": "우식치아",
+        "ref": "없음",
+        "value": "—",
+        "judge": {
+          "code": "",
+          "text": "미입력",
+          "tone": "gray"
+        }
+      },
+      {
+        "key": "suspect",
+        "name": "우식의심치아",
+        "ref": "없음",
+        "value": "—",
+        "judge": {
+          "code": "",
+          "text": "미입력",
+          "tone": "gray"
+        }
+      },
+      {
+        "key": "filled",
+        "name": "수복치아",
+        "ref": "없음",
+        "value": "—",
+        "judge": {
+          "code": "",
+          "text": "미입력",
+          "tone": "gray"
+        }
+      },
+      {
+        "key": "lost",
+        "name": "상실치아",
+        "ref": "없음",
+        "value": "—",
+        "judge": {
+          "code": "",
+          "text": "미입력",
+          "tone": "gray"
+        }
+      },
+      {
+        "key": "gingiva",
+        "name": "치은염증",
+        "ref": "없음",
+        "value": "—",
+        "judge": {
+          "code": "",
+          "text": "미입력",
+          "tone": "gray"
+        }
+      },
+      {
+        "key": "calculus",
+        "name": "치석",
+        "ref": "없음",
+        "value": "—",
+        "judge": {
+          "code": "",
+          "text": "미입력",
+          "tone": "gray"
+        }
+      },
+      {
+        "key": "plaque",
+        "name": "치면세균막검사",
+        "ref": "1점 미만",
+        "value": "—",
+        "judge": {
+          "code": "",
+          "text": "미입력",
+          "tone": "gray"
+        }
+      }
+    ],
+    "counts": {
+      "A": 4,
+      "B": 4,
+      "D": 0
+    },
+    "overall": {
+      "label": "정상B(경계)",
+      "tone": "orange",
+      "desc": "건강에 이상은 없으나 식생활습관 개선 등 자가관리가 필요합니다."
+    },
+    "filled": 8,
+    "abnormal": [
+      {
+        "key": "glu",
+        "name": "공복혈당",
+        "ref": "100 미만",
+        "value": "100 mg/dL",
+        "judge": {
+          "code": "B",
+          "text": "경계",
+          "tone": "orange"
+        }
+      },
+      {
+        "key": "tc",
+        "name": "총콜레스테롤",
+        "ref": "200 미만",
+        "value": "205 mg/dL",
+        "judge": {
+          "code": "B",
+          "text": "경계",
+          "tone": "orange"
+        }
+      },
+      {
+        "key": "hdl",
+        "name": "HDL 콜레스테롤",
+        "ref": "60 이상",
+        "value": "52 mg/dL",
+        "judge": {
+          "code": "B",
+          "text": "경계",
+          "tone": "orange"
+        }
+      },
+      {
+        "key": "upro",
+        "name": "요단백",
+        "ref": "음성(-)",
+        "value": "약양성(±)",
+        "judge": {
+          "code": "B",
+          "text": "경계",
+          "tone": "orange"
+        }
+      }
+    ]
+  },
+  "nutrients": [
+    {
+      "key": "비타민 A",
+      "name": "비타민 A",
+      "unit": "µg",
+      "level": "over",
+      "supp": 3000.0,
+      "meal": 500.0,
+      "total": 3500.0,
+      "rda": 700,
+      "ul": 3000,
+      "hasStd": true,
+      "ulSuppOnly": false,
+      "ulAmount": 3500.0,
+      "sources": [
+        "눈에 좋은 비타민A"
+      ],
+      "unmapped": [],
+      "basis": "권장 700 · 상한 3,000µg",
+      "bar": {
+        "supp": 74.53416149068323,
+        "meal": 12.422360248447205,
+        "rdaMark": 17.39130434782609,
+        "ulMark": 74.53416149068323
+      },
+      "gauge": {
+        "rda": 5.0,
+        "ul": 1.1666666666666667
+      },
+      "caption": "눈에 좋은 비타민A · 영양제 3,000µg + 식사 500µg",
+      "note": {
+        "title": "상한 초과.",
+        "body": "3,500µg, 상한 3,000µg을 넘었습니다. 제품 수를 줄이거나 함량이 낮은 제품으로 바꿔 보세요."
+      }
+    },
+    {
+      "key": "마그네슘",
+      "name": "마그네슘",
+      "unit": "mg",
+      "level": "near",
+      "supp": 350.0,
+      "meal": 280.0,
+      "total": 630.0,
+      "rda": 350,
+      "ul": 350,
+      "hasStd": true,
+      "ulSuppOnly": true,
+      "ulAmount": 350.0,
+      "sources": [
+        "마그네슘 350"
+      ],
+      "unmapped": [],
+      "basis": "권장 350 · 상한 350mg (영양제 기준)",
+      "bar": {
+        "supp": 48.309178743961354,
+        "meal": 38.64734299516908,
+        "rdaMark": 48.309178743961354,
+        "ulMark": 48.309178743961354
+      },
+      "gauge": {
+        "rda": 1.8,
+        "ul": 1.0
+      },
+      "caption": "마그네슘 350 · 영양제 350mg + 식사 280mg",
+      "note": {
+        "title": "상한 근접.",
+        "body": "여기에 같은 성분이 든 제품을 더하면 초과할 수 있습니다."
+      }
+    },
+    {
+      "key": "엽산",
+      "name": "엽산",
+      "unit": "µg",
+      "level": "near",
+      "supp": 1000.0,
+      "meal": 300.0,
+      "total": 1300.0,
+      "rda": 400,
+      "ul": 1000,
+      "hasStd": true,
+      "ulSuppOnly": true,
+      "ulAmount": 1000.0,
+      "sources": [
+        "엽산 1000"
+      ],
+      "unmapped": [],
+      "basis": "권장 400 · 상한 1,000µg (영양제 기준)",
+      "bar": {
+        "supp": 66.88963210702342,
+        "meal": 20.066889632107028,
+        "rdaMark": 26.755852842809368,
+        "ulMark": 66.88963210702342
+      },
+      "gauge": {
+        "rda": 3.25,
+        "ul": 1.0
+      },
+      "caption": "엽산 1000 · 영양제 1,000µg + 식사 300µg",
+      "note": {
+        "title": "상한 근접.",
+        "body": "여기에 같은 성분이 든 제품을 더하면 초과할 수 있습니다."
+      }
+    },
+    {
+      "key": "루테인",
+      "name": "루테인",
+      "unit": "mg",
+      "level": "low",
+      "supp": 0.0,
+      "meal": 1.0,
+      "total": 1.0,
+      "rda": 10,
+      "ul": 20,
+      "hasStd": true,
+      "ulSuppOnly": false,
+      "ulAmount": 1.0,
+      "sources": [],
+      "unmapped": [],
+      "basis": "권장 10 · 상한 20mg",
+      "bar": {
+        "supp": 0.0,
+        "meal": 4.0,
+        "rdaMark": 40.0,
+        "ulMark": 80.0
+      },
+      "gauge": {
+        "rda": 0.1,
+        "ul": 0.05
+      },
+      "caption": "식사 평균 추정 1mg · 등록한 제품 없음",
+      "note": {
+        "title": "식사만으로는 모자랍니다.",
+        "body": "권장량 10mg까지 9mg이 부족합니다. 위의 추천을 참고해 보세요."
+      }
+    },
+    {
+      "key": "비타민 B1",
+      "name": "비타민 B1",
+      "unit": "mg",
+      "level": "low",
+      "supp": 0.0,
+      "meal": 1.1,
+      "total": 1.1,
+      "rda": 1.2,
+      "ul": null,
+      "hasStd": true,
+      "ulSuppOnly": false,
+      "ulAmount": 1.1,
+      "sources": [],
+      "unmapped": [],
+      "basis": "권장 1.2mg 이상",
+      "bar": {
+        "supp": 0.0,
+        "meal": 57.29166666666667,
+        "rdaMark": 62.5,
+        "ulMark": null
+      },
+      "gauge": {
+        "rda": 0.9166666666666667,
+        "ul": 0.9166666666666667
+      },
+      "caption": "식사 평균 추정 1.1mg · 등록한 제품 없음",
+      "note": {
+        "title": "식사만으로는 모자랍니다.",
+        "body": "권장량 1.2mg까지 0.1mg이 부족합니다. 위의 추천을 참고해 보세요."
+      }
+    },
+    {
+      "key": "비타민 B2",
+      "name": "비타민 B2",
+      "unit": "mg",
+      "level": "low",
+      "supp": 0.0,
+      "meal": 1.3,
+      "total": 1.3,
+      "rda": 1.4,
+      "ul": null,
+      "hasStd": true,
+      "ulSuppOnly": false,
+      "ulAmount": 1.3,
+      "sources": [],
+      "unmapped": [],
+      "basis": "권장 1.4mg 이상",
+      "bar": {
+        "supp": 0.0,
+        "meal": 58.03571428571429,
+        "rdaMark": 62.5,
+        "ulMark": null
+      },
+      "gauge": {
+        "rda": 0.9285714285714287,
+        "ul": 0.9285714285714287
+      },
+      "caption": "식사 평균 추정 1.3mg · 등록한 제품 없음",
+      "note": {
+        "title": "식사만으로는 모자랍니다.",
+        "body": "권장량 1.4mg까지 0.1mg이 부족합니다. 위의 추천을 참고해 보세요."
+      }
+    },
+    {
+      "key": "비타민 C",
+      "name": "비타민 C",
+      "unit": "mg",
+      "level": "low",
+      "supp": 0.0,
+      "meal": 65.0,
+      "total": 65.0,
+      "rda": 100,
+      "ul": 2000,
+      "hasStd": true,
+      "ulSuppOnly": false,
+      "ulAmount": 65.0,
+      "sources": [],
+      "unmapped": [],
+      "basis": "권장 100 · 상한 2,000mg",
+      "bar": {
+        "supp": 0.0,
+        "meal": 2.6,
+        "rdaMark": 4.0,
+        "ulMark": 80.0
+      },
+      "gauge": {
+        "rda": 0.65,
+        "ul": 0.0325
+      },
+      "caption": "식사 평균 추정 65mg · 등록한 제품 없음",
+      "note": {
+        "title": "식사만으로는 모자랍니다.",
+        "body": "권장량 100mg까지 35mg이 부족합니다. 위의 추천을 참고해 보세요."
+      }
+    },
+    {
+      "key": "비타민 D",
+      "name": "비타민 D",
+      "unit": "µg",
+      "level": "low",
+      "supp": 0.0,
+      "meal": 3.0,
+      "total": 3.0,
+      "rda": 10,
+      "ul": 100,
+      "hasStd": true,
+      "ulSuppOnly": false,
+      "ulAmount": 3.0,
+      "sources": [],
+      "unmapped": [],
+      "basis": "권장 10 · 상한 100µg",
+      "bar": {
+        "supp": 0.0,
+        "meal": 2.4,
+        "rdaMark": 8.0,
+        "ulMark": 80.0
+      },
+      "gauge": {
+        "rda": 0.3,
+        "ul": 0.03
+      },
+      "caption": "식사 평균 추정 3µg · 등록한 제품 없음",
+      "note": {
+        "title": "식사만으로는 모자랍니다.",
+        "body": "권장량 10µg까지 7µg이 부족합니다. 위의 추천을 참고해 보세요."
+      }
+    },
+    {
+      "key": "비타민 E",
+      "name": "비타민 E",
+      "unit": "mg",
+      "level": "low",
+      "supp": 0.0,
+      "meal": 9.0,
+      "total": 9.0,
+      "rda": 12,
+      "ul": 540,
+      "hasStd": true,
+      "ulSuppOnly": false,
+      "ulAmount": 9.0,
+      "sources": [],
+      "unmapped": [],
+      "basis": "권장 12 · 상한 540mg",
+      "bar": {
+        "supp": 0.0,
+        "meal": 1.3333333333333335,
+        "rdaMark": 1.7777777777777777,
+        "ulMark": 80.0
+      },
+      "gauge": {
+        "rda": 0.75,
+        "ul": 0.016666666666666666
+      },
+      "caption": "식사 평균 추정 9mg · 등록한 제품 없음",
+      "note": {
+        "title": "식사만으로는 모자랍니다.",
+        "body": "권장량 12mg까지 3mg이 부족합니다. 위의 추천을 참고해 보세요."
+      }
+    },
+    {
+      "key": "셀레늄",
+      "name": "셀레늄",
+      "unit": "µg",
+      "level": "low",
+      "supp": 0.0,
+      "meal": 55.0,
+      "total": 55.0,
+      "rda": 60,
+      "ul": 400,
+      "hasStd": true,
+      "ulSuppOnly": false,
+      "ulAmount": 55.0,
+      "sources": [],
+      "unmapped": [],
+      "basis": "권장 60 · 상한 400µg",
+      "bar": {
+        "supp": 0.0,
+        "meal": 11.0,
+        "rdaMark": 12.0,
+        "ulMark": 80.0
+      },
+      "gauge": {
+        "rda": 0.9166666666666666,
+        "ul": 0.1375
+      },
+      "caption": "식사 평균 추정 55µg · 등록한 제품 없음",
+      "note": {
+        "title": "식사만으로는 모자랍니다.",
+        "body": "권장량 60µg까지 5µg이 부족합니다. 위의 추천을 참고해 보세요."
+      }
+    },
+    {
+      "key": "아연",
+      "name": "아연",
+      "unit": "mg",
+      "level": "low",
+      "supp": 0.0,
+      "meal": 8.0,
+      "total": 8.0,
+      "rda": 10,
+      "ul": 35,
+      "hasStd": true,
+      "ulSuppOnly": false,
+      "ulAmount": 8.0,
+      "sources": [],
+      "unmapped": [],
+      "basis": "권장 10 · 상한 35mg",
+      "bar": {
+        "supp": 0.0,
+        "meal": 18.285714285714285,
+        "rdaMark": 22.857142857142858,
+        "ulMark": 80.0
+      },
+      "gauge": {
+        "rda": 0.8,
+        "ul": 0.22857142857142856
+      },
+      "caption": "식사 평균 추정 8mg · 등록한 제품 없음",
+      "note": {
+        "title": "식사만으로는 모자랍니다.",
+        "body": "권장량 10mg까지 2mg이 부족합니다. 위의 추천을 참고해 보세요."
+      }
+    },
+    {
+      "key": "오메가3",
+      "name": "오메가3",
+      "unit": "mg",
+      "level": "low",
+      "supp": 0.0,
+      "meal": 320.0,
+      "total": 320.0,
+      "rda": 1000,
+      "ul": null,
+      "hasStd": true,
+      "ulSuppOnly": false,
+      "ulAmount": 320.0,
+      "sources": [],
+      "unmapped": [],
+      "basis": "권장 1,000mg 이상",
+      "bar": {
+        "supp": 0.0,
+        "meal": 20.0,
+        "rdaMark": 62.5,
+        "ulMark": null
+      },
+      "gauge": {
+        "rda": 0.32,
+        "ul": 0.32
+      },
+      "caption": "식사 평균 추정 320mg · 등록한 제품 없음",
+      "note": {
+        "title": "식사만으로는 모자랍니다.",
+        "body": "권장량 1,000mg까지 680mg이 부족합니다. 위의 추천을 참고해 보세요."
+      }
+    },
+    {
+      "key": "철",
+      "name": "철",
+      "unit": "mg",
+      "level": "low",
+      "supp": 0.0,
+      "meal": 9.0,
+      "total": 9.0,
+      "rda": 12,
+      "ul": 45,
+      "hasStd": true,
+      "ulSuppOnly": false,
+      "ulAmount": 9.0,
+      "sources": [],
+      "unmapped": [],
+      "basis": "권장 12 · 상한 45mg",
+      "bar": {
+        "supp": 0.0,
+        "meal": 16.0,
+        "rdaMark": 21.333333333333336,
+        "ulMark": 80.0
+      },
+      "gauge": {
+        "rda": 0.75,
+        "ul": 0.2
+      },
+      "caption": "식사 평균 추정 9mg · 등록한 제품 없음",
+      "note": {
+        "title": "식사만으로는 모자랍니다.",
+        "body": "권장량 12mg까지 3mg이 부족합니다. 위의 추천을 참고해 보세요."
+      }
+    },
+    {
+      "key": "칼슘",
+      "name": "칼슘",
+      "unit": "mg",
+      "level": "low",
+      "supp": 0.0,
+      "meal": 490.0,
+      "total": 490.0,
+      "rda": 800,
+      "ul": 2500,
+      "hasStd": true,
+      "ulSuppOnly": false,
+      "ulAmount": 490.0,
+      "sources": [],
+      "unmapped": [],
+      "basis": "권장 800 · 상한 2,500mg",
+      "bar": {
+        "supp": 0.0,
+        "meal": 15.68,
+        "rdaMark": 25.6,
+        "ulMark": 80.0
+      },
+      "gauge": {
+        "rda": 0.6125,
+        "ul": 0.196
+      },
+      "caption": "식사 평균 추정 490mg · 등록한 제품 없음",
+      "note": {
+        "title": "식사만으로는 모자랍니다.",
+        "body": "권장량 800mg까지 310mg이 부족합니다. 위의 추천을 참고해 보세요."
+      }
+    },
+    {
+      "key": "코엔자임q10",
+      "name": "코엔자임Q10",
+      "unit": "mg",
+      "level": "unknown",
+      "supp": 100.0,
+      "meal": 0.0,
+      "total": 100.0,
+      "rda": null,
+      "ul": null,
+      "hasStd": false,
+      "ulSuppOnly": false,
+      "ulAmount": 100.0,
+      "sources": [
+        "장에 좋은 유산균"
+      ],
+      "unmapped": [],
+      "basis": "표준 기준 미등록",
+      "bar": {
+        "supp": 86.95652173913044,
+        "meal": 0.0,
+        "rdaMark": null,
+        "ulMark": null
+      },
+      "gauge": {
+        "rda": null,
+        "ul": null
+      },
+      "caption": "장에 좋은 유산균 · 영양제 100mg",
+      "note": {
+        "title": "기준값이 없습니다.",
+        "body": "기준표에 없는 성분이라 합산량만 표시합니다."
+      }
+    },
+    {
+      "key": "프로바이오틱스",
+      "name": "프로바이오틱스",
+      "unit": "억CFU",
+      "level": "unknown",
+      "supp": 0.0,
+      "meal": 0.0,
+      "total": 0.0,
+      "rda": null,
+      "ul": null,
+      "hasStd": false,
+      "ulSuppOnly": false,
+      "ulAmount": 0.0,
+      "sources": [
+        "장에 좋은 유산균"
+      ],
+      "unmapped": [
+        "장에 좋은 유산균: 100억CFU"
+      ],
+      "basis": "표준 기준 미등록",
+      "bar": {
+        "supp": 0.0,
+        "meal": 0.0,
+        "rdaMark": null,
+        "ulMark": null
+      },
+      "gauge": {
+        "rda": null,
+        "ul": null
+      },
+      "caption": "장에 좋은 유산균",
+      "note": {
+        "title": "기준값이 없습니다.",
+        "body": "장에 좋은 유산균: 100억CFU — 이 단위는 환산 규칙이 없어 합산하지 않았습니다."
+      }
+    },
+    {
+      "key": "나이아신",
+      "name": "나이아신",
+      "unit": "mg",
+      "level": "met",
+      "supp": 0.0,
+      "meal": 15.0,
+      "total": 15.0,
+      "rda": 15,
+      "ul": 35,
+      "hasStd": true,
+      "ulSuppOnly": true,
+      "ulAmount": 0.0,
+      "sources": [],
+      "unmapped": [],
+      "basis": "권장 15 · 상한 35mg (영양제 기준)",
+      "bar": {
+        "supp": 0.0,
+        "meal": 34.285714285714285,
+        "rdaMark": 34.285714285714285,
+        "ulMark": 80.0
+      },
+      "gauge": {
+        "rda": 1.0,
+        "ul": 0.0
+      },
+      "caption": "식사 평균 추정 15mg · 등록한 제품 없음",
+      "note": {
+        "title": "충분합니다.",
+        "body": "현재 구성을 유지해도 괜찮습니다."
+      }
+    },
+    {
+      "key": "비타민 B12",
+      "name": "비타민 B12",
+      "unit": "µg",
+      "level": "met",
+      "supp": 0.0,
+      "meal": 4.0,
+      "total": 4.0,
+      "rda": 2.4,
+      "ul": null,
+      "hasStd": true,
+      "ulSuppOnly": false,
+      "ulAmount": 4.0,
+      "sources": [],
+      "unmapped": [],
+      "basis": "권장 2.4µg 이상",
+      "bar": {
+        "supp": 0.0,
+        "meal": 86.95652173913044,
+        "rdaMark": 52.17391304347826,
+        "ulMark": null
+      },
+      "gauge": {
+        "rda": 1.6666666666666667,
+        "ul": 1.6666666666666667
+      },
+      "caption": "식사 평균 추정 4µg · 등록한 제품 없음",
+      "note": {
+        "title": "충분합니다.",
+        "body": "현재 구성을 유지해도 괜찮습니다."
+      }
+    },
+    {
+      "key": "비타민 B6",
+      "name": "비타민 B6",
+      "unit": "mg",
+      "level": "met",
+      "supp": 0.0,
+      "meal": 1.6,
+      "total": 1.6,
+      "rda": 1.5,
+      "ul": 100,
+      "hasStd": true,
+      "ulSuppOnly": false,
+      "ulAmount": 1.6,
+      "sources": [],
+      "unmapped": [],
+      "basis": "권장 1.5 · 상한 100mg",
+      "bar": {
+        "supp": 0.0,
+        "meal": 1.28,
+        "rdaMark": 1.2,
+        "ulMark": 80.0
+      },
+      "gauge": {
+        "rda": 1.0666666666666667,
+        "ul": 0.016
+      },
+      "caption": "식사 평균 추정 1.6mg · 등록한 제품 없음",
+      "note": {
+        "title": "충분합니다.",
+        "body": "현재 구성을 유지해도 괜찮습니다."
+      }
+    },
+    {
+      "key": "비타민 K",
+      "name": "비타민 K",
+      "unit": "µg",
+      "level": "met",
+      "supp": 0.0,
+      "meal": 90.0,
+      "total": 90.0,
+      "rda": 70,
+      "ul": null,
+      "hasStd": true,
+      "ulSuppOnly": false,
+      "ulAmount": 90.0,
+      "sources": [],
+      "unmapped": [],
+      "basis": "권장 70µg 이상",
+      "bar": {
+        "supp": 0.0,
+        "meal": 80.35714285714286,
+        "rdaMark": 62.5,
+        "ulMark": null
+      },
+      "gauge": {
+        "rda": 1.2857142857142858,
+        "ul": 1.2857142857142858
+      },
+      "caption": "식사 평균 추정 90µg · 등록한 제품 없음",
+      "note": {
+        "title": "충분합니다.",
+        "body": "현재 구성을 유지해도 괜찮습니다."
+      }
+    }
+  ],
+  "issues": [
+    {
+      "kind": "상한 초과",
+      "tone": "red",
+      "text": "비타민 A 합산량 3,500µg이 상한 3,000µg을 넘습니다. 제품 구성을 조정해 보세요."
+    },
+    {
+      "kind": "상한 근접",
+      "tone": "orange",
+      "text": "마그네슘이 상한의 70%를 넘었습니다. 같은 성분이 든 제품을 더하면 초과할 수 있습니다."
+    },
+    {
+      "kind": "상한 근접",
+      "tone": "orange",
+      "text": "엽산이 상한의 70%를 넘었습니다. 같은 성분이 든 제품을 더하면 초과할 수 있습니다."
+    },
+    {
+      "kind": "환산 불가",
+      "tone": "gray",
+      "text": "프로바이오틱스의 장에 좋은 유산균: 100억CFU — 단위를 환산할 수 없어 합산에서 제외했습니다."
+    },
+    {
+      "kind": "기준 미등록",
+      "tone": "gray",
+      "text": "코엔자임Q10, 프로바이오틱스는 기준값이 등록되어 있지 않아 비율을 계산하지 못했습니다."
+    }
+  ],
+  "recommend": {
+    "title": "이런 성분을 더 챙겨 보세요",
+    "desc": "식사 평균 추정치 · 복용 중인 영양제 · 검진 8개 항목을 기준으로, 권장량에 못 미치는 성분을 모자란 순서로 골랐습니다. 이미 드시는 영양제로 채워지는 성분은 뺐습니다.",
+    "items": [
+      {
+        "name": "루테인",
+        "amount": "9mg 더",
+        "reason": "식사 추정치로 1mg, 권장량 10mg의 10%입니다.",
+        "tone": "orange",
+        "caution": ""
+      },
+      {
+        "name": "비타민 D",
+        "amount": "7µg 더",
+        "reason": "식사 추정치로 3µg, 권장량 10µg의 30%입니다.",
+        "tone": "orange",
+        "caution": ""
+      },
+      {
+        "name": "오메가3",
+        "amount": "680mg 더",
+        "reason": "식사 추정치로 320mg, 권장량 1,000mg의 32%입니다.",
+        "tone": "orange",
+        "caution": ""
+      },
+      {
+        "name": "칼슘",
+        "amount": "310mg 더",
+        "reason": "식사 추정치로 490mg, 권장량 800mg의 61%입니다.",
+        "tone": "blue",
+        "caution": ""
+      },
+      {
+        "name": "비타민 C",
+        "amount": "35mg 더",
+        "reason": "식사 추정치로 65mg, 권장량 100mg의 65%입니다.",
+        "tone": "blue",
+        "caution": ""
+      },
+      {
+        "name": "비타민 E",
+        "amount": "3mg 더",
+        "reason": "식사 추정치로 9mg, 권장량 12mg의 75%입니다.",
+        "tone": "blue",
+        "caution": ""
+      }
+    ],
+    "advice": "건강검진에서 4개 항목이 기준을 벗어났습니다. 영양제를 고르기 전에 의사·약사와 상의하시기를 권합니다.",
+    "more": 5,
+    "moreText": "이 밖에 5개 성분도 권장량에 못 미칩니다. 아래 섭취량 카드에서 모두 확인하실 수 있습니다.",
+    "note": "권장섭취량에 견준 계산 결과일 뿐, 특정 제품이나 복용을 권하는 것이 아닙니다. 복용을 시작하기 전에 의사·약사와 상의하세요."
+  },
+  "summary": {
+    "text": "건강검진 종합 판정은 '정상B(경계)' 입니다. 등록한 4개 제품과 식사 평균 추정치에서 20개 성분을 확인했습니다. 비타민 A는 상한을 넘어 조정이 필요합니다. 마그네슘, 엽산은 상한에 가까워 추가 섭취에 주의가 필요합니다. 루테인, 비타민 B1, 비타민 B2 외 8개는 권장량에 미치지 못합니다. 나머지 4개 성분은 권장 범위 안에 있습니다. 점검에서 5건이 확인됐습니다.",
+    "chips": [
+      {
+        "text": "상한 초과 1",
+        "tone": "red"
+      },
+      {
+        "text": "상한 근접 2",
+        "tone": "orange"
+      },
+      {
+        "text": "적정 4",
+        "tone": "green"
+      },
+      {
+        "text": "부족 11",
+        "tone": "blue"
+      }
+    ]
+  }
+}

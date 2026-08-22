@@ -1,0 +1,139 @@
+{
+  "_comment": [
+    "케이스별 '정답'. 엔진을 돌려서 만든 값이 아니라, standards.py 의 STD_LIST 와",
+    "exam.py 의 임계값을 보고 사람이 손으로 계산한 값입니다.",
+    "엔진 출력으로 기대값을 만들면 엔진의 버그를 그대로 따라가므로 검증이 되지 않습니다.",
+    "계산 근거는 review.md 에 남겨 두었습니다."
+  ],
+  "case1": {
+    "exam_judges": {
+      "bp": "A",
+      "glu": "A",
+      "hdl": "A",
+      "tc": "A",
+      "tg": "A",
+      "ldl": "A",
+      "bmi": "A",
+      "waist": "A",
+      "hb": "A",
+      "ast": "A",
+      "alt": "A",
+      "ggt": "A",
+      "upro": "A",
+      "cr": "A",
+      "egfr": "A"
+    },
+    "exam_abnormal_count": 0,
+    "nutrient_levels": {
+      "비타민 D": "low",
+      "칼슘": "low",
+      "오메가3": "low"
+    },
+    "issues_kinds": [],
+    "worst": "low",
+    "notes": "영양제가 없으므로 모든 성분이 식사 추정치(meal)만으로 계산된다. 비타민D meal 3 < rda 10 → low, 칼슘 490 < 800 → low, 오메가3 320 < 1000 → low."
+  },
+  "case2": {
+    "exam_judges": {
+      "bp": "B",
+      "glu": "D",
+      "hdl": "D",
+      "tc": "B",
+      "tg": "D",
+      "ldl": "B",
+      "bmi": "B",
+      "waist": "B",
+      "hb": "A",
+      "ggt": "B"
+    },
+    "exam_abnormal_min": 3,
+    "nutrient_levels": {
+      "비타민 D": "over",
+      "마그네슘": "over",
+      "칼슘": "met",
+      "비타민 C": "met",
+      "아연": "met"
+    },
+    "issues_kinds": [
+      "상한 초과",
+      "성분 중복"
+    ],
+    "duplicate_nutrient": "비타민 D",
+    "worst": "over",
+    "notes": [
+      "비타민D: 2000IU×0.025=50µg + 3000IU×0.025=75µg = supp 125µg, + meal 3µg = total 128µg > UL 100µg → over",
+      "마그네슘: supp 400mg > UL 350mg (ul_basis=supp 라 식사분 제외) → over",
+      "칼슘: 600 + meal 490 = 1090 ≥ rda 800, UL 2500 의 70%(1750) 미만 → met",
+      "비타민C: 500 + 65 = 565 ≥ rda 100, UL 2000 의 70%(1400) 미만 → met",
+      "아연: 15 + 8 = 23 ≥ rda 10, UL 35 의 70%(24.5) 미만 → met",
+      "검진: glu 131 ≥ 126 → D / hdl 38 < 40 → D / tg 260 ≥ 200 → D",
+      "      sbp 138·dbp 88 → B / BMI 82÷1.73² = 27.4 → B / waist 96 ≥ 90(남) → B",
+      "      tc 232 ≥ 200 → B / ldl 142 ≥ 130 → B / ggt 66 ≥ 64(남) → B / hb 15.4 → A"
+    ]
+  },
+  "case3": {
+    "exam_judges": {
+      "bp": "B",
+      "glu": "A",
+      "hdl": "A",
+      "tscore": "D",
+      "hb": "A",
+      "bmi": "A",
+      "waist": "A"
+    },
+    "exam_abnormal_min": 1,
+    "nutrient_levels": {
+      "오메가3": "met",
+      "비타민 K": "met",
+      "칼슘": "met"
+    },
+    "issues_kinds": [
+      "복약 주의",
+      "출혈 주의"
+    ],
+    "issues_min_count": 2,
+    "worst": "low",
+    "notes": [
+      "와파린 ↔ 비타민 K → '복약 주의'(red)",
+      "와파린 ↔ 오메가3 → '출혈 주의'(red)",
+      "오메가3: 1000 + meal 320 = 1320 ≥ rda 1000 → met",
+      "비타민K: 120 + meal 90 = 210 ≥ rda 70, UL 없음 → met",
+      "칼슘: 500 + meal 490 = 990 ≥ rda 800 → met",
+      "검진: tscore -2.7 ≤ -2.5 → D / sbp 126 → B(120~139) / 나머지 A"
+    ]
+  },
+  "case4": {
+    "exam_judges": {
+      "bp": "N",
+      "hb": "N",
+      "glu": "B",
+      "upro": "B",
+      "bmi": "A",
+      "waist": "A",
+      "tc": "B"
+    },
+    "exam_missing_min": 2,
+    "nutrient_levels": {
+      "마그네슘": "near",
+      "엽산": "near",
+      "비타민 A": "over"
+    },
+    "unmapped_names": [
+      "프로바이오틱스"
+    ],
+    "worst": "over",
+    "notes": [
+      "마그네슘: supp 350 = UL 350 → '350 > 350' 은 거짓이므로 over 아님, 350 ≥ 245(=350×0.7) → near",
+      "엽산: supp 1000 = UL 1000 → 같은 이유로 near",
+      "비타민A: 10000IU×0.3 = 3000µg + meal 500µg = 3500µg > UL 3000µg → over",
+      "코엔자임Q10·프로바이오틱스: STD_LIST 미등록 → 기준 없음(unknown/unmapped)",
+      "검진: sbp·dbp·hb 결측 → N / glu 100 ≥ 100 → B / upro 약양성(±) → B",
+      "BMI: 76 ÷ 1.78² = 23.99 ≤ 24.9 → A",
+      "unmapped 는 '양을 환산하지 못한 성분'만 담는다(억CFU). 이름이 기준표에 없는 것은 unknown 레벨로 목록에 남는다."
+    ],
+    "unknown_level_names": [
+      "코엔자임Q10",
+      "프로바이오틱스"
+    ]
+  }
+}
