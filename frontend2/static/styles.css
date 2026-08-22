@@ -374,6 +374,31 @@ details:not([open]) .toggle .off{display:inline}
 .fm-go:hover{background:linear-gradient(135deg,#0F2F73,#1A54BE)}
 .fm-go:disabled{background:#D8DCE2;color:#FFFFFF;cursor:not-allowed;box-shadow:none}
 
+/* 서버(에이전트)가 만들어 보낸 리포트 HTML.
+   우리 클래스 이름을 모르는 평범한 h1/h2/table/ul 이라, 카드 안에서
+   읽을 만해 보이도록 최소한의 모양만 입힙니다. */
+.rp-server{padding:24px 26px;display:block}
+.rp-server .nutrition-report{font:400 13.5px/1.7 var(--ff);color:#1F2937}
+.rp-server h1{font:800 20px/1.35 var(--ff);color:#0F2957;margin:0 0 6px}
+.rp-server h2{font:700 15px/1.4 var(--ff);color:#123A8C;margin:22px 0 8px;
+  padding-top:14px;border-top:1px solid #E9F1FD}
+.rp-server .profile{color:#4B5563;font-size:12.5px;margin:0 0 4px}
+.rp-server table{border-collapse:collapse;width:100%;margin:4px 0}
+.rp-server th,.rp-server td{border:1px solid #E3ECFC;padding:8px 10px;text-align:left}
+.rp-server th{background:#F5FAFF;font:700 12.5px/1.4 var(--ff);color:#123A8C}
+.rp-server ul{margin:4px 0;padding-left:20px}
+.rp-server li{margin:3px 0}
+.rp-server .notice{background:#FFF7ED;border:1px solid #FED7AA;border-radius:10px;
+  padding:10px 13px;margin:10px 0;font-size:12.5px;color:#9A3412}
+.rp-server .disclaimer{display:block;margin-top:22px;padding-top:14px;
+  border-top:1px solid #E9F1FD;font-size:11.5px;color:#6B7280}
+
+/* 분석 서버가 다루지 못한 입력의 판정을 붙이는 자리.
+   위쪽 서버 리포트와 섞이지 않도록 제목 줄을 하나 둡니다. */
+.rp-extra-head{margin:26px 0 12px;padding-top:18px;border-top:2px solid #E3ECFC}
+.rp-extra-head .h3{display:block;color:#123A8C}
+.rp-extra-head .sub{display:block;margin-top:4px}
+
 /* 리포트 상단으로 돌아가는 줄 */
 .rp-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .rp-back{font:600 12.5px/1.4 var(--ff);color:#1E3A8A;background:#FFFFFF;
@@ -446,6 +471,11 @@ details:not([open]) .toggle .off{display:inline}
 .hero .h1{font:800 25px/1.35 var(--ff);max-width:640px;text-wrap:pretty;
   letter-spacing:-.015em}
 .hero .sub{max-width:600px;font-size:13px}
+/* 폼 화면 맨 위 — 제목은 왼쪽, '전체 초기화'는 오른쪽 끝. 대화형 화면의
+   머리글 줄과 같은 자리에 같은 버튼이 오게 맞춘 것입니다. */
+.hero-head{display:flex;align-items:flex-start;justify-content:space-between;
+  gap:12px;flex-wrap:wrap}
+.hero-head .chat-tools{flex:none}
 .hero-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px}
 .hero-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
 .hero-meta span{font:500 11.5px/1.5 var(--ff);color:#4B5563;
@@ -525,6 +555,7 @@ details:not([open]) .toggle .off{display:inline}
   .sec>summary{padding:16px 18px;flex-wrap:wrap}
   .sec-body{padding:16px 18px 20px}
   .hero{padding:24px 20px}
+  .hero-head .h1{flex:1 1 100%}
   .hero .h1{font-size:21px}
 }
 @media print{.banner,.state,.rp-acts{display:none}}
@@ -680,22 +711,19 @@ details:not([open]) .toggle .off{display:inline}
   padding:10px 13px;margin-bottom:12px}
 .chat-editbar-t{font:600 12px/1.5 var(--ff);color:#123A8C}
 
-/* 검진표 사진 등록 줄 — 질문 위젯 바로 위, 대화 내내 같은 자리에 있습니다.
-   질문에 하나씩 답하는 길 말고 '사진 한 장으로 한꺼번에' 라는 길이 늘
-   열려 있다는 것을 보여 주기 위해서입니다. */
-.chat-attach{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
-  padding-bottom:12px;margin-bottom:12px;border-bottom:1px dashed #DCE7F8}
-.chat-attach-btn{display:flex;align-items:center;gap:7px;
-  font:600 12.5px/1.4 var(--ff);color:#123A8C;background:#F4F9FF;
-  border:1px dashed #C3D6F2;border-radius:11px;padding:9px 14px;cursor:pointer;
-  transition:background .12s ease,border-color .12s ease}
-.chat-attach-btn:hover{background:#E8F1FF;border-color:#1D5FD6}
+/* 검진표 사진 등록 — 머리글 줄의 '전체 초기화' 왼쪽에 있습니다.
+   예전에는 질문과 입력칸 사이에 두었는데, 답을 하려고 내려오는 길목을
+   가로막아서 위로 옮겼습니다. 점선 테두리는 '해도 되고 안 해도 되는
+   지름길'이라는 뜻으로, 옆의 실선 버튼들과 구분됩니다. */
+.chat-tool-btn.attach{display:inline-flex;align-items:center;gap:6px;
+  color:#123A8C;background:#F4F9FF;border:1px dashed #C3D6F2}
+.chat-tool-btn.attach:hover{color:#123A8C;background:#E8F1FF;border-color:#1D5FD6}
+.chat-tool-btn.attach.busy{cursor:default;color:#4B5563;background:#F4F9FF}
 .chat-attach-plus{font:700 15px/1 var(--ff);color:#1D5FD6}
-.chat-attach-t{font:600 12.5px/1.4 var(--ff);color:#123A8C}
-.chat-attach-hint{font:400 11.5px/1.5 var(--ff);color:#9CA3AF}
-.chat-attach-err{font:600 11.5px/1.5 var(--ff);color:#B91C1C;
-  background:#FDECEC;border:1px solid #F3D2D2;border-radius:8px;padding:6px 9px;
-  flex-basis:100%}
+/* 사진을 읽지 못한 이유 — 머리글 바로 아래 한 줄로 깔립니다. 카드가
+   세로 flex 라서 flex:none 을 주지 않으면 이 줄이 늘어납니다. */
+.chat-attach-err{flex:none;font:600 11.5px/1.5 var(--ff);color:#B91C1C;
+  background:#FDECEC;border-bottom:1px solid #F3D2D2;padding:8px 22px}
 .spin.sm{width:16px;height:16px;border-width:2px;flex:none}
 
 /* 검진표에서 저절로 채워진 답 — 사용자가 직접 친 답과 구분되어야 합니다.
@@ -718,7 +746,10 @@ details:not([open]) .toggle .off{display:inline}
 .chip-btn:hover{background:#F0F7FF;border-color:#1D5FD6;color:#123A8C;
   transform:translateY(-1px);box-shadow:0 6px 14px -8px rgba(18,58,140,.5)}
 .chip-btn.on{border-color:#1D5FD6;background:#E8F1FF;color:#123A8C;font-weight:700}
-.chat-sendrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+/* 버튼 높이가 서로 달라서(‘결과 보기’ 쪽이 더 큽니다) 그냥 두면 작은
+   버튼이 위아래로 늘어나 글자가 위쪽으로 치우쳐 보입니다. 가운데로
+   맞춰서 두 버튼의 글자가 같은 선에 오게 합니다. */
+.chat-sendrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px}
 .chat-card-inline{margin:0}
 .chat-summary{display:flex;flex-wrap:wrap;gap:8px}
 .btn-solid.sm{padding:9px 16px;font-size:12.5px}
@@ -800,6 +831,16 @@ details:not([open]) .toggle .off{display:inline}
 
 .home-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
 .home-step{display:flex;flex-direction:column;gap:10px;position:relative}
+/* 단계와 단계 사이를 나누는 옅은 하늘색 세로선. 위아래 끝은 비워 두고
+   가운데만 살짝 보이도록 양끝을 투명으로 흐리게 뺍니다. 칸 사이 여백
+   (gap:16px)의 한가운데(-8px)에 놓여 어느 칸에도 붙지 않습니다. */
+.home-step + .home-step::before{content:'';position:absolute;
+  left:-8px;top:14%;bottom:14%;width:1px;pointer-events:none;
+  background:linear-gradient(180deg,
+    rgba(56,189,248,0) 0%,
+    rgba(56,189,248,.38) 38%,
+    rgba(56,189,248,.38) 62%,
+    rgba(56,189,248,0) 100%)}
 .home-step-t{font:700 14px/1.4 var(--ff)}
 .home-step-d{margin:0;font:400 12px/1.65 var(--ff);color:#6B7280;text-wrap:pretty}
 
@@ -817,11 +858,13 @@ details:not([open]) .toggle .off{display:inline}
 @media (max-width:900px){
   .home-feat-grid, .home-usecase-grid{grid-template-columns:repeat(2,1fr)}
   .home-steps{grid-template-columns:repeat(2,1fr)}
+  .home-step:nth-child(odd)::before{display:none}
   .home-hero-wrap{padding:44px 28px}
   .home-hero-inner .h1{font-size:26px}
 }
 @media (max-width:640px){
   .home-feat-grid, .home-usecase-grid, .home-steps{grid-template-columns:1fr}
+  .home-step + .home-step::before{display:none}
   .home-sec{padding:26px 20px 28px}
 }
 

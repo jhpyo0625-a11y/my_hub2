@@ -545,19 +545,25 @@ class ApiError extends Error {
     그 밖의 요청은 서버 메시지를 detail(개발자용)에만 남기고, 화면에는
     두루뭉술한 문구를 보여 주는 게 안전합니다(문구가 사용자 안내로
     다듬어져 있다는 보장이 없으므로). */
-async function call(path, {method = 'GET', body, raw, timeout = 60000, surfaceMessage = false} = {}){
+async function call(path, {method = 'GET', body, raw, form, timeout = 60000, surfaceMessage = false} = {}){
   const ctrl  = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeout);
   try {
     /* raw 는 JSON 이 아닌 것을 그대로 보낼 때 씁니다(검진표 사진 한 장).
        파일 하나뿐이라 multipart 로 감싸지 않고 바이트를 그대로 실어 보냅니다
        — 그 편이 서버도 훨씬 단순합니다. */
+    /* form(FormData) 으로 보낼 때는 Content-Type 을 우리가 정하면 안 됩니다.
+       multipart 는 헤더에 boundary 가 들어가야 하는데, 그 값은 브라우저만
+       알고 있습니다. 직접 적으면 boundary 가 빠져서 서버가 못 읽습니다. */
+    const headers = form ? {}
+                  : raw  ? (raw.type ? {'Content-Type': raw.type} : {})
+                         : {'Content-Type': 'application/json'};
+
     const res = await fetch(API_BASE + path, {
       method,
-      headers    : raw ? (raw.type ? {'Content-Type': raw.type} : {})
-                       : {'Content-Type': 'application/json'},
+      headers,
       credentials: 'include',        /* 로그인 쿠키를 함께 보냅니다 */
-      body       : raw ? raw : (body ? JSON.stringify(body) : undefined),
+      body       : form ? form : (raw ? raw : (body ? JSON.stringify(body) : undefined)),
       signal     : ctrl.signal,
     });
 
@@ -616,9 +622,18 @@ const API = {
     return call('/api/draft', {method:'PUT', body:input, timeout:15000});
   },
 
-  /** ★ 판정 요청. AI 가 처리하므로 수 초가 걸립니다. */
+  /** ★ 판정 요청. AI 가 처리하므로 수십 초가 걸립니다.
+      검진표 사진을 올렸다면 그 사진도 함께 보냅니다 — 서버가 사진을
+      보관하지 않으므로, 분석할 때마다 브라우저가 다시 실어 보냅니다. */
   analyze(input){
-    return call('/api/analyze', {method:'POST', body:input, timeout:60000});
+    const file = CHAT.examFile;
+    if(file){
+      const fd = new FormData();
+      fd.append('input', JSON.stringify(input));
+      fd.append('file', file, file.name || 'exam');
+      return call('/api/analyze', {method:'POST', form:fd, timeout:180000});
+    }
+    return call('/api/analyze', {method:'POST', body:input, timeout:180000});
   },
 
   /* -----------------------------------------------------------------------
@@ -962,7 +977,6 @@ function renderIssues(m){
     ? m.issues.map(i => `<div class="ix-row">
         <span class="ix-kind" style="background:${TONE[i.tone].bg};color:${TONE[i.tone].fg}">${esc(i.kind)}</span>
         <span class="ix-text">${esc(i.text)}</span>
-        <a class="link" href="#">자세히</a>
       </div>`).join('')
     : emptyCard('점검된 항목이 없습니다',
                 '등록한 제품과 약 사이에서 겹치거나 부딪히는 성분이 발견되지 않았습니다.', null, true);
@@ -1031,6 +1045,59 @@ const renderReport = m =>
       </div>
     </div>
     ${renderHeader(m)}${renderRecommend(m)}${renderIntake(m)}${renderIssues(m)}${renderSummary(m)}${renderFooter()}</div>`;
+
+/** 결과 화면 하나를 고릅니다.
+    -------------------------------------------------------------------------
+    서버가 완성된 HTML(m.html)을 보내 주면 그것을 그대로 씁니다 — 판정도
+    문장도 전부 서버가 만든 것이므로 화면은 손대지 않습니다. html 이 없으면
+    예전처럼 이 화면이 직접 그립니다(목업으로 볼 때가 그렇습니다).
+
+    위아래의 '인쇄 · 입력 수정' 줄은 어느 쪽이든 붙입니다. 이게 없으면
+    결과를 본 뒤 돌아갈 방법이 사라집니다. */
+/** 분석 서버가 보지 못한 입력이 있는지.
+    -------------------------------------------------------------------------
+    결과보기는 분석 서버가 처리하는데, 그 서버는 나이·성별·체중·이름만
+    받습니다. 영양제·복용 약·건강검진 수치는 넘길 자리가 아예 없어서
+    그쪽 리포트에는 반영되지 않습니다.
+
+    그런데 그 입력들에 대한 판정은 이 응답 안에 이미 함께 들어 있습니다
+    (서버가 같은 요청에서 계산해 둡니다). 그냥 버리면 사용자는 와파린과
+    오메가3를 같이 적어 놓고도 출혈 주의 안내를 못 보게 됩니다 —
+    '경고가 없다'로 읽히는 쪽이 위험합니다. 그래서 아래에 따로 붙입니다. */
+function serverMissedInput(m){
+  const issues = (m.issues || []).length;
+  const flagged = (m.nutrients || []).filter(n => n.level === 'over' || n.level === 'near').length;
+  const abnormal = ((m.exam || {}).abnormal || []).length;
+  return {issues, flagged, abnormal, any: issues + flagged + abnormal > 0};
+}
+
+const reportHtml = m => {
+  if(!m || !m.html) return renderReport(m);
+
+  const missed = serverMissedInput(m);
+  const extra = !missed.any ? '' : `
+    <div class="rp-extra-head">
+      <span class="h3">입력하신 영양제 · 약 · 검진 결과로 확인한 내용</span>
+      <span class="sub">위 리포트에는 포함되지 않은 항목입니다.
+        ${missed.issues ? `점검 ${missed.issues}건 · ` : ''}${missed.flagged ? `주의 성분 ${missed.flagged}개 · ` : ''}${missed.abnormal ? `검진 이상 ${missed.abnormal}건` : ''}</span>
+    </div>
+    ${missed.issues ? renderIssues(m) : ''}
+    ${missed.flagged ? renderIntake(m) : ''}`;
+
+  return `<div class="page">
+    ${UI.sample ? sampleBanner() : mockBanner()}
+    <div class="rp-top">
+      <div><span class="h2">영양제 섭취 리포트</span>
+        <span class="sub" style="display:block">입력하신 내용으로 분석했습니다.</span></div>
+      <div class="rp-acts">
+        <button type="button" class="btn-line" data-act="print">인쇄 · PDF 저장</button>
+        <button type="button" class="rp-back" data-act="edit">입력 수정</button>
+      </div>
+    </div>
+    <section class="card rp-server">${m.html}</section>
+    ${extra}
+  </div>`;
+};
 
 
 /* =========================================================================
@@ -1402,6 +1469,18 @@ function modeToggle(){
   </div>`;
 }
 
+/** 폼 화면에서 '전체 초기화'를 눌렀을 때 한 번 더 확인받는 카드.
+    대화형 화면과 똑같이, 누르자마자 지우지 않습니다. */
+function formClearConfirmHtml(){
+  return `<div class="chat-confirm">
+    <span class="sub2">정말 지금까지 입력한 내용을 모두 지울까요? 이 작업은 되돌릴 수 없어요.</span>
+    <div class="chat-sendrow">
+      <button type="button" class="btn-solid sm" data-act="form-clear-yes">네, 전부 지울게요</button>
+      <button type="button" class="btn-line sm" data-act="form-clear-no">아니요, 계속할게요</button>
+    </div>
+  </div>`;
+}
+
 function renderInputScreen(){
   return `<div class="page">
     <datalist id="nutlist">${APP.hints.map(h => `<option value="${esc(h)}">`).join('')}</datalist>
@@ -1410,7 +1489,13 @@ function renderInputScreen(){
     ${modeToggle()}
 
     <section class="card hero">
-      <span class="h1">지금 나에게 부족한 영양소, 확인해 보세요</span>
+      <div class="hero-head">
+        <span class="h1">지금 나에게 부족한 영양소, 확인해 보세요</span>
+        <div class="chat-tools">
+          <button type="button" class="chat-tool-btn danger" data-act="form-clear"
+                  title="지금까지 입력한 내용을 모두 지우고 처음부터 다시 시작합니다.">전체 초기화</button>
+        </div>
+      </div>
       <span class="sub">나이와 성별만 넣으면 식사에서 섭취하는 평균 추정치로 부족한 성분을 찾아
         드립니다. 복용 중인 영양제와 약을 더 넣으면 합산량·상한 초과·상호작용까지 함께 봅니다.</span>
       <div class="hero-meta">
@@ -1422,6 +1507,7 @@ function renderInputScreen(){
         <button type="button" class="btn-line" data-act="history">지난 리포트 보기</button>
         <span class="savestate" id="savestate"></span>
       </div>
+      ${UI.confirmClear ? formClearConfirmHtml() : ''}
     </section>
 
     ${section({
@@ -1529,7 +1615,7 @@ function chatBubbleText(step){
     case 'name': return '먼저 이름을 알려주시겠어요? 답하지 않으셔도 괜찮아요.';
     case 'age':  return `${nm}나이가 어떻게 되세요?`;
     case 'sex':  return '성별을 알려주세요.';
-    case 'meal': return '식사에서 섭취하는 영양성분은 평균 추정치를 반영하여 계산할까요? 반영하면 영양제를 넣지 않아도 부족한 성분을 알려드려요.';
+    case 'meal': return '식사에서 섭취하는 영양성분은 평균 추정치를 반영하여 계산할까요?';
     case 'examAsk': return '건강검진 결과가 있으신가요? 있으시면 몇 가지만 여쭤볼게요.';
     case 'examGroups': return CHAT.importedGroups.length
       ? `검진표에서 읽은 항목(${CHAT.importedGroups.join(', ')})은 이미 채워 두었어요. 이 밖에 결과가 더 있는 항목만 골라 주세요.`
@@ -1849,25 +1935,31 @@ const IMAGE_ACCEPT = 'image/png,image/jpeg,image/gif,image/webp,image/bmp,image/
    사용자를 기다리게 하지 않으려는 것일 뿐, 방어는 서버가 합니다. */
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 
-function chatAttachHtml(){
+function chatAttachToolHtml(){
   if(CHAT.imgBusy){
-    return `<div class="chat-attach busy">
+    return `<span class="chat-tool-btn attach busy" aria-live="polite">
       <span class="spin sm"></span>
-      <span class="chat-attach-t">검진표를 읽고 있어요…</span>
-    </div>`;
+      <span>검진표를 읽고 있어요…</span>
+    </span>`;
   }
   const done = CHAT.imported;
-  return `<div class="chat-attach">
-    <button type="button" class="chat-attach-btn" data-act="pick-exam-image"
-            title="건강검진 결과지 사진을 올리면 읽어서 자동으로 채워 드려요">
-      <span class="chat-attach-plus" aria-hidden="true">＋</span>
-      <span>${done ? '검진표 다시 올리기' : '검진표 이미지 등록'}</span>
-    </button>
-    <span class="chat-attach-hint">${done
-      ? `사진에서 ${done.count}개 항목을 채웠어요`
-      : '이미지 파일만 · 10MB 이하'}</span>
-    ${CHAT.imgError ? `<span class="chat-attach-err">${esc(CHAT.imgError)}</span>` : ''}
-  </div>`;
+  /* 안내 문구('이미지 파일만 · 10MB 이하')는 버튼 옆에 따로 두지 않고
+     title 로 옮겼습니다 — 머리글 줄은 좁아서 글자가 늘어나면 줄이
+     밀립니다. 무엇을 읽었는지는 어차피 대화에 그대로 남습니다. */
+  return `<button type="button" class="chat-tool-btn attach" data-act="pick-exam-image"
+          title="건강검진 결과지 사진을 올리면 읽어서 자동으로 채워 드려요 (이미지 파일만 · 10MB 이하)">
+    <span class="chat-attach-plus" aria-hidden="true">＋</span>
+    <span>${done ? '검진표 다시 올리기' : '검진표 이미지 등록'}</span>
+  </button>`;
+}
+
+/** 사진을 읽지 못한 이유. 머리글 바로 아래에 한 줄로 붙습니다.
+    파일 형식·크기 때문에 막힌 경우는 대화에 아무것도 남지 않으므로,
+    이 줄이 없으면 왜 아무 일도 일어나지 않았는지 알 수 없습니다. */
+function chatAttachErrHtml(){
+  return CHAT.imgError
+    ? `<div class="chat-attach-err">${esc(CHAT.imgError)}</div>`
+    : '';
 }
 
 /** 파일을 고른 순간 — 서버에 보내기 전에 화면에서 먼저 걸러 냅니다.
@@ -1886,6 +1978,10 @@ async function handleExamImageFile(file){
     rerenderChat();
     return;
   }
+
+  /* 결과보기 때 이 사진을 서버로 함께 보냅니다. 서버는 사진을 저장하지
+     않기 때문에(민감정보), 분석하는 순간까지 브라우저가 들고 있습니다. */
+  CHAT.examFile = file;
 
   CHAT.imgBusy = true;
   CHAT.log.push({role:'user', text:`🖼 ${file.name}`});
@@ -1995,10 +2091,12 @@ function renderChatScreen(){
           <span class="sub">질문에 답하시면 그대로 채워져요. 버튼을 누르거나 문장으로 직접 답해도 돼요.</span>
         </div>
         <div class="chat-tools">
+          ${CHAT.editing || CHAT.confirmClear ? '' : chatAttachToolHtml()}
           <button type="button" class="chat-tool-btn danger" data-act="chat-clear"
                   title="지금까지 입력한 내용을 모두 지우고 처음부터 다시 시작합니다.">전체 초기화</button>
         </div>
       </div>
+      ${chatAttachErrHtml()}
 
       <div class="chat-log" id="chatLog">
         ${CHAT.log.map(chatMsgHtml).join('')}
@@ -2007,7 +2105,6 @@ function renderChatScreen(){
 
       <div class="chat-input-area" id="chatInputArea">
         ${CHAT.editing ? chatEditBarHtml() : ''}
-        ${CHAT.editing || CHAT.confirmClear ? '' : chatAttachHtml()}
         ${CHAT.confirmClear ? chatClearConfirmHtml() : `<div id="chatWidget">${chatWidgetHtml(CHAT.step)}</div>`}
       </div>
 
@@ -2616,6 +2713,8 @@ const UI = {
   pendingAfterLogin: null,  // 로그인 모달이 닫힌 뒤 이어서 할 일 (예: 끊겼던 분석 재시도)
   loadingMessage: '',
   historyList: null,
+  confirmClear: false,  // 폼 화면에서 '전체 초기화'를 눌러 확인을 기다리는 중인지.
+                        // (대화형 쪽은 CHAT.confirmClear 가 따로 들고 있습니다)
   inputMode: 'chat',    // 'chat' | 'form' — 입력 화면을 대화형으로 볼지 폼으로 볼지.
                          // 로그인 직후에는 대화형이 기본값이고, 사용자가 화면 위 토글로
                          // 언제든 자유롭게 바꿀 수 있습니다. 둘 다 같은 state 를 채웁니다.
@@ -2701,7 +2800,9 @@ const CHAT = {
   examQueue: [],         // 고른 검진 그룹 중 아직 안 물어본 것들 (앞에서부터 하나씩 뺍니다)
   prodDraft: null,       // 지금 입력 중인 영양제 {name, items}
   medDraft : null,       // 지금 입력 중인 약 {name, desc}
-  confirmClear: false,   // '전체 초기화' 버튼을 눌러서 확인을 기다리는 중인지
+  examFile: null,        // 사용자가 고른 검진표 사진. 결과보기 때 함께 보냅니다.
+                         // (서버에 저장하지 않으므로 여기서만 들고 있습니다)
+  confirmClear: false,   // '전체 초기화' 버튼을 눌러서 확인을 기다리는 중인지 (대화형)
   tempSeededFor: null,   // 다중 선택 칩에 이미 있던 값을 한 번 채워 넣은 단계 이름
                           // (계속 다시 채우면 사용자가 일부러 다 지워도 되돌아가 버립니다)
   editing: null,         // 이전 답변을 고치는 중일 때 {index, step, ref, returnStep, saved}
@@ -2752,6 +2853,7 @@ function resetChat(){
   CHAT.editing = null;
   CHAT.imgBusy = false;
   CHAT.imgError = null;
+  CHAT.examFile = null;
   CHAT.imported = null;
   CHAT.importedGroups = [];
   CHAT.known = [];
@@ -2904,7 +3006,9 @@ function refreshForm(){
   $('#sum-line').textContent = line;
   $('#sum-hint').textContent = hint;
   $('#go-report').disabled   = !ready;
-  $('#go-report').textContent = (ready && !items) ? '식사 기준으로 확인하기' : '결과 보기';
+  /* 버튼 이름은 늘 '결과 보기' 입니다 — 대화형 화면과 같은 말을 씁니다.
+     (예전에는 영양제를 안 넣었을 때만 '식사 기준으로 확인하기' 로 바뀌어서,
+      같은 일을 하는 버튼이 화면마다 다른 이름으로 보였습니다) */
 
   queueSave();
 }
@@ -2963,6 +3067,10 @@ function nav(method, view, url){
 
 const HASH_OF = {report:'#report', history:'#history', home:'#home'};
 function go(view, {push = true} = {}){
+  /* 화면을 옮기면 폼의 '정말 지울까요?' 는 없던 일이 됩니다 — 확인 카드만
+     남겨 둔 채 다른 화면에 갔다가 돌아왔을 때 그대로 떠 있으면, 무엇을
+     지우려던 참이었는지 모른 채 '네' 를 누르게 됩니다. */
+  UI.confirmClear = false;
   UI.view = view;
   if(push){
     const url = HASH_OF[view] || '#input';
@@ -2990,7 +3098,7 @@ function paintView(){
   if(v === 'loading')   { app().innerHTML = screenLoading(UI.loadingMessage); return; }
   if(v === 'analyzing') { app().innerHTML = screenAnalyzing(); startStepTicker(); return; }
   if(v === 'error')     { app().innerHTML = screenError(UI.error, UI.retryLabel); return; }
-  if(v === 'report')    { app().innerHTML = renderReport(UI.report); window.scrollTo(0, 0); return; }
+  if(v === 'report')    { app().innerHTML = reportHtml(UI.report); window.scrollTo(0, 0); return; }
   if(v === 'history')   { app().innerHTML = renderHistory(); window.scrollTo(0, 0); return; }
   if(v === 'home')      { app().innerHTML = screenHome(); window.scrollTo(0, 0); return; }
 
@@ -3396,6 +3504,21 @@ document.addEventListener('click', e => {
     e.preventDefault();
     const input = document.getElementById('examImageInput');
     if(input) input.click();
+    return;
+  }
+
+  /* 폼 화면의 '전체 초기화' — 대화형과 똑같이 한 번 더 확인받고 지웁니다.
+     지울 때는 입력값(state)과 대화 진행 상태를 함께 되돌립니다. 폼에서
+     지웠는데 대화로 돌아가면 예전 대화가 그대로 남아 있으면 안 됩니다. */
+  if(act === 'form-clear'){ e.preventDefault(); UI.confirmClear = true; paint(); return; }
+  if(act === 'form-clear-no'){ e.preventDefault(); UI.confirmClear = false; paint(); return; }
+  if(act === 'form-clear-yes'){
+    e.preventDefault();
+    UI.confirmClear = false;
+    clearInputState();
+    resetChat();
+    queueSave();
+    paint();
     return;
   }
 

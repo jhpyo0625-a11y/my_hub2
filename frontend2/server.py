@@ -25,11 +25,13 @@ server.py — MyHerb 로컬 서버
 ==============================================================================
 """
 
+import json
 import os
 import secrets
 from datetime import datetime, timezone
 from pathlib import Path
 
+import httpx
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -44,6 +46,91 @@ STATIC = BASE / "static"
 
 COOKIE = "myherb_sid"
 COOKIE_MAX_AGE = 60 * 60 * 24 * 7        # 7일
+
+# =============================================================================
+# 에이전트 서버 (agent/server.py)
+# -----------------------------------------------------------------------------
+# 로그인·회원가입·결과보기 세 가지는 이 서버가 직접 계산하지 않고 에이전트에
+# 넘깁니다. 나머지(bootstrap·me·draft·reports·exam-image)는 에이전트에 없으므로
+# 여기서 계속 처리합니다.
+#
+# 브라우저가 8000 번을 직접 부르지 않고 이 서버를 거치는 이유:
+#   · 에이전트에 CORS 설정이 없어서, 브라우저가 직접 부르면 응답을 읽지
+#     못합니다(요청은 가는데 결과를 못 받는 최악의 형태가 됩니다).
+#   · 경로(/api/v1/*)와 형식(form-data)이 화면 규격과 달라서, 그 변환을
+#     여기 한 곳에 모아 두면 화면 코드를 고치지 않아도 됩니다.
+# =============================================================================
+API_URL = os.environ.get("API_URL", "http://localhost:8000")
+
+# 결과보기는 LLM·그래프를 타서 오래 걸립니다. 로그인·가입은 그럴 일이 없습니다.
+AGENT_TIMEOUT_AUTH = 20.0
+AGENT_TIMEOUT_RECOMMEND = 180.0
+
+
+def _as_number(value, cast):
+    """'45' → 45 처럼 숫자로 읽히면 바꿔 주고, 아니면 None.
+
+    화면에서 오는 값은 전부 문자열이고 비어 있을 수 있습니다("58kg" 처럼
+    단위가 붙어 오기도 합니다). 에이전트는 int/float 로 선언해 두었으므로
+    읽히지 않는 값을 그대로 보내면 422 가 됩니다.
+    """
+    if value is None:
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    try:
+        return cast(float(text))
+    except (TypeError, ValueError):
+        return None
+
+
+async def call_agent(path: str, fields: dict, timeout: float, file=None) -> dict:
+    """에이전트를 부르고 data 만 돌려줍니다. 실패는 전부 HTTPException 으로 바꿉니다.
+
+    에이전트의 응답 규약이 이 서버와 두 가지가 다릅니다.
+      1. 본문이 {status, message, data} 로 한 겹 싸여 있습니다.
+      2. **실패해도 HTTP 200** 입니다. status 를 봐야 실패인 줄 압니다.
+    두 가지를 여기서 흡수해서, 위쪽 코드는 평범한 dict 만 다루게 합니다.
+    """
+    # None·빈 값은 아예 보내지 않습니다. 에이전트 쪽 필드가 전부 Optional 이라
+    # 빈 문자열을 보내면 '값이 있다'고 잘못 읽힐 수 있습니다.
+    data = {k: str(v) for k, v in fields.items() if v is not None and str(v) != ""}
+
+    # file 은 (파일명, 바이트, mime) 한 벌입니다. 넘어온 경우에만 실어 보냅니다.
+    files = {"file": file} if file else None
+
+    try:
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            res = await client.post(API_URL + path, data=data, files=files)
+    except httpx.TimeoutException:
+        raise HTTPException(504, "분석 서버가 제때 응답하지 않았습니다. 잠시 후 다시 시도해 주세요.")
+    except httpx.RequestError:
+        raise HTTPException(502, "분석 서버에 연결하지 못했습니다. 서버가 켜져 있는지 확인해 주세요.")
+
+    if res.status_code == 422:
+        # 필수 항목이 빠졌을 때. 화면이 보낸 값이 규격과 어긋난 경우입니다.
+        raise HTTPException(400, "입력값을 다시 확인해 주세요.")
+    if res.status_code >= 500:
+        raise HTTPException(502, "분석 서버에 문제가 생겼습니다.")
+
+    try:
+        body = res.json()
+    except ValueError:
+        raise HTTPException(502, "분석 서버가 알 수 없는 형식으로 응답했습니다.")
+
+    if body.get("status") == "fail":
+        msg = (body.get("message") or "").strip()
+        # 에이전트가 파이썬 예외를 그대로 문자열로 내보내는 경우가 있습니다
+        # (예: KeyError 는 "'pwd'" 로 옵니다). 그대로 보여 주면 사용자가
+        # 무슨 말인지 알 수 없으므로 일반 문구로 바꿉니다.
+        if not msg or (msg.startswith("'") and msg.endswith("'")):
+            msg = "요청을 처리하지 못했습니다."
+        # ★ 401 을 쓰면 안 됩니다. 이 서비스에서 401 은 '세션이 끊겼다' 는
+        #   뜻이라, 화면이 재로그인 창을 다시 띄우는 무한 반복이 됩니다.
+        raise HTTPException(400, msg)
+
+    return body.get("data") or {}
 
 # 성분 기준값과 상호작용 규칙이 아직 검증되지 않았다는 뜻입니다.
 # True 인 동안 화면 맨 위에 '예시 기준값으로 계산 중입니다' 경고 띠가 뜹니다.
@@ -224,21 +311,58 @@ def _login_always_ok(name: str, email: str) -> dict:
     return user
 
 
-@app.post("/api/login")
-async def login(request: Request, response: Response):
-    body = await request.json() if await request.body() else {}
-    user = _login_always_ok("", (body or {}).get("email"))
+def _adopt_agent_user(response: Response, data: dict, fallback_email: str,
+                      fallback_name: str = "") -> dict:
+    """에이전트가 확인해 준 사용자로 이 서버의 세션을 엽니다.
+
+    세션은 계속 이 서버가 쥡니다 — 에이전트에는 로그인 개념이 없어서
+    (쿠키도 토큰도 내려주지 않습니다), 여기서 세션을 만들지 않으면
+    임시저장(draft)과 지난 리포트(reports)가 전부 동작하지 않습니다.
+    """
+    au = data.get("user") or {}
+    key = norm_email(au.get("id") or fallback_email)
+    if not key:
+        key = "guest@myherb.local"
+
+    existing = USERS.get(key)
+    name = (au.get("name") or fallback_name or "").strip()
+    if not name:
+        name = existing["name"] if existing else key.split("@")[0]
+
+    user = {"name": name, "email": key}
+    USERS[key] = user
     start_session(response, user)
     return user
+
+
+@app.post("/api/login")
+async def login(request: Request, response: Response):
+    """판정은 에이전트가 합니다. 이 서버는 세션만 엽니다."""
+    body = await request.json() if await request.body() else {}
+    body = body or {}
+    email = body.get("email") or ""
+
+    data = await call_agent(
+        "/api/v1/login",
+        {"id": email, "pwd": body.get("password") or ""},
+        AGENT_TIMEOUT_AUTH,
+    )
+    return _adopt_agent_user(response, data, email)
 
 
 @app.post("/api/signup")
 async def signup(request: Request, response: Response):
     body = await request.json() if await request.body() else {}
     body = body or {}
-    user = _login_always_ok(body.get("name"), body.get("email"))
-    start_session(response, user)
-    return user
+    email = body.get("email") or ""
+    name = body.get("name") or ""
+
+    data = await call_agent(
+        "/api/v1/signup",
+        {"id": email, "pwd": body.get("password") or "", "name": name},
+        AGENT_TIMEOUT_AUTH,
+    )
+    return _adopt_agent_user(response, data, email, name)
 
 
 @app.post("/api/logout")
@@ -285,10 +409,68 @@ async def analyze(request: Request):
     목록 화면이 계속 비어 있게 됩니다.
     """
     user = require_user(request)
-    body = await request.json() if await request.body() else {}
+
+    # 화면은 두 가지 모양으로 보냅니다.
+    #   · 검진표 사진이 없으면  application/json  (예전 그대로)
+    #   · 사진이 있으면        multipart/form-data — input(JSON 문자열) + file
+    # 사진은 여기서 **저장하지 않습니다.** 받은 즉시 에이전트로 흘려보내고
+    # 요청이 끝나면 사라집니다(민감정보라 서버에 남기지 않습니다).
+    upload = None
+    ctype = request.headers.get("content-type", "")
+    if ctype.startswith("multipart/form-data"):
+        form = await request.form()
+        raw = form.get("input") or "{}"
+        try:
+            body = json.loads(raw)
+        except ValueError:
+            raise HTTPException(400, "입력값을 읽지 못했습니다.")
+
+        up = form.get("file")
+        if up is not None and hasattr(up, "read"):
+            blob = await up.read()
+            if len(blob) > MAX_IMAGE_BYTES:
+                raise HTTPException(400, f"이미지가 너무 큽니다. {MAX_IMAGE_BYTES // (1024 * 1024)}MB 이하로 올려 주세요.")
+            mime = sniff_image(blob)
+            if not mime:
+                raise HTTPException(400, "이미지 파일만 올릴 수 있습니다. (PNG · JPG · GIF · WEBP · HEIC)")
+            upload = (up.filename or "exam", blob, mime)
+    else:
+        body = await request.json() if await request.body() else {}
+
     state = normalize_input(body)
 
+    exam = state.get("exam") or {}
+    data = await call_agent(
+        "/api/v1/recommend",
+        {
+            "name": state.get("name"),
+            # 에이전트가 int/float 로 받으므로 숫자로 읽히는 값만 보냅니다.
+            # 숫자가 아니면 아예 빼서 보냅니다(둘 다 Optional 입니다) —
+            # 나이 한 칸 때문에 분석 전체가 422 로 막히면 안 됩니다.
+            "age": _as_number(state.get("age"), int),
+            # 에이전트는 male/female 로 받습니다. 화면은 남성/여성 입니다.
+            "gender": {"남성": "male", "여성": "female"}.get(state.get("sex")),
+            "weight_kg": _as_number(exam.get("weight"), float),
+            # birth_date 는 화면에서 모으지 않습니다(검진일과 다른 값입니다).
+        },
+        AGENT_TIMEOUT_RECOMMEND,
+        file=upload,
+    )
+
+    html = (data.get("html") or "").strip()
+    if not html:
+        raise HTTPException(502, "분석 서버가 리포트를 만들지 못했습니다.")
+
+    # 화면에 보이는 내용은 위의 html 이 전부입니다. 그런데 '지난 리포트'
+    # 목록은 요약 한 줄·배지·최고 심각도를 리포트 구조에서 뽑아 쓰므로
+    # (list_reports 참고), html 만 저장하면 목록이 빈칸투성이가 됩니다.
+    # 그래서 목록에 쓸 뼈대는 여기서 그대로 만들어 두고, 화면이 실제로
+    # 그릴 html 만 얹습니다.
     report = to_report(state)
+    report["html"] = html
+    if data.get("disclaimer"):
+        report["agentDisclaimer"] = data["disclaimer"]
+    report["partialFailure"] = bool(data.get("partial_failure"))
 
     entry = {
         "id": "r" + secrets.token_hex(8),
