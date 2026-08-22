@@ -9,6 +9,7 @@ uv sync
 uv run python main.py            # streamable-http, http://localhost:8080/mcp/
 uv run python main.py --stdio    # stdio transport
 uv run python main.py --selftest # 순수연산 tool 자체검증
+uv run fastmcp dev inspector main.py  # web 상에서 실제 tool 검증해보고 싶다면...
 ```
 
 ## 프로토콜
