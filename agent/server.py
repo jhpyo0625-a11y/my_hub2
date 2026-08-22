@@ -22,6 +22,122 @@ app = FastAPI(
 )
 
 
+
+# ============================================================
+# 공통 응답 형식
+# ============================================================
+
+def success_response(data=None):
+    return {
+        "status": "success",
+        "message": "",
+        "data": data if data is not None else {},
+    }
+
+
+def fail_response(error):
+    return {
+        "status": "fail",
+        "message": str(error),
+        "data": {},
+    }
+
+
+# ============================================================
+# 회원가입 API
+# ============================================================
+
+@app.post(
+    "/api/v1/signup",
+    summary="사용자 회원가입"
+)
+async def signup(
+    id: str = Form(...),
+    pwd: str = Form(...),
+    name: str = Form(...),
+):
+    try:
+        # 필수값 검증
+        if not id.strip():
+            raise ValueError("아이디를 입력해주세요.")
+
+        if not pwd.strip():
+            raise ValueError("비밀번호를 입력해주세요.")
+
+        if not name.strip():
+            raise ValueError("이름을 입력해주세요.")
+
+        # 회원정보 조회 (db_helper 이용, executor 참고할 것)
+        users = {}
+
+        # 이미 가입된 사용자 확인
+        if id in users:
+            raise ValueError("이미 존재하는 아이디입니다.")
+
+        # 회원 저장
+        users[id] = {
+            "id": id,
+            "pwd": pwd,
+            "name": name,
+        }
+
+        return success_response(
+            {
+                "user": {
+                    "id": id,
+                    "name": name,
+                }
+            }
+        )
+
+    except Exception as e:
+        return fail_response(e)
+
+
+# ============================================================
+# 로그인 API
+# ============================================================
+
+@app.post(
+    "/api/v1/login",
+    summary="사용자 로그인"
+)
+async def login(
+    id: str = Form(...),
+    pwd: str = Form(...),
+):
+    try:
+        # 사용자 존재 여부 확인 (db_helper 이용, executor 참고할 것)
+        user = {}
+
+        if user is None:
+            raise ValueError(
+                "아이디 또는 비밀번호가 올바르지 않습니다."
+            )
+
+        # 비밀번호 확인
+        if user["pwd"] != pwd:
+            raise ValueError(
+                "아이디 또는 비밀번호가 올바르지 않습니다."
+            )
+
+        return success_response(
+            {
+                "user": {
+                    "id": user["id"],
+                    "name": user["name"],
+                }
+            }
+        )
+
+    except Exception as e:
+        return fail_response(e)
+
+
+# ============================================================
+# 영양제 추천 API
+# ============================================================
+
 @app.post(
     "/api/v1/recommend",
     summary="검진표 이미지 기반 개인 맞춤 영양 추천 생성",
@@ -83,6 +199,7 @@ async def recommend_nutrition(
 
         return {
             "status": "success",
+            "message": "",
             "data": final_state.get(
                 "final_report",
                 {},
@@ -90,13 +207,16 @@ async def recommend_nutrition(
         }
 
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=(
-                f"파이프라인 실행 중 오류 발생: {str(e)}"
-            ),
-        )
+        return {
+            "status": "fail",
+            "message": str(e),
+            "data": {},
+        }
 
+
+# ============================================================
+# 서버 실행
+# ============================================================
 
 if __name__ == "__main__":
     import uvicorn

@@ -10,7 +10,9 @@ cd mcp
 # 패키지 상태 동기화
 uv sync
 # 서버 기동
-uv run server.py
+uv run main.py
+# 테스트하기
+# npx @modelcontextprotocol/inspector
 
 
 # 2. agent
