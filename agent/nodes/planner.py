@@ -125,6 +125,8 @@ def _llm_plan(normalized: dict, targets: list[str], feedback: str | None):
             "validate_ul_guardrail는 마지막에 수행(제품 검색 결과에 의존). "
             "동시 실행 가능한 step은 같은 parallel_group 정수로 묶어라."
         )
+        from guardrails.harness import load_spec
+        sys = load_spec("planner") + "\n\n" + sys
         usr = json.dumps(
             {"normalized": normalized, "target_nutrients": targets,
              "reviewer_feedback": feedback},

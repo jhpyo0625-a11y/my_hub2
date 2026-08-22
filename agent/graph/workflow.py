@@ -11,6 +11,9 @@ from nodes.reviewer import specialized_review_node
 from nodes.aggregator import aggregator_node
 from nodes.compliance import legal_compliance_node
 
+from guardrails.harness import guard
+from guardrails import checks as C
+
 
 def route_after_review(
     state: State,
@@ -32,12 +35,24 @@ def route_after_review(
 def build_workflow():
     workflow = StateGraph(State)
 
-    workflow.add_node("normalizer_node", input_normalization_node)
-    workflow.add_node("planner_agent", planner_agent_node)
-    workflow.add_node("executor_agent", executor_node)
-    workflow.add_node("reviewer_agent", specialized_review_node)
-    workflow.add_node("aggregator_agent", aggregator_node)
-    workflow.add_node("compliance_agent", legal_compliance_node)
+    workflow.add_node("normalizer_node", guard(
+        input_normalization_node, "normalizer", "guardrails/normalizer.md",
+        pre=C.pre_normalizer, post=C.post_normalizer))
+    workflow.add_node("planner_agent", guard(
+        planner_agent_node, "planner", "guardrails/planner.md",
+        pre=C.pre_planner, post=C.post_planner))
+    workflow.add_node("executor_agent", guard(
+        executor_node, "executor", "guardrails/executor.md",
+        pre=C.pre_executor, post=C.post_executor))
+    workflow.add_node("reviewer_agent", guard(
+        specialized_review_node, "reviewer", "guardrails/reviewer.md",
+        pre=C.pre_reviewer, post=C.post_reviewer))
+    workflow.add_node("aggregator_agent", guard(
+        aggregator_node, "aggregator", "guardrails/aggregator.md",
+        pre=C.pre_aggregator, post=C.post_aggregator))
+    workflow.add_node("compliance_agent", guard(
+        legal_compliance_node, "compliance", "guardrails/compliance.md",
+        pre=C.pre_compliance, post=C.post_compliance, on_violation="block"))
 
     workflow.set_entry_point("normalizer_node")
 

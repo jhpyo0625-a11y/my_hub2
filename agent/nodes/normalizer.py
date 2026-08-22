@@ -47,13 +47,19 @@ async def input_normalization_node(state: State) -> State:
     if gender_defaulted:
         gender = "female"
 
+    # age: 미만/누락 시 스코프 이탈이므로 기본값 사용 여부를 하류에 플래그로 전달.
+    age_in = user_input.get("age")
+    age_defaulted = not isinstance(age_in, int)
+    age = age_in if isinstance(age_in, int) else 30
+
     state["normalized_data"] = {
         "units_normalized": True,
         "name": user_input.get("name") or "익명",
         "birth_date": user_input.get("birth_date"),
-        "age": user_input.get("age") or 30,
+        "age": age,
         "gender": gender,
         "gender_defaulted": gender_defaulted,
+        "age_defaulted": age_defaulted,
         "weight_kg": user_input.get("weight_kg") or 60.0,
         "current_supplements": user_input.get("current_supplements", []),
         # Compliance 마스킹 단계가 식별할 PII 필드 목록.

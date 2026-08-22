@@ -11,6 +11,9 @@ from fastapi import (
 from schemas.state import State
 from graph.workflow import graph
 
+from guardrails.harness import GuardViolation
+from nodes.compliance import DISCLAIMER
+
 
 app = FastAPI(
     title="AI 영양제 추천 서비스 API",
@@ -193,9 +196,16 @@ async def recommend_nutrition(
         }
 
         # 노드가 async이므로 ainvoke 사용.
-        final_state = await graph.ainvoke(
-            initial_state
-        )
+        try:
+            final_state = await graph.ainvoke(initial_state)
+        except GuardViolation as gv:
+            print(f"[BLOCKED] {gv.node}: {gv.problems}")
+            return {
+                "status": "blocked",
+                "message": "안전 검증에서 문제가 발견되어 리포트를 제공할 수 없습니다. "
+                           "전문가와 상담하시기를 권장드립니다.",
+                "disclaimer": DISCLAIMER,
+            }
 
         return {
             "status": "success",
