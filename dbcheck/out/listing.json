@@ -1,0 +1,180 @@
+{
+  "header": [
+    "구분",
+    "대상",
+    "위치",
+    "필요 테이블",
+    "연동 방식",
+    "상태",
+    "점검 방법",
+    "결과",
+    "비고"
+  ],
+  "rows": [
+    [
+      "인증",
+      "회원가입 API",
+      "agent/server.py · signup()",
+      "users",
+      "db_helper.create_user (psycopg 직접)",
+      "정상",
+      "dbcheck/test_api.py",
+      "17/17 통과",
+      "bcrypt 해시 저장. 중복은 PK 제약으로 차단"
+    ],
+    [
+      "인증",
+      "로그인 API",
+      "agent/server.py · login()",
+      "users",
+      "db_helper.authenticate (psycopg 직접)",
+      "정상",
+      "dbcheck/test_api.py",
+      "17/17 통과",
+      "실패 문구 통일 · 응답시간 균일화"
+    ],
+    [
+      "인증",
+      "회원 저장/조회 함수",
+      "agent/services/db_helper.py",
+      "users",
+      "psycopg 직접",
+      "정상",
+      "dbcheck/test_auth.py",
+      "27/27 통과",
+      "순수 로직과 DB 접근을 분리해 개별 검증"
+    ],
+    [
+      "추천",
+      "영양 기준값 산출",
+      "agent/services/db_helper.py · db_calculate_ri",
+      "kdri_standards, nutrient_codes",
+      "MCP → DB → stub (3단)",
+      "정상",
+      "dbcheck/check_db.py",
+      "2개 영양소 반환",
+      "연령·성별 밴드 매칭 동작"
+    ],
+    [
+      "추천",
+      "제품 검색",
+      "agent/services/db_helper.py · db_search_products",
+      "product_ingredients_master",
+      "MCP → DB → stub (3단)",
+      "주의",
+      "dbcheck/check_db.py",
+      "0개 반환",
+      "★ 데이터 커버리지 부족 — 아래 '발견' 참고"
+    ],
+    [
+      "추천",
+      "상한 검증",
+      "agent/services/db_helper.py · db_validate_ul",
+      "kdri_standards",
+      "MCP → DB → stub (3단)",
+      "정상",
+      "dbcheck/check_db.py",
+      "위반 1건 검출",
+      "UL 초과 판정 동작"
+    ],
+    [
+      "MCP",
+      "search_products",
+      "mcp/main.py:334",
+      "product_ingredients_master",
+      "psycopg 직접 (_db_conn)",
+      "정상",
+      "8080 기동 확인",
+      "서버 응답",
+      "mcp/.env 필요 — 없으면 DB 없이 빈 결과"
+    ],
+    [
+      "MCP",
+      "search_evidence",
+      "mcp/main.py:371",
+      "(RAG/Chroma)",
+      "psycopg 직접 (_db_conn)",
+      "정상",
+      "8080 기동 확인",
+      "서버 응답",
+      ""
+    ],
+    [
+      "MCP",
+      "그 외 툴 7종",
+      "mcp/main.py",
+      "(없음)",
+      "DB 미사용",
+      "해당없음",
+      "-",
+      "-",
+      "계산·정규화 툴이라 DB 불필요"
+    ],
+    [
+      "미사용",
+      "리포트 이력",
+      "(참조 코드 없음)",
+      "prescription_histories",
+      "-",
+      "미연동",
+      "SQL 전수 검색",
+      "참조 0건",
+      "★ 테이블은 있으나 읽고 쓰는 코드가 없음"
+    ],
+    [
+      "미사용",
+      "건강 프리셋",
+      "(참조 코드 없음)",
+      "user_health_presets",
+      "-",
+      "미연동",
+      "SQL 전수 검색",
+      "참조 0건",
+      "★ 스키마 문서가 product_ingredients_master 복붙 — 실제 컬럼 불명"
+    ],
+    [
+      "구조",
+      "3단 fallback",
+      "agent/nodes/executor.py:94-104",
+      "(전체)",
+      "MCP → DB → 결정적 stub",
+      "주의",
+      "코드 검토",
+      "예외를 전부 삼킴",
+      "★ DB 가 끊겨도 status:success 반환 — 실패가 성공으로 보임"
+    ],
+    [
+      "구조",
+      "스키마 정합성",
+      "users ↔ prescription_histories",
+      "users",
+      "-",
+      "주의",
+      "dbcheck/check_db.py",
+      "users.id(100) ≠ user_id(50)",
+      "50자 초과 아이디는 이력 저장 불가 — 앱에서 50자로 제한해 방어 중"
+    ]
+  ],
+  "findings": [
+    [
+      "발견 1",
+      "제품 검색이 0건인 이유",
+      "제품 테이블에 1,958행이 있지만 영양소는 23종뿐. 에이전트가 추천하는 vitamin_d·epa_dha 는 제품 데이터가 아예 없음. 코드 표기 문제가 아니라 데이터 커버리지 문제 (제품 코드 23종은 기준표와 100% 일치)."
+    ],
+    [
+      "발견 2",
+      "기준표 47종 vs 제품 23종",
+      "기준표에는 47종이 있으나 제품이 존재하는 것은 23종. 나머지 24종을 추천하면 반드시 '추천 제품 없음' 이 나옴."
+    ],
+    [
+      "발견 3",
+      "실패가 성공으로 보이는 구조",
+      "executor 의 3단 fallback 이 예외를 삼키고 stub 결과를 success 로 반환. API 호출만으로는 DB 연동 여부를 알 수 없어 check_db.py 가 필요."
+    ],
+    [
+      "발견 4",
+      "미사용 테이블 2개",
+      "prescription_histories·user_health_presets 를 참조하는 SQL 이 코드 전체에 0건. 리포트 이력 기능이 DB 에 남지 않음."
+    ]
+  ]
+}

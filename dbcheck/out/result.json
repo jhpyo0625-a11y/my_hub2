@@ -1,0 +1,158 @@
+[
+  {
+    "group": "접속",
+    "item": "DATABASE_URL",
+    "status": "정상",
+    "detail": "설정됨"
+  },
+  {
+    "group": "접속",
+    "item": "psycopg 설치",
+    "status": "정상",
+    "detail": ""
+  },
+  {
+    "group": "접속",
+    "item": "DB 연결",
+    "status": "정상",
+    "detail": "540ms"
+  },
+  {
+    "group": "접속",
+    "item": "데이터베이스",
+    "status": "정상",
+    "detail": "neondb"
+  },
+  {
+    "group": "테이블",
+    "item": "users",
+    "status": "정상",
+    "detail": "회원 (signup·login)"
+  },
+  {
+    "group": "테이블",
+    "item": "kdri_standards",
+    "status": "정상",
+    "detail": "영양 기준값 (RI·UL)"
+  },
+  {
+    "group": "테이블",
+    "item": "nutrient_codes",
+    "status": "정상",
+    "detail": "영양소 코드·단위"
+  },
+  {
+    "group": "테이블",
+    "item": "product_ingredients_master",
+    "status": "정상",
+    "detail": "제품 성분"
+  },
+  {
+    "group": "테이블",
+    "item": "prescription_histories",
+    "status": "정상",
+    "detail": "리포트 이력"
+  },
+  {
+    "group": "테이블",
+    "item": "user_health_presets",
+    "status": "정상",
+    "detail": "건강 프리셋"
+  },
+  {
+    "group": "데이터",
+    "item": "users",
+    "status": "주의",
+    "detail": "0 행"
+  },
+  {
+    "group": "데이터",
+    "item": "kdri_standards",
+    "status": "정상",
+    "detail": "1,052 행"
+  },
+  {
+    "group": "데이터",
+    "item": "nutrient_codes",
+    "status": "정상",
+    "detail": "47 행"
+  },
+  {
+    "group": "데이터",
+    "item": "product_ingredients_master",
+    "status": "정상",
+    "detail": "1,958 행"
+  },
+  {
+    "group": "데이터",
+    "item": "prescription_histories",
+    "status": "주의",
+    "detail": "0 행"
+  },
+  {
+    "group": "데이터",
+    "item": "user_health_presets",
+    "status": "주의",
+    "detail": "0 행"
+  },
+  {
+    "group": "users",
+    "item": "id",
+    "status": "정상",
+    "detail": "character varying(100)"
+  },
+  {
+    "group": "users",
+    "item": "pwd_hash",
+    "status": "정상",
+    "detail": "character varying(255)"
+  },
+  {
+    "group": "users",
+    "item": "name",
+    "status": "정상",
+    "detail": "character varying(100)"
+  },
+  {
+    "group": "users",
+    "item": "created_at",
+    "status": "정상",
+    "detail": "timestamp with time zone"
+  },
+  {
+    "group": "users",
+    "item": "updated_at",
+    "status": "정상",
+    "detail": "timestamp with time zone"
+  },
+  {
+    "group": "users",
+    "item": "id 길이 정합성",
+    "status": "주의",
+    "detail": "users.id(100) ≠ prescription_histories.user_id(50)"
+  },
+  {
+    "group": "쿼리",
+    "item": "db_calculate_ri",
+    "status": "정상",
+    "detail": "2개 영양소 반환"
+  },
+  {
+    "group": "쿼리",
+    "item": "db_search_products",
+    "status": "주의",
+    "detail": "0개 제품 반환"
+  },
+  {
+    "group": "쿼리",
+    "item": "db_validate_ul",
+    "status": "정상",
+    "detail": "안전=False 위반=1"
+  },
+  {
+    "group": "MCP",
+    "item": "기동 여부",
+    "status": "정상",
+    "detail": "http://localhost:8080/ 응답함 (HTTP 404)"
+  }
+]
