@@ -56,8 +56,11 @@ def _render_html(report: dict, profile: dict, failed: list) -> str:
         for p in products[:5]
     ) or "<li>추천 제품 없음</li>"
 
-    guide_items = "".join(f"<li>{esc(str(g))}</li>" for g in guidelines) \
-        or "<li>참고 근거 없음</li>"
+    guide_items = "".join(
+        f"<li>{esc(str(g.get('text', '')))} "
+        f"<span class=\"cite\">— {esc(str(g.get('source', '')))}</span></li>"
+        for g in guidelines
+    ) or "<li>참고 근거 없음</li>"
 
     failure_notice = ""
     if failed:

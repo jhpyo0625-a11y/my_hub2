@@ -131,8 +131,11 @@ def post_aggregator(state) -> list[str]:
     if "ul_check" in rep and rep["ul_check"] != by_task.get("validate_ul_guardrail", {}):
         p.append("ul_check가 executor 결과와 불일치")
     g = rep.get("guidelines")
-    if not isinstance(g, list) or not all(isinstance(x, str) for x in g):
-        p.append("guidelines 형식 오류")
+    # 각 근거는 dict이고 text+source(인용) 모두 있어야 한다 — 무인용 근거 차단.
+    if not isinstance(g, list) or not all(
+        isinstance(x, dict) and x.get("text") and x.get("source") for x in g
+    ):
+        p.append("guidelines 형식/출처 누락")
     return p
 
 

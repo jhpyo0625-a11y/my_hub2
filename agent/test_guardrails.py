@@ -129,7 +129,8 @@ def _agg_state():
         {"task_name": "validate_ul_guardrail", "status": "success", "result": {"is_safe": True}},
     ]
     rep = {
-        "title": "t", "user_profile": {}, "guidelines": ["a"],
+        "title": "t", "user_profile": {},
+        "guidelines": [{"text": "a", "source": "file.pdf p.1"}],
         "calculated_target": {"custom_ri": {"vitamin_d": {"value": 10}}},
         "ul_check": {"is_safe": True},
     }
@@ -144,8 +145,8 @@ async def test_aggregator():
     assert post_aggregator(s), "missing key flag"
     s = _agg_state(); s["aggregated_report"]["calculated_target"] = {"custom_ri": {"vitamin_d": {"value": 999}}}
     assert post_aggregator(s), "pass-through mismatch flag"
-    s = _agg_state(); s["aggregated_report"]["guidelines"] = [None]
-    assert post_aggregator(s), "guidelines flag"
+    s = _agg_state(); s["aggregated_report"]["guidelines"] = [{"text": "a"}]
+    assert post_aggregator(s), "guideline missing-source flag"
     print("  aggregator OK")
 
 

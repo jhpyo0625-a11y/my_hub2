@@ -16,6 +16,19 @@ def _rag_search(queries: list[str]) -> list[dict]:
         return []
 
 
+def _citation(doc: dict) -> str:
+    """RAG 문서 메타데이터에서 인용 문자열 구성. 출처 없으면 빈 문자열."""
+    m = doc.get("metadata", {}) or {}
+    src = m.get("source_file") or m.get("source_path")
+    if not src:
+        return ""
+    if m.get("page_number"):
+        return f"{src} p.{m['page_number']}"
+    if m.get("row_number"):
+        return f"{src} row {m['row_number']}"
+    return str(src)
+
+
 async def aggregator_node(state: State) -> State:
     print(
         "\n[Node 5] Aggregator Agent: "
@@ -42,6 +55,14 @@ async def aggregator_node(state: State) -> State:
     rag_context = _rag_search(queries)
     state["rag_context"] = rag_context
 
+    # 근거는 반드시 출처를 동반한다 — 무인용 근거는 제외(신뢰성 직결).
+    guidelines = []
+    for d in rag_context[:2]:
+        text = d.get("content")
+        source = _citation(d)
+        if text and source:
+            guidelines.append({"text": text, "source": source})
+
     state["aggregated_report"] = {
         "title": "개인 맞춤형 정밀 영양 리포트",
         "user_profile": state.get("normalized_data", {}),
@@ -51,6 +72,6 @@ async def aggregator_node(state: State) -> State:
         "products": by_task.get("search_products", {}).get("products", []),
         "ul_check": by_task.get("validate_ul_guardrail", {}),
         "failed_items": state.get("failed_items", []),
-        "guidelines": [d.get("content") for d in rag_context[:2]],
+        "guidelines": guidelines,
     }
     return state
