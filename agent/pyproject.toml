@@ -17,4 +17,5 @@ dependencies = [
     "psycopg[binary]>=3.3.4",
     "fastmcp>=3.4.6",
     "langsmith>=0.10.18",
+    "bcrypt>=4.1",
 ]

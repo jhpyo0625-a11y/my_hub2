@@ -152,3 +152,136 @@ def db_validate_ul(
         "ul_violations": violations,
         "approved_recommendations": approved,
     }
+
+# =============================================================================
+# 회원 (users) — 회원가입 / 로그인
+# -----------------------------------------------------------------------------
+# 비밀번호는 **절대 평문으로 저장하지 않습니다.** bcrypt 해시만 넣고, 원문은
+# 검증이 끝나는 즉시 버립니다(로그에도 남기지 않습니다).
+#
+# 위쪽 함수들과 마찬가지로 전부 동기 함수입니다. async 인 쪽(server.py)에서
+# asyncio.to_thread 로 감싸 부릅니다 — 그러지 않으면 DB 가 느릴 때 서버
+# 전체가 멈춥니다.
+# =============================================================================
+import bcrypt
+
+
+class DuplicateUser(Exception):
+    """이미 있는 아이디로 가입을 시도했습니다."""
+
+
+# users.id 는 VARCHAR(100) 이지만 prescription_histories.user_id 는
+# VARCHAR(50) 입니다. 50자를 넘는 아이디로 가입하면 그 사용자의 리포트
+# 이력을 남길 수 없으므로, 짧은 쪽에 맞춰 미리 막습니다.
+MAX_ID_LEN = 50
+MAX_NAME_LEN = 100
+MIN_PWD_LEN = 4
+
+
+def hash_password(pwd: str) -> str:
+    """bcrypt 해시. 출력은 60자라 VARCHAR(255) 에 넉넉히 들어갑니다."""
+    return bcrypt.hashpw(pwd.encode("utf-8"), bcrypt.gensalt()).decode("ascii")
+
+
+def verify_password(pwd: str, pwd_hash: str) -> bool:
+    """평문과 해시를 대조. 해시가 깨져 있어도 예외 대신 False 를 돌려줍니다."""
+    try:
+        return bcrypt.checkpw(pwd.encode("utf-8"), pwd_hash.encode("ascii"))
+    except (ValueError, TypeError):
+        return False
+
+
+# 아이디가 없을 때도 해시 검증을 한 번 수행해 응답 시간을 비슷하게 맞추기
+# 위한 더미입니다. 이게 없으면 응답이 돌아오는 속도만으로 '그 아이디가
+# 존재하는지'를 알아낼 수 있습니다.
+_DUMMY_HASH = hash_password("dummy-password-for-timing")
+
+
+def normalize_user_id(raw) -> str:
+    """아이디 정규화. 대소문자와 앞뒤 공백 때문에 같은 사람이 둘로 갈리지
+    않도록, 저장할 때도 찾을 때도 반드시 이 함수를 거칩니다."""
+    return str(raw or "").strip().lower()
+
+
+def validate_signup(user_id: str, pwd: str, name: str) -> str | None:
+    """입력값이 규격에 맞는지. 문제가 있으면 사용자에게 보여 줄 문구를,
+    없으면 None 을 돌려줍니다. DB 를 건드리지 않으므로 따로 테스트할 수
+    있습니다."""
+    if not user_id:
+        return "아이디를 입력해주세요."
+    if len(user_id) > MAX_ID_LEN:
+        return f"아이디는 {MAX_ID_LEN}자 이하로 입력해주세요."
+    if not (pwd or "").strip():
+        return "비밀번호를 입력해주세요."
+    if len(pwd) < MIN_PWD_LEN:
+        return f"비밀번호는 {MIN_PWD_LEN}자 이상으로 입력해주세요."
+    if not (name or "").strip():
+        return "이름을 입력해주세요."
+    if len(name.strip()) > MAX_NAME_LEN:
+        return f"이름은 {MAX_NAME_LEN}자 이하로 입력해주세요."
+    return None
+
+
+def create_user(user_id: str, pwd: str, name: str) -> dict:
+    """회원 한 명을 저장하고 {id, name} 을 돌려줍니다.
+
+    중복 아이디는 **PK 제약에 맡깁니다.** '먼저 조회해 보고 없으면 넣기'는
+    두 요청이 동시에 들어오면 둘 다 통과해 버립니다. INSERT 를 시도하고
+    UniqueViolation 을 잡는 쪽이 안전합니다.
+    """
+    import psycopg.errors
+
+    key = normalize_user_id(user_id)
+    with get_db_connection() as conn, conn.cursor() as cur:
+        try:
+            cur.execute(
+                """
+                INSERT INTO users (id, pwd_hash, name)
+                VALUES (%s, %s, %s)
+                RETURNING id, name
+                """,
+                (key, hash_password(pwd), name.strip()),
+            )
+        except psycopg.errors.UniqueViolation:
+            raise DuplicateUser(key)
+        return dict(cur.fetchone())
+
+
+def find_user(user_id: str) -> dict | None:
+    """아이디로 한 명. 없으면 None. 해시를 함께 돌려주므로 호출한 쪽에서
+    바로 verify_password 로 대조할 수 있습니다."""
+    key = normalize_user_id(user_id)
+    if not key:
+        return None
+    with get_db_connection() as conn, conn.cursor() as cur:
+        cur.execute(
+            "SELECT id, pwd_hash, name FROM users WHERE id = %s",
+            (key,),
+        )
+        row = cur.fetchone()
+        return dict(row) if row else None
+
+
+def authenticate(user_id: str, pwd: str) -> dict | None:
+    """아이디와 비밀번호가 맞으면 {id, name}, 아니면 None.
+
+    ★ '아이디가 없다' 와 '비밀번호가 틀렸다' 를 구분해서 돌려주지 않습니다.
+      구분해서 알려 주면 어떤 아이디가 가입되어 있는지 확인하는 데
+      쓰일 수 있습니다.
+    """
+    user = find_user(user_id)
+    if user is None:
+        # 없는 아이디여도 해시 검증을 한 번 돌려 응답 시간을 맞춥니다.
+        verify_password(pwd or "", _DUMMY_HASH)
+        return None
+    if not verify_password(pwd or "", user["pwd_hash"]):
+        return None
+    return {"id": user["id"], "name": user["name"]}
+
+
+def delete_user(user_id: str) -> int:
+    """검증용 계정을 지울 때 씁니다. 지운 행 수를 돌려줍니다."""
+    key = normalize_user_id(user_id)
+    with get_db_connection() as conn, conn.cursor() as cur:
+        cur.execute("DELETE FROM users WHERE id = %s", (key,))
+        return cur.rowcount

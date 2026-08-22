@@ -1,3 +1,4 @@
+import asyncio
 from typing import Optional
 
 from fastapi import (
@@ -10,6 +11,7 @@ from fastapi import (
 
 from schemas.state import State
 from graph.workflow import graph
+from services import db_helper
 
 from guardrails.harness import GuardViolation
 from nodes.compliance import DISCLAIMER
@@ -61,42 +63,35 @@ async def signup(
     pwd: str = Form(...),
     name: str = Form(...),
 ):
+    """회원 한 명을 users 테이블에 저장합니다.
+
+    비밀번호는 bcrypt 해시로만 들어갑니다. 평문은 저장하지도, 로그에
+    남기지도 않습니다.
+    """
+    user_id = db_helper.normalize_user_id(id)
+
+    # 입력 검증은 DB 를 건드리지 않는 순수 함수로 빼 두었습니다(테스트 용이).
+    problem = db_helper.validate_signup(user_id, pwd, name)
+    if problem:
+        return fail_response(problem)
+
     try:
-        # 필수값 검증
-        if not id.strip():
-            raise ValueError("아이디를 입력해주세요.")
-
-        if not pwd.strip():
-            raise ValueError("비밀번호를 입력해주세요.")
-
-        if not name.strip():
-            raise ValueError("이름을 입력해주세요.")
-
-        # 회원정보 조회 (db_helper 이용, executor 참고할 것)
-        users = {}
-
-        # 이미 가입된 사용자 확인
-        if id in users:
-            raise ValueError("이미 존재하는 아이디입니다.")
-
-        # 회원 저장
-        users[id] = {
-            "id": id,
-            "pwd": pwd,
-            "name": name,
-        }
-
-        return success_response(
-            {
-                "user": {
-                    "id": id,
-                    "name": name,
-                }
-            }
+        # psycopg 는 동기입니다. 그대로 부르면 DB 가 느릴 때 이벤트 루프가
+        # 막혀 서버 전체가 멈춥니다. executor 와 같은 방식으로 감쌉니다.
+        user = await asyncio.to_thread(
+            db_helper.create_user, user_id, pwd, name
         )
-
+    except db_helper.DuplicateUser:
+        # 조회 후 삽입이 아니라 PK 제약이 잡아 줍니다 — 동시에 같은 아이디로
+        # 두 번 들어와도 하나만 성공합니다.
+        return fail_response("이미 존재하는 아이디입니다.")
     except Exception as e:
-        return fail_response(e)
+        # ★ str(e) 를 그대로 내보내지 않습니다. 예전에는 KeyError 가
+        #   "'pwd'" 라는 문구로 사용자 화면까지 새어 나갔습니다.
+        print(f"[signup] 실패: {type(e).__name__}: {e}")
+        return fail_response("회원가입을 처리하지 못했습니다. 잠시 후 다시 시도해주세요.")
+
+    return success_response({"user": {"id": user["id"], "name": user["name"]}})
 
 
 # ============================================================
@@ -111,32 +106,21 @@ async def login(
     id: str = Form(...),
     pwd: str = Form(...),
 ):
+    """users 테이블에서 찾아 비밀번호 해시를 대조합니다."""
     try:
-        # 사용자 존재 여부 확인 (db_helper 이용, executor 참고할 것)
-        user = {}
-
-        if user is None:
-            raise ValueError(
-                "아이디 또는 비밀번호가 올바르지 않습니다."
-            )
-
-        # 비밀번호 확인
-        if user["pwd"] != pwd:
-            raise ValueError(
-                "아이디 또는 비밀번호가 올바르지 않습니다."
-            )
-
-        return success_response(
-            {
-                "user": {
-                    "id": user["id"],
-                    "name": user["name"],
-                }
-            }
+        user = await asyncio.to_thread(
+            db_helper.authenticate, id, pwd
         )
-
     except Exception as e:
-        return fail_response(e)
+        print(f"[login] 실패: {type(e).__name__}: {e}")
+        return fail_response("로그인을 처리하지 못했습니다. 잠시 후 다시 시도해주세요.")
+
+    if user is None:
+        # ★ '없는 아이디' 와 '비밀번호 틀림' 을 구분해 알려 주지 않습니다.
+        #   구분하면 어떤 아이디가 가입되어 있는지 확인하는 데 쓰입니다.
+        return fail_response("아이디 또는 비밀번호가 올바르지 않습니다.")
+
+    return success_response({"user": {"id": user["id"], "name": user["name"]}})
 
 
 # ============================================================
