@@ -38,7 +38,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from analyze import report_info, summary_line, to_report
-from exam import compute_exam
+from exam import EXAM, compute_exam
 from schema_bridge import (BLOCKED, FAIL, has_structured,
                            looks_like_internal_error, to_recommend_form,
                            to_report_view, to_session_user, to_sex, to_user_id)
@@ -608,6 +608,9 @@ async def delete_report(report_id: str, request: Request):
 # 그래서 성별을 모를 때는 이 세 항목의 판정을 붙이지 않습니다.
 SEX_DEPENDENT = {"waist", "hb", "ggt"}
 
+# 화면이 아는 검진 항목 키(40개). 바깥에서 받은 값을 걸러 낼 때 씁니다.
+EXAM_KEYS = {i["key"] for g in EXAM for it in g["items"] for i in it.get("inputs", [])}
+
 
 def judge_read_values(exam: dict, sex: str, age: str) -> dict:
     """검진표에서 읽은 값에 판정 기준과 판정 결과를 붙입니다.
@@ -669,9 +672,14 @@ async def read_exam_via_agent(data: bytes, mime: str):
 
     payload = body.get("data") or {}
     ocr = payload.get("ocr_result") or {}
-    values = ocr.get("exam") or ocr.get("extracted_indicators") or {}
+
+    # 화면이 아는 항목만 받습니다. 분석 서버의 extracted_indicators 는
+    # 한글 항목명("비타민 D")을 키로 쓰는 다른 표현이라, 그대로 exam 에
+    # 넣으면 화면이 모르는 키가 섞여 들어갑니다. 이름 대응은 규격을
+    # 맞춘 뒤에 하기로 하고(§9), 지금은 아는 키만 걸러 씁니다.
+    values = {k: v for k, v in (ocr.get("exam") or {}).items() if k in EXAM_KEYS}
     if not values:
-        return None                       # 아직 수치를 안 주는 상태입니다
+        return None                       # 아직 쓸 수 있는 수치가 없습니다
 
     return {
         "source": "agent",

@@ -3365,7 +3365,7 @@ function startStepTicker(){
       lis[i].classList.remove('on'); lis[i].classList.add('done');
       i++; lis[i].classList.add('on');
     }
-  }, 900);
+  }, 7000);
 }
 
 /** 리포트를 접힘 상태를 지키며 다시 그립니다. */

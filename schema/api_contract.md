@@ -886,32 +886,31 @@ return success_response(data=normalized_result)
 `exam` 은 §2.3 의 40개 키를 씁니다(값은 전부 문자열). `groups` 와 `fields` 는
 없어도 되고, 있으면 화면이 그대로 보여 줍니다.
 
-`extracted_indicators`(지금 stub 이 돌려주는 모양)도 받도록 해 두었으니
-과도기에는 그쪽으로 주셔도 됩니다.
+⚠️ **`extracted_indicators` 로는 안 됩니다.** `agent/schemas/ocr.py` 의
+`OcrIndicator` 는 항목명을 한글 원문(`"비타민 D"`, `"중성지방"`)으로 담는데,
+화면 `exam` 은 `sbp`·`glu`·`tg` 같은 **코드**를 키로 씁니다. 체계가 달라서
+그대로 넣으면 화면이 모르는 키가 섞입니다. 화면은 아는 키만 걸러 받도록
+해 두었으니, **`ocr_result.exam` 으로 코드 키를 주셔야** 반영됩니다.
+
+이름 대응이 부담스러우면 `extracted_indicators` 를 그대로 두고 `exam` 만
+추가로 채워 주셔도 됩니다(둘 다 있어도 됩니다).
 
 ---
 
-### 요청 2 — OCR 실구현
+### 요청 2 — OCR 실구현 ✅ **완료됨** (`0db14ae`)
 
-**파일**: `agent/services/ocr.py`
-**작업량**: 큼 · **T3.1 로 이미 계획돼 있습니다**
+`agent/services/ocr.py` 가 OpenAI Vision 으로 실제 판독하도록 구현됐습니다
+(96줄, TODO 0건). 고정값 stub 이 사라졌습니다.
 
-현재 49줄 전부 TODO 이고 `image_bytes` 를 **길이만 출력하고 버립니다.**
-어떤 사진을 넣어도 고정 3지표(비타민D 12.3 / 칼슘 9.5 / 중성지방 180)가
-나옵니다.
+**남은 것은 키 하나입니다.**
 
 ```python
-print(f"[OCR] 파일({filename}, {len(image_bytes)} bytes) 파싱 및 ...")
-parsed_medical_data = {"extracted_indicators": {
-    "Vitamin_D": {"value": 12.3, ...}, ...}}   # 입력과 무관한 고정값
+if not config.OPENAI_API_KEY:
+    return _blank("OPENAI_API_KEY 없음")
 ```
 
-**요청 1 과 순서는 무관합니다.** 요청 1만 먼저 적용하면 화면이 stub 값을
-받게 되는데, 그건 지금 화면이 자체 견본을 쓰는 것과 다르지 않으므로
-손해가 없습니다. 요청 2가 끝나면 그 자리에 진짜 수치가 들어갑니다.
-
-**참고**: 화면 쪽 `frontend2/vision.py` 에 프롬프트와 파싱·검증 코드가 있습니다
-(`_PROMPT`, `_clean`, 40개 키 화이트리스트). 옮겨 쓰실 수 있습니다.
+`agent/.env` 의 `OPENAI_API_KEY` 가 비어 있어 지금은 빈 결과가 나옵니다.
+키를 채우면 실제 판독이 시작됩니다.
 
 ---
 
@@ -933,10 +932,11 @@ parsed_medical_data = {"extracted_indicators": {
 
 ### 우선순위
 
-| 순서 | 요청 | 작업량 | 적용 후 |
+| 순서 | 요청 | 작업량 | 상태 |
 |---|---|---|---|
-| 1 | `normalize` 응답에 `ocr_result` | **3줄** | 화면이 **분석 서버 판독 결과**를 사용 |
-| 2 | OCR 실구현 | 큼 (T3.1) | 그 결과가 **진짜 수치**가 됨 |
+| 1 | `normalize` 응답에 `ocr_result.exam` | **3줄** | ❌ 남음 |
+| 2 | OCR 실구현 | — | ✅ 완료 (`0db14ae`) |
+| 3 | `OPENAI_API_KEY` 발급·기입 | — | ❌ 남음 (`agent/.env` 비어 있음) |
 
 **1번이 3줄입니다.** §8 요청 1(`compliance.py` 3줄)과 성격이 같습니다 —
 값은 이미 만들어져 있는데 응답에 안 실려 있습니다.
