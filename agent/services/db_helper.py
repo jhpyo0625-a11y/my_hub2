@@ -376,3 +376,110 @@ def get_prescription_history(
         row = cur.fetchone()
 
     return dict(row) if row else None
+
+
+def remove_prescription_history(
+    user_id: str,
+    history_id: int,
+) -> bool:
+    """특정 사용자의 특정 처방/검사 이력을 삭제합니다."""
+    key = normalize_user_id(user_id)
+
+    if not key:
+        return False
+
+    with get_db_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                DELETE
+                FROM prescription_histories
+                WHERE id = %s
+                  AND user_id = %s
+                """,
+                (history_id, key),
+            )
+            deleted_rows = cur.rowcount
+        conn.commit()
+
+    return deleted_rows > 0
+
+def get_user_health_presets(
+    user_id: str,
+    preset_id: int,
+) -> Dict[str, Any] | None:
+    """특정 사용자의 입력 정보를 조회합니다.
+
+    preset_id만으로 조회하지 않고 user_id를 함께 조건에 사용하여
+    다른 사용자의 입력 정보에 접근할 수 없도록 합니다.
+    """
+
+    key = normalize_user_id(user_id)
+
+    if not key:
+        return None
+
+    with get_db_connection() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT
+                id,
+                age,
+                gender,
+                weight_kg,
+                activity_level,
+                routine_supplements,
+                latest_checkup_data,
+                allergies_conditions,
+                updated_at
+            FROM user_health_presets
+            WHERE id = %s
+              AND user_id = %s
+            LIMIT 1
+            """,
+            (preset_id, key),
+        )
+
+        row = cur.fetchone()
+
+    return dict(row) if row else None
+
+def save_user_health_presets(
+    user_id: str,
+    preset_id: int,
+) -> Dict[str, Any] | None:
+    """특정 사용자의 입력 정보를 조회합니다.
+
+    preset_id만으로 조회하지 않고 user_id를 함께 조건에 사용하여
+    다른 사용자의 입력 정보에 접근할 수 없도록 합니다.
+    """
+
+    key = normalize_user_id(user_id)
+
+    if not key:
+        return None
+
+    with get_db_connection() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT
+                id,
+                age,
+                gender,
+                weight_kg,
+                activity_level,
+                routine_supplements,
+                latest_checkup_data,
+                allergies_conditions,
+                updated_at
+            FROM user_health_presets
+            WHERE id = %s
+              AND user_id = %s
+            LIMIT 1
+            """,
+            (preset_id, key),
+        )
+
+        row = cur.fetchone()
+
+    return dict(row) if row else None

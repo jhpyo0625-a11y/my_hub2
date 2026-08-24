@@ -527,7 +527,7 @@ const USE_MOCK = false;     /* 이 파일은 실제 서버에 붙습니다 */
 /* 같은 주소에서 화면과 서버가 함께 돌면 '' 그대로 두면 됩니다.
    (server.js 가 이 화면을 http://localhost:3000 에서 내려 줍니다)
    다른 주소의 서버에 붙일 때만 예: 'https://api.myherb.co.kr' 처럼 적으세요. */
-const API_BASE = '';
+const API_BASE = 'http://localhost:8000';
 
 /** 서버 오류를 화면이 알아들을 수 있는 형태로 감쌉니다.
     code 로 무엇이 잘못됐는지 구분하고, message 는 사용자에게 보여 줍니다. */
@@ -603,37 +603,46 @@ const API = {
 
   /** 화면을 열 때 한 번 — 성분 이름 추천 목록 등 */
   bootstrap(){
-    return call('/api/bootstrap', {timeout:15000});
+    return call('/api/v1/bootstrap', {timeout:15000});
   },
 
   /** 저장해 둔 입력값 불러오기. 없으면 null.
       로그인이 안 되어 있어도 화면은 그냥 열려야 하므로 null 로 넘깁니다. */
-  async loadDraft(){
-    try { return await call('/api/draft', {timeout:15000}); }
-    catch(e){
-      if(e.code === 'LOGIN_REQUIRED' || e.code === 'HTTP_404') return null;
-      console.warn('[draft] 불러오기 실패 — 빈 화면으로 시작합니다.', e);
-      return null;
-    }
-  },
+  // async loadDraft(){
+  //   try { return await call('/api/v1/health_presets', {timeout:15000}); }
+  //   catch(e){
+  //     if(e.code === 'LOGIN_REQUIRED' || e.code === 'HTTP_404') return null;
+  //     console.warn('[draft] 불러오기 실패 — 빈 화면으로 시작합니다.', e);
+  //     return null;
+  //   }
+  // },
 
   /** 입력값 저장. 실패해도 입력을 막지 않습니다(표시만 합니다). */
-  saveDraft(input){
-    return call('/api/draft', {method:'PUT', body:input, timeout:15000});
+  saveDraft(presetId, input) {
+    console.log(input)
+    return call(`/api/v1/health_presets/${presetId}`, { method: 'PUT', body: input, timeout: 15000 });
   },
 
   /** ★ 판정 요청. AI 가 처리하므로 수십 초가 걸립니다.
       검진표 사진을 올렸다면 그 사진도 함께 보냅니다 — 서버가 사진을
       보관하지 않으므로, 분석할 때마다 브라우저가 다시 실어 보냅니다. */
-  analyze(input){
+  analyze(input) {
+    const fd = new FormData();
+    console.log(input)
+    debugger
+    // input 객체의 값들을 백엔드 Form 필드 이름에 맞게 각각 append
+    if (input.name) fd.append('name', input.name);
+    if (input.birth_date) fd.append('birth_date', input.birth_date);
+    if (input.age) fd.append('age', input.age);
+    if (input.sex) fd.append('sex', input.sex);
+    if (input.weight_kg) fd.append('weight_kg', input.weight_kg);
+  
     const file = CHAT.examFile;
-    if(file){
-      const fd = new FormData();
-      fd.append('input', JSON.stringify(input));
+    if (file) {
       fd.append('file', file, file.name || 'exam');
-      return call('/api/analyze', {method:'POST', form:fd, timeout:180000});
     }
-    return call('/api/analyze', {method:'POST', body:input, timeout:180000});
+  
+    return call('/api/v1/recommend', { method: 'POST', form: fd, timeout: 180000 });
   },
 
   /* -----------------------------------------------------------------------
@@ -642,20 +651,27 @@ const API = {
      ----------------------------------------------------------------------- */
 
   /** 지금 로그인되어 있는지. 되어 있으면 {name, email}, 아니면 LOGIN_REQUIRED 예외. */
-  me(){
-    return call('/api/me', {timeout:15000});
+  // me(){
+  //   return call('/api/v1/me', {timeout:15000});
+  // },
+
+  login(id, pwd){
+    const formData = new FormData();
+    formData.append('id', id);
+    formData.append('pwd', pwd);
+    return call('/api/v1/login', {method:'POST', form:formData, timeout:15000, surfaceMessage:true});
   },
 
-  login(email, password){
-    return call('/api/login', {method:'POST', body:{email, password}, timeout:15000, surfaceMessage:true});
-  },
-
-  signup(name, email, password){
-    return call('/api/signup', {method:'POST', body:{name, email, password}, timeout:15000, surfaceMessage:true});
+  signup(name, id, pwd) {
+    const formData = new FormData();
+    formData.append('id', id);
+    formData.append('pwd', pwd);
+    formData.append('name', name);
+    return call('/api/v1/signup', { method: 'POST', form: formData, timeout: 15000, surfaceMessage: true });
   },
 
   logout(){
-    return call('/api/logout', {method:'POST', timeout:15000});
+    return call('/api/v1/logout', {method:'POST', timeout:15000});
   },
 
   /* -----------------------------------------------------------------------
@@ -664,17 +680,17 @@ const API = {
 
   /** 목록은 가벼운 요약만. 전체 성분·소견은 리포트를 열 때(getReport) 받습니다. */
   listReports(){
-    return call('/api/reports', {timeout:15000});
+    return call('/api/v1/prescription-histories', {timeout:15000});
   },
 
   /** 리포트 하나의 전체 내용. analyze() 의 응답과 같은 Report 모양입니다. */
   getReport(id){
-    return call('/api/reports/' + encodeURIComponent(id), {timeout:15000});
+    return call('/api/v1/prescription-histories/' + encodeURIComponent(id), {timeout:15000});
   },
 
   /** 리포트 하나 지우기. 되돌릴 수 없으므로 화면에서 한 번 더 확인받습니다. */
   deleteReport(id){
-    return call('/api/reports/' + encodeURIComponent(id), {method:'DELETE', timeout:15000});
+    return call('/api/v1/prescription-remove/' + encodeURIComponent(id), {method:'DELETE', timeout:15000});
   },
 
   /** ★ 검진표 사진 한 장을 보내 검진값을 읽어 옵니다.
@@ -685,12 +701,24 @@ const API = {
     /* 성별·나이를 함께 보냅니다. 서버가 읽은 값에 판정 기준을 나란히
        붙여 주는데, 허리둘레·혈색소·γ-GTP 는 남녀 기준이 달라서 성별을
        모르면 판정을 못 붙입니다(그때는 판정 없이 수치와 기준만 옵니다). */
-    const q = new URLSearchParams();
-    if(state.sex) q.set('sex', state.sex);
-    if(state.age) q.set('age', state.age);
-    const qs = q.toString() ? ('?' + q.toString()) : '';
-    return call('/api/exam-image' + qs, {method:'POST', raw:file, timeout:60000});
-  },
+    const fd = new FormData();
+    
+    if (file) {
+      fd.append('file', file, file.name || 'exam_image');
+    }
+    if (state.sex) {
+      fd.append('sex', state.sex); // 'male' 또는 'female'
+    }
+    if (state.age) {
+      fd.append('age', state.age);
+    }
+  
+    return call('/api/v1/normalize', {
+      method: 'POST',
+      form: fd,
+      timeout: 60000
+    });
+  }
 };
 
 
@@ -713,7 +741,7 @@ function renderHeader(m){
   const tags = (m.badges || []).map(b => chip(b.text, b.tone));
 
   /* 검진 결과 열 — 종합 판정과 눈에 띄는 항목만. 전체 표는 아래에 있습니다. */
-  const examCol = !ex.filled
+  const examCol = !ex?.filled
     ? emptyCard('검진 결과가 없습니다',
                 '건강검진 결과를 입력하면 별표 4 기준으로 항목별 판정을 계산합니다.')
     : `<div class="rows">
@@ -746,11 +774,11 @@ function renderHeader(m){
        </div>`;
 
   /* 검진 결과 전체 표 — 입력된 항목만 목표질환별로 묶어 보여 줍니다. */
-  const filledGroups = ex.groups
+  const filledGroups = ex?.groups
     .map(g => ({...g, rows: g.rows.filter(r => r.judge.code)}))
     .filter(g => g.rows.length);
-  const blank = ex.rows.length - ex.filled;
-  const examTable = !ex.filled ? '' : `<details class="exam" data-k="ex">
+  const blank = ex?.rows.length - ex?.filled;
+  const examTable = !ex?.filled ? '' : `<details class="exam" data-k="ex">
       <summary class="ix-sum" style="border-bottom:none;padding:12px 0 0">
         <span class="h3">검진 결과 전체 · ${ex.filled}개 항목</span>
         <span class="toggle"><span class="on">접기</span><span class="off">펼치기</span></span>
@@ -769,10 +797,10 @@ function renderHeader(m){
     </details>`;
 
   /* 복약 정보 열 */
-  const medsCol = !s.meds.length
+  const medsCol = !s?.meds.length
     ? emptyCard('등록된 약이 없습니다',
                 '복용 중인 약을 입력하면 영양제와의 상호작용을 함께 점검합니다.')
-    : `<div class="rows">${s.meds.map(md => {
+    : `<div class="rows">${s?.meds.map(md => {
          /* 어떤 경고가 어느 약에서 나왔는지는 서버가 issue.med 로 알려 줍니다.
             (예전에는 문구 앞글자를 비교했는데, 문장이 조금만 바뀌어도
              연결이 끊어져서 규격에 필드를 하나 두었습니다.) */
@@ -786,7 +814,7 @@ function renderHeader(m){
        }).join('')}</div>`;
 
   /* 등록한 영양제 열 */
-  const suppCol = !s.products.length
+  const suppCol = !s?.products.length
     ? emptyCard('등록된 영양제가 없습니다',
                 '제품명과 성분을 입력하면 성분별 합산량을 계산해 드립니다.')
     : `<div class="rows">${s.products.map(p => {
@@ -804,11 +832,11 @@ function renderHeader(m){
   return `<details class="card hd" data-k="hd" open>
     <summary class="hd-sum">
       <div class="hd-left">
-        <div class="avatar">${esc((s.name || '?').trim().charAt(0))}</div>
+        <div class="avatar">${esc((s?.name || '?').trim().charAt(0))}</div>
         <div class="hd-info">
           <div class="hd-name">
-            <span class="nm">${esc(s.name || '이름 미입력')}</span>
-            <span class="mt">${esc(s.age || '—')}세 · ${esc(s.sex)} · ${esc(s.date)}</span>
+            <span class="nm">${esc(s?.name || '이름 미입력')}</span>
+            <span class="mt">${esc(s?.age || '—')}세 · ${esc(s?.sex)} · ${esc(s?.date)}</span>
           </div>
           <div class="tags">${tags.join('')}</div>
         </div>
@@ -818,9 +846,9 @@ function renderHeader(m){
     <div class="hd-body">
       <div class="hd-grid">
         <div class="hd-col">
-          <div class="hd-col-t">검진 결과${editLink('exam', ex.filled ? '수정' : '입력')}</div>${examCol}</div>
+          <div class="hd-col-t">검진 결과${editLink('exam', ex?.filled ? '수정' : '입력')}</div>${examCol}</div>
         <div class="hd-col">
-          <div class="hd-col-t">복약 정보${editLink('meds', s.meds.length ? '수정' : '입력')}</div>${medsCol}</div>
+          <div class="hd-col-t">복약 정보${editLink('meds', s?.meds.length ? '수정' : '입력')}</div>${medsCol}</div>
         <div class="hd-col">
           <div class="hd-col-t">등록한 영양제${editLink('products', '수정')}</div>${suppCol}</div>
       </div>
@@ -980,7 +1008,7 @@ function renderRecommend(m){
 
 /* ---- [블록 3] 상호작용 · 중복 점검 --------------------------------------- */
 function renderIssues(m){
-  const body = m.issues.length
+  const body = m.issues?.length
     ? m.issues.map(i => `<div class="ix-row">
         <span class="ix-kind" style="background:${TONE[i.tone].bg};color:${TONE[i.tone].fg}">${esc(i.kind)}</span>
         <span class="ix-text">${esc(i.text)}</span>
@@ -990,7 +1018,7 @@ function renderIssues(m){
 
   return `<details class="card" data-k="ix" open>
     <summary class="ix-sum">
-      <span class="h3">상호작용 · 성분 중복 점검${m.issues.length ? ` · ${m.issues.length}건` : ''}</span>
+      <span class="h3">상호작용 · 성분 중복 점검${m.issues?.length ? ` · ${m.issues?.length}건` : ''}</span>
       <span class="toggle"><span class="on">접기</span><span class="off">펼치기</span></span>
     </summary>
     <div>${body}</div>
@@ -1045,7 +1073,7 @@ const renderReport = m =>
     ${UI.sample ? sampleBanner() : mockBanner()}
     <div class="rp-top">
       <div><span class="h2">영양제 섭취 리포트</span>
-        <span class="sub" style="display:block">${esc(m.input.date || '')} 기준 · 입력하신 내용으로 분석했습니다.</span></div>
+        <span class="sub" style="display:block">${esc(m.input?.date || '')} 기준 · 입력하신 내용으로 분석했습니다.</span></div>
       <div class="rp-acts">
         <button type="button" class="btn-line" data-act="print">인쇄 · PDF 저장</button>
         <button type="button" class="rp-back" data-act="edit">입력 수정</button>
@@ -2029,63 +2057,90 @@ async function handleExamImageFile(file){
 function chatAnsweredByUser(step){
   return CHAT.log.some(m => m.role === 'user' && m.step === step && !m.auto);
 }
+function applyExamReading(r) {
+  // 1. 서버 공통 응답 구조(data) 언래핑
+  const d = (r && r.data) ? r.data : (r || {});
 
-function applyExamReading(r){
-  const keys = Object.keys(r.exam || {});
-  Object.entries(r.exam || {}).forEach(([k, v]) => { state.exam[k] = v; });
-  (r.chronic || []).forEach(c => { if(!state.chronic.includes(c)) state.chronic.push(c); });
+  // 2. exam, chronic 등 안전하게 추출
+  const exam = d.exam || {};
+  const chronic = d.chronic || [];
+  const keys = Object.keys(exam);
 
+  Object.entries(exam).forEach(([k, v]) => { state.exam[k] = v; });
+  chronic.forEach(c => { if (!state.chronic.includes(c)) state.chronic.push(c); });
+
+  // 3. 인적사항 자동 채우기 (기본값으로 채워진 값은 제외)
   const auto = [];   // [단계, 대화에 남길 문구]
-  if(r.name && !chatAnsweredByUser('name')){ state.name = r.name; auto.push(['name', r.name]); }
-  if(r.age  && !chatAnsweredByUser('age') ){ state.age  = r.age;  auto.push(['age', `${r.age}세`]); }
-  if(r.sex  && !chatAnsweredByUser('sex') ){ state.sex  = r.sex;  auto.push(['sex', r.sex]); }
-  if(r.date && !chatAnsweredByUser('examDate')){ state.date = r.date; auto.push(['examDate', r.date]); }
 
-  CHAT.imported = {source: r.source, count: keys.length, at: Date.now()};
-  CHAT.importedGroups = r.groups || [];
+  // 이름: '익명'이나 null이 아니고 사용자가 직접 답변하지 않은 경우
+  if (d.name && d.name !== '익명' && !chatAnsweredByUser('name')) { 
+    state.name = d.name; 
+    auto.push(['name', d.name]); 
+  }
+
+  // 나이: 서버 기본값(age_defaulted: true)이 아닐 때만 적용
+  if (d.age && !d.age_defaulted && !chatAnsweredByUser('age')) { 
+    state.age = d.age;  
+    auto.push(['age', `${d.age}세`]); 
+  }
+
+  // 성별: gender -> sex 매핑 및 서버 기본값(gender_defaulted: true)이 아닐 때만 적용
+  const sexVal = d.sex || d.gender;
+  if (sexVal && !d.gender_defaulted && !chatAnsweredByUser('sex')) { 
+    const sexText = sexVal === 'female' ? '여성' : (sexVal === 'male' ? '남성' : sexVal);
+    state.sex = sexVal;  
+    auto.push(['sex', sexText]); 
+  }
+
+  // 검진일
+  if (d.date && !chatAnsweredByUser('examDate')) { 
+    state.date = d.date; 
+    auto.push(['examDate', d.date]); 
+  }
+
+  // 4. 대화 상태 업데이트
+  CHAT.imported = { source: d.source, count: keys.length, at: Date.now() };
+  CHAT.importedGroups = d.groups || [];
   CHAT.wantsExam = true;
 
-  /* 사진에서 읽은 것은 다시 묻지 않습니다. */
   CHAT.known = ['examAsk', ...auto.map(([step]) => step)];
-  if((r.chronic || []).length) CHAT.known.push('chronic');
+  if (chronic.length) CHAT.known.push('chronic');
 
-  /* 무엇을 읽었는지 그대로 보여 줍니다 — 잘못 읽었을 때 사용자가 바로
-     알아채고 고칠 수 있어야 하기 때문입니다. */
-  const head = r.source === 'demo'
+  // 5. 판독 결과 안내 텍스트 생성
+  const head = d.source === 'demo'
     ? '⚠ 예시 판독입니다(실제 사진을 읽은 결과가 아니에요). 검진표에서 이렇게 읽었다고 가정할게요.'
     : '검진표에서 이렇게 읽었어요.';
-  /* 읽은 수치를 판정 기준과 나란히 보여 줍니다 — '148/88' 만 보여 주면
-     그게 높은 건지 사용자가 알 수 없습니다. 서버가 judged 로 붙여 줍니다.
-     성별을 아직 모르면 남녀 기준이 다른 항목(허리둘레·혈색소·γ-GTP)은
-     판정 없이 수치와 기준만 나옵니다. */
-  const jd = r.judged || {};
+
+  const jd = d.judged || {};
   const lines = (jd.rows && jd.rows.length)
     ? jd.rows.map(x => {
         const verdict = x.judge ? `  ${x.judge.text}`
                                 : (x.needSex ? '  (성별을 알려 주시면 판정해 드려요)' : '');
         return `· ${x.name} ${x.value}  (기준 ${x.ref})${verdict}`;
       })
-    : (r.fields || []).map(f => `· ${f.name} ${f.text}`);
+    : (d.fields || []).map(f => `· ${f.name} ${f.text}`);
 
-  /* 기준을 벗어난 항목이 몇 개인지 한 줄로 먼저 알려 줍니다. */
   const off = jd.counts || {};
   const abnormal = (off.B || 0) + (off.D || 0);
   const summary = abnormal
     ? ` 읽은 항목 중 ${abnormal}개가 기준을 벗어났어요.`
     : ((jd.rows && jd.rows.length) ? ' 읽은 항목은 모두 기준 안에 있어요.' : '');
-  CHAT.log.push({role:'bot', text: keys.length
-    ? `${head}${summary}\n${lines.join('\n')}\n\n다르게 읽은 값이 있으면 아래 '수정'으로 고칠 수 있어요.`
-    : '사진에서 읽어낼 수 있는 검진값이 없었어요. 질문에 직접 답해 주시면 그대로 채워 드릴게요.'});
 
-  /* 자동으로 채워진 답들도 대화에 남깁니다 — 그래야 '수정' 버튼이 붙어서
-     나중에 고칠 수 있고, 무엇이 저절로 채워졌는지도 눈에 보입니다. */
-  auto.forEach(([step, text]) => CHAT.log.push({role:'user', text, step, auto:true}));
-  if(CHAT.importedGroups.length){
+  CHAT.log.push({
+    role: 'bot', 
+    text: keys.length
+      ? `${head}${summary}\n${lines.join('\n')}\n\n다르게 읽은 값이 있으면 아래 '수정'으로 고칠 수 있어요.`
+      : '사진에서 읽어낼 수 있는 검진값이 없었어요. 질문에 직접 답해 주시면 그대로 채워 드릴게요.'
+  });
+
+  // 6. 대화 로그 및 큐 정리
+  auto.forEach(([step, text]) => CHAT.log.push({ role: 'user', text, step, auto: true }));
+  if (CHAT.importedGroups.length) {
     CHAT.importedGroups.forEach(g => CHAT.log.push({
-      role:'user', text: chatExamGroupConfirmText(g), step:'examGroupDetail', ref:g, auto:true}));
+      role: 'user', text: chatExamGroupConfirmText(g), step: 'examGroupDetail', ref: g, auto: true
+    }));
   }
 
-  /* 사진에서 채워지지 않은 검진 그룹만 큐에 남깁니다. */
   CHAT.examQueue = CHAT.examQueue.filter(g => !CHAT.importedGroups.includes(g));
   CHAT.step = chatFirstUnknownFrom(CHAT.step);
 }
@@ -2927,8 +2982,8 @@ function fillForm(){
 function readForm(){
   state.name = $('#f-name').value.trim();
   state.age  = $('#f-age').value;
-  state.sex  = $('#f-sex').value;
   state.date = $('#f-date').value;
+  state.sex  = $('#f-sex').value;
   state.countMeal = $('#f-meal').checked;
 
   state.exam = {};
@@ -3064,11 +3119,12 @@ function queueSave(){
 async function doSave(){
   const seq  = ++saveSeq;
   const body = snapshot();
+  console.log(body)
   /* 아무것도 안 적은 상태는 저장하지 않습니다 */
   if(!body.age && !body.sex && !body.products.length && !body.meds.length && !body.name) return;
   setSaveState('저장 중…');
   try {
-    await API.saveDraft(body);
+    // await API.saveDraft(body);
     if(seq === saveSeq) setSaveState('저장됨', 'ok');
   } catch(e){
     if(seq !== saveSeq) return;
@@ -3261,12 +3317,12 @@ function paintAuthModal(focusFirst){
 /** 로그인/회원가입에 성공한 뒤 — 저장된 입력을 이어받고,
     끊겼던 작업(pendingAfterLogin)이 있으면 그걸 이어서 합니다. */
 async function afterLogin(){
-  try {
-    const draft = await API.loadDraft();
-    if(draft) Object.assign(state, draft);
-  } catch(e){
-    console.warn('[draft] 로그인 직후 불러오기 실패.', e);
-  }
+  // try {
+  //   const draft = await API.loadDraft();
+  //   if(draft) Object.assign(state, draft);
+  // } catch(e){
+  //   console.warn('[draft] 로그인 직후 불러오기 실패.', e);
+  // }
   if(UI.pendingAfterLogin){
     /* 세션이 끊겨서 다시 로그인한 경우입니다. 하던 일(대개 끊겼던 분석)을
        그대로 이어서 합니다 — 여기서 메인 화면으로 보내 버리면 사용자가
@@ -3387,6 +3443,7 @@ function rerenderReport(){
 let analyzeSeq = 0;
 
 async function analyze(input, {sample = false} = {}){
+  console.log("async analyze")
   const seq = ++analyzeSeq;
   UI.sample = sample;
   go('analyzing', {push:false});
@@ -3626,19 +3683,27 @@ document.addEventListener('submit', e => {
   paintAuthModal();
 
   const req = mode === 'signup' ? API.signup(name, email, pw) : API.login(email, pw);
-  req.then(user => {
-    AUTH.user = user;
-    saveSessionUser(user);        /* 서버 세션과 별개로, 화면이 바로 읽을 사본 */
-    AUTH.busy = false;
-    AUTH.name = ''; AUTH.email = ''; AUTH.pw = '';
-    closeAuthGate();
-    paintTopbar();
-    return afterLogin();
-  }).catch(err => {
-    AUTH.busy = false;
-    AUTH.formError = (err && err.message) || '처리하지 못했습니다. 다시 시도해 주세요.';
-    paintAuthModal();
-  });
+
+req.then(res => {
+  // 1. 서버 응답 status가 'fail'이거나 user 정보가 없는 경우 에러 처리
+  if (res.status === 'fail' || !res.data?.user) {
+    throw new Error(res.message || '처리하지 못했습니다. 다시 시도해 주세요.');
+  }
+  // 2. res.data.user에서 실제 유저 객체 추출
+  const user = res.data.user;
+  AUTH.user = user;
+  saveSessionUser(user);        /* 화면이 바로 읽을 사본 */
+  AUTH.busy = false;
+  AUTH.name = ''; AUTH.email = ''; AUTH.pw = '';
+  closeAuthGate();
+  paintTopbar();
+  return afterLogin();
+}).catch(err => {
+  AUTH.busy = false;
+  // throw new Error()로 던져진 메세지 또는 ApiError 메세지 출력
+  AUTH.formError = (err && err.message) || '처리하지 못했습니다. 다시 시도해 주세요.';
+  paintAuthModal();
+});
 });
 
 /* 계정 메뉴 바깥을 누르면 닫습니다 */
@@ -3692,7 +3757,7 @@ window.addEventListener('beforeunload', e => {
     AUTH.user = loadSessionUser();
     if(AUTH.user) paintTopbar();
     try {
-      AUTH.user = await API.me();
+      // AUTH.user = await API.me();
       saveSessionUser(AUTH.user);
     } catch(e){
       AUTH.user = null;
@@ -3701,14 +3766,14 @@ window.addEventListener('beforeunload', e => {
     paintTopbar();
 
     /* 저장해 둔 입력 이어받기 — 로그인되어 있을 때만 의미가 있습니다. */
-    if(AUTH.user){
-      try {
-        const draft = await API.loadDraft();
-        if(draft) Object.assign(state, draft);
-      } catch(e){
-        console.warn('[draft] 실패 — 빈 화면으로 시작합니다.', e);
-      }
-    }
+    // if(AUTH.user){
+    //   try {
+    //     const draft = await API.loadDraft();
+    //     if(draft) Object.assign(state, draft);
+    //   } catch(e){
+    //     console.warn('[draft] 실패 — 빈 화면으로 시작합니다.', e);
+    //   }
+    // }
 
     /* 주소 기록 (막히면 nav 안에서 조용히 넘어갑니다) */
     let hash = '';

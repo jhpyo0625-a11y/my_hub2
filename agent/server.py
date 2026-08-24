@@ -10,6 +10,7 @@ from fastapi import (
     Request,
 )
 
+from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
 from schemas.state import State
@@ -34,13 +35,28 @@ app = FastAPI(
 )
 
 
+# 허용할 프론트엔드 출처(Origin) 목록
+origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+# 1. 세션 미들웨어 등록
 app.add_middleware(
     SessionMiddleware,
     secret_key=SESSION_SECRET_KEY,
     session_cookie="ai_nutrition_session",
     max_age=60 * 60 * 24 * 7,  # 7일
     same_site="lax",
-    https_only=False,  # 로컬 개발환경에서는 False
+    https_only=False,  # 로컬 개발환경
+)
+
+# 2. CORS 미들웨어 별도 등록 (★ 반드시 분리해서 작성)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,            # 허용할 Origin 목록
+    allow_credentials=True,           # 쿠키/세션 전송 허용
+    allow_methods=["*"],              # 모든 HTTP 메서드 허용
+    allow_headers=["*"],              # 모든 요청 헤더 허용
 )
 
 
@@ -62,6 +78,29 @@ def fail_response(error):
         "message": str(error),
         "data": {},
     }
+
+
+# ============================================================
+# 샘플 부트스트랩 API
+# ============================================================
+
+@app.get(
+    "/api/v1/bootstrap",
+    summary="사용자 로그인 여부 조회",
+)
+async def bootstrap(
+):
+    """사용자 로그인 정보를 조회합니다."""
+
+    return {
+      "nutHints": [
+        '비타민 A', '비타민 B1', '비타민 B2', '나이아신', '비타민 B6', '엽산', '비타민 B12',
+        '비타민 C', '비타민 D', '비타민 E', '비타민 K', '비오틴', '판토텐산',
+        '칼슘', '마그네슘', '아연', '철', '셀레늄', '구리', '망간', '요오드', '크롬',
+        '오메가3', '루테인', '유산균', '밀크씨슬', '코엔자임Q10',
+      ],
+      "unverified": True,
+    };
 
 
 # ============================================================
@@ -109,6 +148,25 @@ async def signup(
 
 
 # ============================================================
+# 로그인 여부 확인 API
+# ============================================================
+
+@app.get("/api/v1/me")
+async def get_me(request: Request):
+    user_id = request.session.get("user_id")
+    user_name = request.session.get("user_name")
+
+    if not user_id:
+        return fail_response("로그인이 필요한 서비스입니다.")
+
+    return success_response({
+        "user": {
+            "id": user_id,
+            "name": user_name,
+        }
+    })
+
+# ============================================================
 # 로그인 API
 # ============================================================
 
@@ -122,7 +180,9 @@ async def login(
     pwd: str = Form(...),
 ):
     """users 테이블에서 찾아 비밀번호 해시를 대조합니다."""
-
+    print("=========================")
+    print(id)
+    print(pwd)
     try:
         user = await asyncio.to_thread(
             db_helper.authenticate, id, pwd
@@ -346,6 +406,153 @@ async def get_prescription_history_detail(
             "검사 이력 상세 정보를 조회하지 못했습니다. "
             "잠시 후 다시 시도해주세요."
         )
+
+
+# ============================================================
+# 특정 검사/처방 이력 삭제 API
+# ============================================================
+
+@app.delete(
+    "/api/v1/prescription-remove/{history_id}",
+    summary="특정 검사/처방 이력 삭제",
+)
+async def remove_prescription_history(
+    history_id: int,
+    request: Request,
+):
+    """현재 로그인한 사용자의 특정 검사/처방 이력 삭제합니다."""
+
+    # 세션에서 user_id 획득
+    user_id = request.session.get("user_id")
+
+    if not user_id:
+        return fail_response(
+            "로그인이 필요한 서비스입니다."
+        )
+
+    try:
+        history = await asyncio.to_thread(
+            db_helper.remove_prescription_history,
+            user_id,
+            history_id,
+        )
+
+        if history is None:
+            return fail_response(
+                "해당 검사 이력을 찾을 수 없습니다."
+            )
+
+        return success_response(history)
+
+    except Exception as e:
+        print(
+            f"[prescription-remove] "
+            f"실패: {type(e).__name__}: {e}"
+        )
+
+        return fail_response(
+            "검사 이력을 삭제하지 못했습니다. "
+            "잠시 후 다시 시도해주세요."
+        )
+
+
+# ============================================================
+# 특정 검사/처방 입력 정보 조회 API
+# ============================================================
+
+@app.get(
+    "/api/v1/health_presets/{preset_id}",
+    summary="특정 검사/처방 입력 정보 조회",
+)
+async def get_user_health_presets(
+    preset_id: int,
+    request: Request,
+):
+    """현재 로그인한 사용자의 입력 정보를 조회합니다."""
+
+    # 세션에서 user_id 획득
+    user_id = request.session.get("user_id")
+
+    if not user_id:
+        return fail_response(
+            "로그인이 필요한 서비스입니다."
+        )
+
+    try:
+        history = await asyncio.to_thread(
+            db_helper.get_user_health_presets,
+            user_id,
+            preset_id,
+        )
+
+        if history is None:
+            return fail_response(
+                "해당 검사 이력을 찾을 수 없습니다."
+            )
+
+        return success_response(history)
+
+    except Exception as e:
+        print(
+            f"[prescription-history-detail] "
+            f"실패: {type(e).__name__}: {e}"
+        )
+
+        return fail_response(
+            "검사 이력 상세 정보를 조회하지 못했습니다. "
+            "잠시 후 다시 시도해주세요."
+        )
+
+
+
+# ============================================================
+# 특정 검사/처방 입력 정보 조회 API
+# ============================================================
+
+@app.put(
+    "/api/v1/health_presets/{preset_id}",
+    summary="특정 검사/처방 입력 정보 조회",
+)
+async def save_user_health_presets(
+    preset_id: int,
+    request: Request,
+):
+    """현재 로그인한 사용자의 입력 정보를 조회합니다."""
+
+    # 세션에서 user_id 획득
+    user_id = request.session.get("user_id")
+
+    if not user_id:
+        return fail_response(
+            "로그인이 필요한 서비스입니다."
+        )
+
+    try:
+        history = await asyncio.to_thread(
+            db_helper.save_user_health_presets,
+            user_id,
+            preset_id,
+            data,
+        )
+
+        if history is None:
+            return fail_response(
+                "해당 검사 이력을 찾을 수 없습니다."
+            )
+
+        return success_response(history)
+
+    except Exception as e:
+        print(
+            f"[prescription-history-detail] "
+            f"실패: {type(e).__name__}: {e}"
+        )
+
+        return fail_response(
+            "검사 이력 상세 정보를 조회하지 못했습니다. "
+            "잠시 후 다시 시도해주세요."
+        )
+
 
 
 # ============================================================

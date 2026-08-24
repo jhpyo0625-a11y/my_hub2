@@ -544,6 +544,7 @@ class ApiError extends Error {
     두루뭉술한 문구를 보여 주는 게 안전합니다(문구가 사용자 안내로
     다듬어져 있다는 보장이 없으므로). */
 async function call(path, {method = 'GET', body, raw, form, timeout = 60000, surfaceMessage = false} = {}){
+  console.log("test")
   const ctrl  = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeout);
   try {
@@ -605,7 +606,7 @@ const API = {
       로그인이 안 되어 있어도 화면은 그냥 열려야 하므로 null 로 넘깁니다. */
   async loadDraft(){
     if(USE_MOCK) return MOCK.loadDraft();
-    try { return await call('/api/draft', {timeout:15000}); }
+    try { return await call('/api/v1/health_presets', {timeout:15000}); }
     catch(e){
       if(e.code === 'LOGIN_REQUIRED' || e.code === 'HTTP_404') return null;
       console.warn('[draft] 불러오기 실패 — 빈 화면으로 시작합니다.', e);
@@ -615,8 +616,9 @@ const API = {
 
   /** 입력값 저장. 실패해도 입력을 막지 않습니다(표시만 합니다). */
   saveDraft(input){
+    console.log(input)
     if(USE_MOCK) return MOCK.saveDraft(input);
-    return call('/api/draft', {method:'PUT', body:input, timeout:15000});
+    return call('/api/v1/health_presets', {method:'PUT', body:input, timeout:15000});
   },
 
   /** ★ 판정 요청. AI 가 처리하므로 수십 초가 걸립니다.
@@ -642,7 +644,7 @@ const API = {
   /** 지금 로그인되어 있는지. 되어 있으면 {name, email}, 아니면 LOGIN_REQUIRED 예외. */
   me(){
     if(USE_MOCK) return MOCK.me();
-    return call('/api/me', {timeout:15000});
+    return call('/api/v1/me', {timeout:15000});
   },
 
   login(email, password){
@@ -651,7 +653,7 @@ const API = {
     const formData = new URLSearchParams();
     formData.append('id', email);
     formData.append('pwd', password);
-    return call('/api/login', {method:'POST', body:formData, timeout:15000, surfaceMessage:true});
+    return call('/api/v1/login', {method:'POST', body:formData, timeout:15000, surfaceMessage:true});
   },
 
   signup(name, email, password){
@@ -660,12 +662,12 @@ const API = {
     formData.append('id', email);
     formData.append('pwd', password);
     formData.append('name', name);
-    return call('/api/signup', {method:'POST', body:formData, timeout:15000, surfaceMessage:true});
+    return call('/api/v1/signup', {method:'POST', body:formData, timeout:15000, surfaceMessage:true});
   },
 
   logout(){
     if(USE_MOCK) return MOCK.logout();
-    return call('/api/logout', {method:'POST', timeout:15000});
+    return call('/api/v1/logout', {method:'POST', timeout:15000});
   },
 
   /* -----------------------------------------------------------------------
@@ -675,19 +677,19 @@ const API = {
   /** 목록은 가벼운 요약만. 전체 성분·소견은 리포트를 열 때(getReport) 받습니다. */
   listReports(){
     if(USE_MOCK) return MOCK.listReports();
-    return call('/api/reports', {timeout:15000});
+    return call('/api/v1/prescription-histories', {timeout:15000});
   },
 
   /** 리포트 하나의 전체 내용. analyze() 의 응답과 같은 Report 모양입니다. */
   getReport(id){
     if(USE_MOCK) return MOCK.getReport(id);
-    return call('/api/reports/' + encodeURIComponent(id), {timeout:15000});
+    return call('/api/v1/prescription-histories/' + encodeURIComponent(id), {timeout:15000});
   },
 
   /** 리포트 하나 지우기. 되돌릴 수 없으므로 화면에서 한 번 더 확인받습니다. */
   deleteReport(id){
     if(USE_MOCK) return MOCK.deleteReport(id);
-    return call('/api/reports/' + encodeURIComponent(id), {method:'DELETE', timeout:15000});
+    return call('/api/v1/reports/' + encodeURIComponent(id), {method:'DELETE', timeout:15000});
   },
 
   /** ★ 검진표 사진 한 장을 보내 검진값을 읽어 옵니다.
