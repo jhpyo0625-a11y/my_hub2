@@ -15,7 +15,7 @@ from services import db_helper
 
 from guardrails.harness import GuardViolation
 from nodes.compliance import DISCLAIMER
-from normalizer import input_normalization_node
+from nodes.normalizer import input_normalization_node
 from dotenv import load_dotenv
 
 load_dotenv()
