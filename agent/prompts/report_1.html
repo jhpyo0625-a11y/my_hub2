@@ -1,23 +1,754 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MyHerb</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
 /* =========================================================================
-   app.js — MyHerb 화면 동작 (목업 포함 · 개발용)
-   -------------------------------------------------------------------------
-   report.html 이 이 파일을 불러 씁니다.
-
-   ★ 이 파일에는 백엔드가 없는 동안 브라우저 안에서 판정을 흉내 내는
-     [E] 목업 블록이 들어 있습니다. 실제 서버에 붙일 때는 이 파일을 지우는
-     것이 아니라, 목업 블록만 빠진 live-app.js 를 쓰면 됩니다.
-     (node build-live.js 가 이 파일로부터 자동으로 만들어 줍니다)
-
-   구성 — 아래 순서대로 들어 있습니다.
-     [A] 화면 토큰    색·수준 이름표
-     [B] 유틸         이스케이프 · 숫자 서식 · 조사 처리
-     [C] 입력 폼 정의 검진 항목 · 만성질환 목록
-     [D] ★ API 경계 ★ 서버와 만나는 유일한 지점. 여기만 고칩니다.
-     [E] ▼ 목업 블록 ▼ 백엔드 대신 계산하는 임시 코드 (실서버에서는 빠집니다)
-     [F] 렌더         Report 를 받아 화면을 그립니다
-     [G] 화면 전환    불러오는 중 / 입력 / 분석 중 / 리포트 / 실패
-     [H] 이벤트·시작
+   0. 공통 — 변수 · 리셋 · 페이지 틀
    ========================================================================= */
+:root{
+  --ff:'Pretendard Variable',Pretendard,-apple-system,system-ui,'Malgun Gothic',sans-serif;
+  --border:#E5E7EB;
+  --radius:16px;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:#EDEEF1;
+  color:#111827;
+  font-family:var(--ff);
+  -webkit-font-smoothing:antialiased;
+}
+a{color:#1E3A8A;text-decoration:none}
+a:hover{color:#15803D}
+
+/* 페이지 전체를 감싸는 세로 스택. 블록 사이 간격을 여기서 한 번에 조절합니다. */
+.page{
+  max-width:1200px;
+  margin:0 auto;
+  padding:40px 24px 72px;
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+}
+
+/* 큰 카드(블록 껍데기)의 공통 모양 */
+.card{
+  background:#FFFFFF;
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  box-shadow:0 1px 2px rgba(16,24,40,.04);
+}
+
+/* -------- 자주 쓰는 작은 부품들 -------------------------------------------- */
+.chip{font:600 11.5px/1 var(--ff);padding:5px 9px;
+  border-radius:999px;border:1px solid}
+.tag{font:700 10px/1.35 var(--ff);padding:4px 7px;border-radius:6px;
+  border:1px solid transparent;display:inline-block;white-space:nowrap;flex:none}
+.bigchip{font:700 12.5px/1 var(--ff);padding:7px 12px;
+  border-radius:999px;border:1px solid transparent}
+.h2{font:700 20px/1.3 var(--ff)}
+.h3{font:700 16px/1.3 var(--ff)}
+.sub{font:400 12.5px/1.6 var(--ff);color:#6B7280;text-wrap:pretty}
+.link{font:600 12px/1.4 var(--ff)}
+.note-s{font:400 11.5px/1.7 var(--ff);color:#9CA3AF}
+.b{font-weight:600} .right{text-align:right}
+
+/* 빈 상태 카드 — 데이터가 없을 때 그 자리에 대신 들어갑니다 */
+.empty{
+  border:1px dashed #D8DCE2;border-radius:10px;background:#FFFFFF;
+  padding:14px 13px;display:flex;flex-direction:column;gap:6px;align-items:flex-start;
+}
+.empty.plain{border:none;padding:22px 20px}   /* 섹션 통째로 비었을 때 */
+.empty-t{font:600 13px/1.4 var(--ff);color:#4B5563}
+.empty-d{font:400 11.5px/1.6 var(--ff);color:#9CA3AF}
+
+/* 접기/펼치기 버튼 (<details> 의 요약 줄에 들어갑니다) */
+.toggle{
+  font:600 13px/1.4 var(--ff);padding:9px 14px;border-radius:10px;
+  border:1px solid #C7CDD6;background:#FFFFFF;
+  color:#1F2937;flex:none;white-space:nowrap;
+}
+.toggle .on{display:inline} .toggle .off{display:none}
+details:not([open]) .toggle .on{display:none}
+details:not([open]) .toggle .off{display:inline}
+
+
+/* =========================================================================
+   [블록 1] 프로필 헤더
+   구조:  요약 줄(아바타 + 이름 + 태그 + 접기버튼)
+          └ 펼침 영역 = 3열(검진 결과 / 복약 정보 / 등록한 영양제) + 링크 줄
+   ========================================================================= */
+.hd{overflow:hidden}
+.hd-sum{list-style:none;display:flex;align-items:flex-start;
+  justify-content:space-between;gap:24px;padding:22px 24px;cursor:pointer}
+.hd-sum::-webkit-details-marker{display:none}
+.hd-left{display:flex;gap:16px;align-items:flex-start}
+.avatar{width:56px;height:56px;border-radius:50%;background:#E8EBF2;
+  border:1px solid #D3D9E6;display:flex;align-items:center;justify-content:center;
+  font:700 18px/1 var(--ff);color:#1E3A8A;flex:none}
+.hd-info{display:flex;flex-direction:column;gap:8px}
+.hd-name{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.hd-name .nm{font:700 22px/1.2 var(--ff)}
+.hd-name .mt{font:400 13px/1.4 var(--ff);color:#6B7280}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+
+.hd-body{border-top:1px solid var(--border);background:#FAFBFC;
+  padding:22px 24px;display:flex;flex-direction:column;gap:16px}
+/* 헤더 3열. 열 수는 tokens.LAYOUT["header_cols"] 로 정합니다. */
+.hd-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.hd-col{display:flex;flex-direction:column;gap:10px}
+.hd-col-t{font:700 13px/1.4 var(--ff);color:#111827}
+.hd-links{display:flex;gap:18px;flex-wrap:wrap;
+  border-top:1px dashed #E1E4E9;padding-top:12px}
+
+/* 검진 결과 표 — 열 너비 비율을 여기서 조절합니다 */
+.tbl{border:1px solid var(--border);border-radius:10px;
+  background:#FFFFFF;overflow:hidden}
+.tr{display:grid;grid-template-columns:1.25fr .85fr .95fr .62fr;gap:6px;
+  padding:8px 10px;font:400 11.5px/1.5 var(--ff);
+  border-top:1px solid #F1F2F4;align-items:center}
+.tr.th{font:600 11px/1.4 var(--ff);color:#6B7280;
+  background:#F3F4F6;border-top:none}
+.tr .b{white-space:nowrap}
+.tr .rf{color:#6B7280}
+
+/* [추가] 검진 표를 목표질환별로 나누는 구분줄 */
+.tr.gp{background:#FAFBFC;font:700 10.5px/1.4 var(--ff);color:#9CA3AF;
+  grid-template-columns:1fr;letter-spacing:.04em}
+/* [추가] 검진 전체 표를 감싸는 접이식 영역 */
+.exam summary{list-style:none}
+.exam summary::-webkit-details-marker{display:none}
+
+/* 복약 / 영양제 목록의 작은 줄 */
+.rows{display:flex;flex-direction:column;gap:8px}
+.row{border:1px solid var(--border);border-radius:10px;background:#FFFFFF;
+  padding:11px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.row.top{align-items:flex-start}
+.row-l{display:flex;flex-direction:column;gap:3px}
+.row-t{font:600 12.5px/1.4 var(--ff)}
+.row-d{font:400 11.5px/1.4 var(--ff);color:#6B7280}
+
+
+/* =========================================================================
+   [블록 2] 섭취량
+   구조:  제목 + 범례 / 탭 / 본문
+          본문은 데이터에 따라 둘 중 하나 → 성분 카드 그리드  또는  안내 블록
+   ========================================================================= */
+.intake{display:flex;flex-direction:column;gap:14px}
+.in-head{display:flex;align-items:flex-start;justify-content:space-between;
+  gap:24px;flex-wrap:wrap}
+.in-head-l{display:flex;flex-direction:column;gap:6px;max-width:720px}
+
+.legend{display:flex;flex-wrap:wrap;gap:12px;align-items:center;
+  font:500 11.5px/1.4 var(--ff);color:#4B5563}
+.legend span{display:flex;align-items:center;gap:5px}
+.legend .sw{width:10px;height:10px;border-radius:2px;display:inline-block}
+.legend .ln{width:2px;height:12px;display:inline-block}
+
+/* --- 탭 (권장 대비 / 상한 대비) -------------------------------------------
+   JavaScript 없이 동작합니다. 숨겨진 radio 두 개 + CSS 형제 선택자 조합입니다.
+   한 페이지에 리포트를 여러 개 넣을 때를 대비해 id 에 uid 를 붙입니다.        */
+.tabs{display:inline-flex;align-self:flex-start;padding:3px;
+  background:#E8EAEE;border-radius:10px;gap:3px}
+.tabs label{font:500 12.5px/1.4 var(--ff);padding:8px 16px;border-radius:8px;
+  color:#6B7280;cursor:pointer}
+.tabin{position:absolute;opacity:0;pointer-events:none}
+.tabin[value=rda]:checked~.intake .tabs .lb-rda,
+.tabin[value=ul]:checked~.intake .tabs .lb-ul{
+  background:#FFFFFF;color:#111827;font-weight:700;
+  box-shadow:0 1px 2px rgba(16,24,40,.08)}
+
+/* 탭에 대응하는 두 화면(pane). 선택된 쪽만 보입니다. */
+.pane{display:none;flex-direction:column;gap:16px}
+.pane.always{display:flex}            /* 탭이 필요 없는 상태(안내 블록)일 때 */
+.tabin[value=rda]:checked~.intake .pane-rda,
+.tabin[value=ul]:checked~.intake .pane-ul{display:flex}
+
+/* 성분 카드 그리드. 열 수는 data-cols 속성으로 지정됩니다(카드 개수에 따라 자동). */
+.grid{display:grid;gap:16px;grid-template-columns:repeat(4,1fr)}
+.grid[data-cols="1"]{grid-template-columns:repeat(1,1fr)}
+.grid[data-cols="2"]{grid-template-columns:repeat(2,1fr)}
+.grid[data-cols="3"]{grid-template-columns:repeat(3,1fr)}
+.grid[data-cols="4"]{grid-template-columns:repeat(4,1fr)}
+
+/* --- 성분 카드 ------------------------------------------------------------
+   위에서부터: 이름+배지 / 캡션 / 반원 게이지 / 등급 / 막대 / 수치 / 코멘트    */
+.nc{background:#FFFFFF;border:1px solid var(--border);
+  border-radius:14px;padding:18px;
+  box-shadow:0 1px 2px rgba(16,24,40,.04);
+  display:flex;flex-direction:column;gap:12px}
+.nc-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.nc-name{font:700 18px/1.3 var(--ff)}
+.nc-cap{font:500 11.5px/1.4 var(--ff);padding:5px 9px;
+  border-radius:7px;display:inline-block}
+.gauge{width:100%;max-width:190px;margin:2px auto 0;display:block}
+.nc-level{text-align:center;font:700 13px/1.4 var(--ff);margin-top:-4px}
+
+/* 막대 + 마커. barwrap 이 좌표 기준이고 마커는 % 위치로 절대배치됩니다. */
+.barwrap{position:relative;height:40px}
+.bar{position:absolute;left:0;right:0;top:20px;height:10px;
+  border-radius:5px;background:#F3F4F6;
+  display:flex;overflow:hidden}
+.mk{position:absolute;top:12px;height:26px;width:2px;display:block}
+.mk-rda{background:#15803D}
+.mk-ul{background:#DC2626;transform:translateX(-2px)}
+.mkl{position:absolute;top:0;font:700 9.5px/1 var(--ff);font-style:normal}
+.mkl-rda{color:#15803D;transform:translateX(-50%)}
+.mkl-ul{color:#DC2626;right:0}
+
+.nc-vals{display:flex;justify-content:space-between;gap:8px;
+  font:500 11.5px/1.4 var(--ff);color:#4B5563;margin-top:-6px}
+.nc-note{border:1px solid;border-radius:9px;padding:10px 11px;
+  font:400 12px/1.6 var(--ff);text-wrap:pretty}
+.nc-note b{font-weight:700}
+
+/* --- 안내 블록 (성분 카드가 없을 때 그 자리에 들어갑니다) -------------------- */
+.guide{border:1px solid #F5C9A4;background:#FFF8F2;border-radius:14px;
+  padding:20px 22px;display:flex;flex-direction:column;gap:8px}
+.guide-t{font:700 17px/1.3 var(--ff);color:#9A3412}
+.guide-d{margin:0;font:400 13.5px/1.8 var(--ff);color:#7C2D12;
+  max-width:900px;text-wrap:pretty}
+
+/* 안내 카드들 — 헤더와 같은 3열 그리드를 재사용합니다 */
+.opts{display:grid;grid-template-columns:repeat(3,1fr);
+  gap:16px}
+.opt{background:#FFFFFF;border:1px solid var(--border);
+  border-top:4px solid #9CA3AF;border-radius:14px;padding:20px;
+  display:flex;flex-direction:column;gap:12px;align-items:flex-start;
+  box-shadow:0 1px 2px rgba(16,24,40,.04)}
+.opt-t{font:700 17px/1.3 var(--ff)}
+.opt-d{margin:0;font:400 13px/1.7 var(--ff);color:#4B5563}
+.btn{margin-top:auto;align-self:stretch;text-align:center;
+  font:700 13.5px/1.4 var(--ff);padding:12px 16px;border-radius:10px;color:#fff!important}
+
+/* 안내 카드 안의 숫자 타일 (예: 계산으로 알 수 있는 값) */
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%}
+.stat{border:1px solid var(--border);border-radius:10px;padding:12px;
+  display:flex;flex-direction:column;gap:4px}
+.stat-l{font:600 11px/1.4 var(--ff);color:#6B7280}
+.stat-v{font:800 22px/1.2 var(--ff);color:#111827}
+.stat-v em{font:600 12px/1 var(--ff);color:#6B7280;font-style:normal}
+.opt-hold{background:#F3F4F6;border-radius:9px;padding:11px;
+  font:400 12px/1.6 var(--ff);color:#6B7280;width:100%}
+
+/* 그리드 아래 가로로 눕는 보조 카드 (예: 추가 등록 유도) */
+.wide{background:#FFFFFF;border:1px dashed #C7CDD6;
+  border-radius:14px;padding:18px 20px;display:flex;align-items:center;
+  justify-content:space-between;gap:16px;flex-wrap:wrap}
+.wide .btn{margin:0;align-self:center;flex:none;padding:12px 18px}
+
+
+/* =========================================================================
+   [블록 3] 상호작용 · 성분 중복 점검
+   구조:  제목 줄(접기 가능) + 행 목록 (없으면 빈 상태)
+   ========================================================================= */
+.ix-sum{list-style:none;display:flex;align-items:center;justify-content:space-between;
+  padding:16px 20px;border-bottom:1px solid #F1F2F4;cursor:pointer}
+.ix-sum::-webkit-details-marker{display:none}
+.ix-row{display:flex;align-items:center;gap:14px;padding:14px 20px;
+  border-bottom:1px solid #F5F6F7}
+.ix-kind{font:700 10.5px/1.4 var(--ff);padding:5px 8px;border-radius:6px;
+  flex:none;min-width:96px;text-align:center;white-space:nowrap}
+.ix-text{font:400 13px/1.5 var(--ff);flex:1}
+.ix-foot{padding:12px 20px;border-top:1px solid #F5F6F7}
+
+
+/* =========================================================================
+   [블록 4] 종합 소견
+   ========================================================================= */
+.sm{padding:22px 24px;display:flex;flex-direction:column;gap:14px}
+.sm-text{margin:0;font:400 14px/1.8 var(--ff);color:#1F2937;
+  max-width:900px;text-wrap:pretty}
+.sm-keys{display:flex;flex-direction:column;gap:8px}
+.sm-keys-l{font:700 11.5px/1.4 var(--ff);color:#6B7280}
+.sm-keys-r{display:flex;flex-wrap:wrap;gap:8px}
+
+
+/* =========================================================================
+   [블록 5] 푸터
+   ========================================================================= */
+.ft{display:flex;flex-direction:column;gap:8px;padding:0 4px}
+.ft p{margin:0;font:400 12px/1.7 var(--ff);color:#9CA3AF;
+  max-width:1000px;text-wrap:pretty}
+
+
+/* =========================================================================
+   인쇄 — 탭과 버튼을 숨기고 두 pane 을 모두 펼칩니다. 필요 없으면 지우세요.
+   ========================================================================= */
+@media print{
+  .tabs,.toggle{display:none}
+  .pane{display:flex!important}
+}
+
+
+/* =========================================================================
+   [추가] 리포트 → 입력 화면 이동 링크
+   ========================================================================= */
+.hd-col-t{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.link.edit{font:600 11.5px/1.4 var(--ff);color:#1E3A8A;flex:none;white-space:nowrap}
+.link.edit::before{content:'✎ ';font-size:10px}
+.link.edit:hover{color:#15803D}
+
+/* 이동한 섹션을 잠깐 강조합니다 */
+.fm-focus{outline:2px solid #1E3A8A;outline-offset:2px;
+  transition:outline-color .4s ease}
+@media (prefers-reduced-motion:reduce){.fm-focus{transition:none}}
+
+/* =========================================================================
+   [블록 0] 입력 화면 — 사용자가 처음 만나는 화면입니다.
+   리포트와 같은 토큰(--ff, --border, --radius)을 씁니다.
+   ========================================================================= */
+.intro{padding:26px 24px;display:flex;flex-direction:column;gap:8px}
+.intro .h1{font:800 24px/1.3 var(--ff)}
+.intro .sub{max-width:640px}
+.intro-steps{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.intro-steps span{font:600 11.5px/1 var(--ff);color:#6B7280;
+  background:#F3F4F6;border-radius:999px;padding:6px 10px}
+
+.fm{padding:22px 24px;display:flex;flex-direction:column;gap:14px}
+.fm-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.fm-opt{font:500 11.5px/1.4 var(--ff);color:#9CA3AF}
+
+.fm-row{display:flex;gap:10px;flex-wrap:wrap}
+.fm-f{display:flex;flex-direction:column;gap:5px;flex:1;min-width:120px}
+.fm-f>span{font:600 11px/1.3 var(--ff);color:#6B7280}
+.fm input[type=text],.fm input[type=number],.fm input[type=date],.fm select{
+  font:500 13px/1.4 var(--ff);color:#111827;font-family:var(--ff);
+  padding:10px 11px;border:1px solid #D8DCE2;border-radius:9px;
+  background:#FFFFFF;width:100%}
+.fm input:focus,.fm select:focus{outline:2px solid #1E3A8A;outline-offset:-1px;border-color:#1E3A8A}
+.fm input::placeholder{color:#C7CDD6}
+
+/* 목표질환별 접이식 그룹 */
+.fm-grp{border:1px solid var(--border);border-radius:10px;background:#FCFCFD}
+.fm-grp+.fm-grp{margin-top:7px}
+.fm-grp>summary{list-style:none;cursor:pointer;padding:12px 14px;
+  font:600 13px/1.4 var(--ff);color:#374151;display:flex;align-items:center;gap:10px}
+.fm-grp>summary::-webkit-details-marker{display:none}
+.fm-grp>summary::after{content:'펼치기';margin-left:auto;font:600 11px/1 var(--ff);color:#9CA3AF}
+.fm-grp[open]>summary::after{content:'접기'}
+.fm-grp>summary:hover{background:#F6F8FD;border-radius:10px}
+.fm-grp .cnt{font:700 10px/1 var(--ff);color:#1E3A8A;background:#EAEFF9;
+  padding:5px 7px;border-radius:6px;opacity:0}
+.fm-grp .cnt.on{opacity:1}
+.fm-grpbody{padding:2px 14px 14px;display:flex;flex-direction:column;gap:12px}
+.fm-item>.nm{font:600 11.5px/1.4 var(--ff);color:#6B7280;display:block;margin-bottom:5px}
+
+/* 개수가 정해지지 않은 입력 묶음 (약 · 영양제) */
+.fm-card{border:1px solid var(--border);border-radius:12px;padding:13px;
+  background:#FCFCFD;display:flex;flex-direction:column;gap:9px}
+.fm-card+.fm-card{margin-top:9px}
+.fm-cardtop{display:flex;gap:8px;align-items:center}
+.fm-cardtop input{flex:1}
+.fm-ing{display:grid;grid-template-columns:1fr 92px 96px 34px;gap:6px;align-items:center}
+.fm-inglab{display:grid;grid-template-columns:1fr 92px 96px 34px;gap:6px;
+  font:600 10.5px/1 var(--ff);color:#9CA3AF;padding:0 2px}
+.fm-x{width:34px;height:38px;flex:none;border:1px solid var(--border);border-radius:8px;
+  background:#FFFFFF;color:#9CA3AF;font:600 16px/1 var(--ff);cursor:pointer;padding:0}
+.fm-x:hover{background:#FDECEC;border-color:#F7D4D4;color:#DC2626}
+.fm-add{font:700 12.5px/1.4 var(--ff);color:#1E3A8A;background:#FFFFFF;
+  border:1px dashed #C7CDD6;border-radius:10px;padding:11px;cursor:pointer;width:100%}
+.fm-add:hover{background:#F6F8FD;border-color:#1E3A8A}
+.fm-add.sm{font:600 11.5px/1.4 var(--ff);border:none;background:none;
+  padding:2px 0;width:auto;text-align:left}
+.fm-add.sm:hover{color:#15803D;background:none}
+
+/* 만성질환 선택 */
+.fm-tags{display:flex;flex-wrap:wrap;gap:6px}
+.fm-tag{font:500 12px/1 var(--ff);border:1px solid var(--border);border-radius:999px;
+  padding:9px 13px;cursor:pointer;background:#FFFFFF;color:#6B7280}
+/* 체크박스는 눈에서만 감춥니다. display:none 으로 지우면 키보드 Tab 으로
+   선택할 수 없게 되어 키보드만 쓰는 사용자가 이 항목을 건너뛰게 됩니다. */
+.fm-tag input{position:absolute;opacity:0;width:1px;height:1px;margin:0;pointer-events:none}
+.fm-tag:focus-within{outline:2px solid #1E3A8A;outline-offset:2px}
+.fm-tag:hover{background:#F6F8FD}
+.fm-tag.on{border-color:#DC2626;background:#FDECEC;color:#DC2626;font-weight:700}
+/* '식사 평균도 함께 계산'은 질환 선택이 아니라 단순 옵션이므로 붉게 칠하지 않습니다 */
+#meal-wrap.on{border-color:#1E3A8A;background:#EAEFF9;color:#1E3A8A}
+
+/* 하단 고정 바 — 입력 요약과 다음 단계 */
+.fm-bar{position:sticky;bottom:0;z-index:5;background:#FFFFFF;
+  border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:0 -2px 12px rgba(16,24,40,.06);
+  padding:14px 20px;display:flex;align-items:center;
+  justify-content:space-between;gap:16px;flex-wrap:wrap}
+.fm-sum{display:flex;flex-direction:column;gap:3px}
+.fm-sum b{font:700 13px/1.4 var(--ff)}
+.fm-go{font:700 14px/1.4 var(--ff);color:#FFFFFF;background:#1E3A8A;
+  border:none;border-radius:10px;padding:14px 26px;cursor:pointer;flex:none}
+.fm-go:hover{background:#152B66}
+.fm-go:disabled{background:#D8DCE2;color:#FFFFFF;cursor:not-allowed}
+
+/* 리포트 상단으로 돌아가는 줄 */
+.rp-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.rp-back{font:600 12.5px/1.4 var(--ff);color:#1E3A8A;background:#FFFFFF;
+  border:1px solid #C7CDD6;border-radius:9px;padding:9px 14px;cursor:pointer}
+.rp-back:hover{background:#F6F8FD;border-color:#1E3A8A}
+
+@media (max-width:640px){
+  .fm-go{width:100%}
+}
+@media print{.fm-bar,.rp-top{display:none}}
+
+
+/* =========================================================================
+   [블록 -1] 상태 화면 — 불러오는 중 / 분석 중 / 실패
+   판정을 백엔드(AI)가 하므로 응답까지 몇 초가 걸립니다.
+   그동안 보여 줄 화면이 반드시 있어야 합니다.
+   ========================================================================= */
+.state{min-height:70vh;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:14px;text-align:center;padding:40px 24px}
+.state .h1{font:800 21px/1.4 var(--ff)}
+.state .sub{max-width:430px;text-align:center}
+.spin{width:38px;height:38px;border-radius:50%;
+  border:3px solid #E1E4E9;border-top-color:#1E3A8A;
+  animation:spin 850ms linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation-duration:2.4s}}
+
+/* 분석 중 단계 표시 — 진행 중인 단계만 진하게 */
+.steps{display:flex;flex-direction:column;gap:7px;margin:6px 0 0;padding:0;text-align:left}
+.steps li{list-style:none;font:500 12.5px/1.5 var(--ff);color:#C7CDD6;
+  display:flex;align-items:center;gap:8px;transition:color .3s ease}
+.steps li::before{content:'○';font-size:10px}
+.steps li.on{color:#1F2937;font-weight:600}
+.steps li.on::before{content:'◉';color:#1E3A8A}
+.steps li.done{color:#15803D}
+.steps li.done::before{content:'✓';color:#15803D}
+
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:6px}
+.btn-line{font:600 13px/1.4 var(--ff);padding:11px 18px;border-radius:10px;
+  border:1px solid #C7CDD6;background:#FFFFFF;color:#1F2937;cursor:pointer}
+.btn-line:hover{background:#F6F8FD;border-color:#1E3A8A;color:#1E3A8A}
+.btn-solid{font:700 13px/1.4 var(--ff);padding:11px 20px;border-radius:10px;
+  border:none;background:#1E3A8A;color:#FFFFFF;cursor:pointer}
+.btn-solid:hover{background:#152B66}
+.errbox{border:1px solid #F7D4D4;background:#FDECEC;border-radius:10px;
+  padding:11px 13px;font:400 11.5px/1.6 var(--ff);color:#991B1B;
+  max-width:520px;text-align:left;word-break:break-word}
+
+/* =========================================================================
+   [블록 -2] 알림 띠 — 예시 기준값 경고 · 샘플 리포트 표시
+   ========================================================================= */
+.banner{display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  border-radius:var(--radius);padding:12px 18px;font:500 12.5px/1.6 var(--ff)}
+.banner.warn{background:#FFF8F2;border:1px solid #F5C9A4;color:#9A3412}
+.banner.info{background:#EAEFF9;border:1px solid #CBD8F0;color:#1E3A8A}
+.banner b{font-weight:700}
+.banner .btn-line{margin-left:auto;padding:8px 14px;font-size:12px}
+
+/* =========================================================================
+   [블록 0-A] 히어로 — 첫 화면 맨 위
+   ========================================================================= */
+.hero{padding:30px 26px;display:flex;flex-direction:column;gap:10px}
+.hero .h1{font:800 25px/1.35 var(--ff);max-width:640px;text-wrap:pretty}
+.hero .sub{max-width:600px;font-size:13px}
+.hero-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px}
+.hero-meta{display:flex;gap:14px;flex-wrap:wrap;margin-top:2px}
+.hero-meta span{font:500 11.5px/1.5 var(--ff);color:#6B7280;
+  display:flex;align-items:center;gap:5px}
+
+/* =========================================================================
+   [블록 0-B] 입력 섹션 — 접이식 껍데기
+   선택 섹션은 접힌 채로 시작해, 첫 화면에서 폼이 짧아 보이게 합니다.
+   ========================================================================= */
+.sec{overflow:hidden}
+.sec>summary{list-style:none;cursor:pointer;padding:18px 24px;
+  display:flex;align-items:center;gap:12px}
+.sec>summary::-webkit-details-marker{display:none}
+.sec>summary:hover{background:#FAFBFC}
+.sec-n{width:24px;height:24px;border-radius:50%;flex:none;
+  background:#EAEFF9;color:#1E3A8A;font:700 12px/24px var(--ff);text-align:center}
+.sec[open] .sec-n{background:#1E3A8A;color:#FFFFFF}
+.sec-t{font:700 15px/1.3 var(--ff)}
+.sec-req{font:700 10px/1.35 var(--ff);padding:4px 7px;border-radius:6px;
+  background:#FDECEC;color:#DC2626;flex:none}
+.sec-opt{font:500 11.5px/1.4 var(--ff);color:#9CA3AF;flex:none}
+.sec-state{margin-left:auto;display:flex;align-items:center;gap:9px;flex:none}
+.sec-badge{font:700 10.5px/1.35 var(--ff);padding:5px 8px;border-radius:6px;
+  background:#EAF6EE;color:#15803D;white-space:nowrap}
+.sec-arrow{font:600 11px/1 var(--ff);color:#9CA3AF;white-space:nowrap}
+.sec[open] .sec-arrow::after{content:'접기'}
+.sec:not([open]) .sec-arrow::after{content:'펼치기'}
+.sec-body{border-top:1px solid var(--border);padding:20px 24px 24px;
+  display:flex;flex-direction:column;gap:14px}
+
+/* 성분 인식 표시 — 입력하는 순간 기준 유무를 알려 줍니다 */
+.ing-flag{font:600 10px/1.35 var(--ff);padding:4px 6px;border-radius:5px;
+  white-space:nowrap;align-self:center;text-align:center}
+.ing-flag.ok{background:#EAF6EE;color:#15803D}
+.ing-flag.no{background:#F3F4F6;color:#9CA3AF}
+.ing-flag.idle{visibility:hidden}
+.fm-ing,.fm-inglab{grid-template-columns:1fr 84px 88px 60px 34px}
+
+/* 저장 상태 */
+.savestate{font:500 11.5px/1.4 var(--ff);color:#9CA3AF;
+  display:flex;align-items:center;gap:6px}
+.savestate.ok{color:#15803D}
+.savestate.err{color:#DC2626}
+
+/* 리포트 상단 액션 */
+.rp-acts{display:flex;gap:8px;flex-wrap:wrap}
+
+/* =========================================================================
+   [블록 2-B] 추천 영양제
+   구조:  제목 + 근거 설명 / 성분 타일 목록 / 주의 문구
+   ========================================================================= */
+.rc{padding:22px 24px;display:flex;flex-direction:column;gap:14px}
+.rc-head{display:flex;flex-direction:column;gap:6px}
+.rc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.rc-item{border:1px solid var(--border);border-left:4px solid #9CA3AF;
+  border-radius:12px;padding:14px 15px;background:#FFFFFF;
+  display:flex;flex-direction:column;gap:7px}
+.rc-top{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.rc-name{font:700 16px/1.3 var(--ff)}
+.rc-amt{font:700 12px/1.3 var(--ff);flex:none}
+.rc-why{margin:0;font:400 12px/1.65 var(--ff);color:#4B5563;text-wrap:pretty}
+.rc-caution{font:600 11.5px/1.6 var(--ff);color:#C2410C;
+  background:#FFF1E8;border:1px solid #FBD3B8;border-radius:8px;padding:8px 10px}
+.rc-advice{border:1px solid #F7D4D4;background:#FDECEC;border-radius:10px;
+  padding:12px 14px;font:600 12.5px/1.7 var(--ff);color:#991B1B;text-wrap:pretty}
+.rc-note{font:400 11.5px/1.7 var(--ff);color:#9CA3AF;text-wrap:pretty}
+.rc-none{border:1px dashed #C3E5CE;background:#F7FCF9;border-radius:12px;
+  padding:18px 20px;font:500 13px/1.7 var(--ff);color:#14532D}
+
+@media (max-width:900px){ .rc-grid{grid-template-columns:repeat(2,1fr)} }
+@media (max-width:640px){ .rc-grid{grid-template-columns:1fr} }
+
+@media (max-width:640px){
+  .fm-ing,.fm-inglab{grid-template-columns:1fr 66px 70px 50px 34px}
+  .sec>summary{padding:16px 18px;flex-wrap:wrap}
+  .sec-body{padding:16px 18px 20px}
+  .hero{padding:24px 20px}
+  .hero .h1{font-size:21px}
+}
+@media print{.banner,.state,.rp-acts{display:none}}
+
+/* =========================================================================
+   [블록 -3] 상단바 — 로그인한 사용자만 봅니다
+   로그인 전에는 hidden 이라 화면에 아예 없습니다(계정 메뉴를 보여줄 계정이
+   없으니까요). #app 과 별도로 관리해서, 화면(입력→분석중→리포트)이
+   바뀌어도 상단바는 다시 그리지 않습니다.
+   ========================================================================= */
+#topbar{position:sticky;top:0;z-index:20;background:#FFFFFF;
+  border-bottom:1px solid var(--border)}
+#topbar:not([hidden]){display:block}
+.tb-inner{max-width:1200px;margin:0 auto;padding:0 24px;height:56px;
+  display:flex;align-items:center;justify-content:space-between}
+.tb-acct{position:relative}
+.tb-guest{display:flex;gap:8px;align-items:center}
+.tb-name{font:600 13px/1.4 var(--ff);color:#374151;background:none;
+  border:none;cursor:pointer;padding:8px 4px;display:flex;align-items:center;gap:4px}
+.tb-name:hover{color:#1E3A8A}
+.tb-menu{position:absolute;right:0;top:calc(100% + 4px);background:#FFFFFF;
+  border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(16,24,40,.12);
+  min-width:140px;padding:6px;flex-direction:column;z-index:21}
+.tb-menu[hidden]{display:none}
+.tb-menu:not([hidden]){display:flex}
+.tb-menu a{font:500 13px/1.4 var(--ff);color:#374151;padding:9px 10px;
+  border-radius:7px;text-decoration:none}
+.tb-menu a:hover{background:#F6F8FD;color:#1E3A8A}
+
+/* =========================================================================
+   [블록 -4] 로그인 · 회원가입 모달
+   로그인하기 전에는 반드시 이 모달을 거쳐야 합니다. 배경(scrim)을 눌러도
+   닫히지 않습니다 — 선택이 아니라 통과해야 하는 관문이기 때문입니다.
+   ========================================================================= */
+.modal-scrim{position:fixed;inset:0;background:rgba(17,24,39,.5);
+  display:flex;align-items:center;justify-content:center;z-index:50;padding:20px;
+  overflow-y:auto}
+.modal-card{background:#FFFFFF;border-radius:var(--radius);max-width:400px;width:100%;
+  padding:28px 26px;display:flex;flex-direction:column;gap:16px;
+  box-shadow:0 20px 60px rgba(16,24,40,.28);margin:auto}
+.modal-card .h2{display:block}
+.modal-card .sub{display:block;margin-top:6px}
+#app[inert]{filter:blur(1.5px);user-select:none}
+
+/* =========================================================================
+   [블록 -5] 지난 리포트 목록
+   ========================================================================= */
+.hist-list{display:flex;flex-direction:column;gap:10px}
+.hist-card{background:#FFFFFF;border:1px solid var(--border);border-radius:14px;
+  padding:16px 18px;display:flex;align-items:center;justify-content:space-between;
+  gap:16px;flex-wrap:wrap}
+.hist-l{display:flex;flex-direction:column;gap:6px;min-width:0}
+.hist-date{font:700 13.5px/1.4 var(--ff)}
+.hist-sum{font:400 12px/1.5 var(--ff);color:#6B7280}
+.hist-badges{display:flex;gap:6px;flex-wrap:wrap}
+
+@media print{#topbar{display:none}}
+
+/* =========================================================================
+   [블록 -10] 대화형 입력
+   ========================================================================= */
+.mode-toggle{display:inline-flex;gap:3px;padding:3px;background:#E9ECF2;
+  border-radius:11px;align-self:flex-start}
+.mode-btn{font:600 12.5px/1.4 var(--ff);padding:8px 14px;border-radius:8px;
+  border:none;background:none;color:#6B7280;cursor:pointer}
+.mode-btn.on{background:#FFFFFF;color:#1E3A8A;box-shadow:0 1px 2px rgba(16,24,40,.08)}
+.mode-btn:not(.on):hover{color:#374151}
+
+/* 채팅창은 정해진 크기를 유지합니다 — 안의 질문이 버튼 몇 개짜리든
+   여러 줄짜리 카드(검진 결과·성분 입력)든, 카드 전체 높이는 늘 같고
+   입력칸(.chat-input-area)은 언제나 카드 맨 아래 같은 자리에 있습니다.
+   대화 목록(.chat-log)만 flex:1 로 남은 공간을 차지하며 안에서 스크롤됩니다. */
+.chat-card{padding:22px 22px 20px;display:flex;flex-direction:column;gap:14px;
+  height:min(640px,78vh)}
+.chat-headrow{display:flex;align-items:flex-start;justify-content:space-between;
+  gap:12px;flex-wrap:wrap;flex:none}
+.chat-tools{display:flex;gap:6px;flex-wrap:wrap}
+.chat-tool-btn{font:600 12px/1.3 var(--ff);padding:7px 11px;border-radius:8px;
+  border:1px solid var(--border);background:#FFFFFF;color:#6B7280;cursor:pointer}
+.chat-tool-btn:hover{color:#374151;border-color:#9CA3AF}
+.chat-tool-btn.danger{color:#B91C1C;border-color:#F3D2D2}
+.chat-tool-btn.danger:hover{background:#FDECEC;border-color:#DC2626}
+.chat-log{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:10px;
+  overflow-y:auto;padding:2px 2px 4px}
+.chat-msg{display:flex}
+.chat-msg.user{justify-content:flex-end}
+.chat-bubble{font:400 13.5px/1.55 var(--ff);padding:10px 14px;border-radius:14px;
+  max-width:min(480px,80%);white-space:pre-wrap;word-break:break-word}
+.chat-msg.bot .chat-bubble{background:#F1F3F7;color:#111827;border-bottom-left-radius:4px}
+.chat-msg.user .chat-bubble{background:#1E3A8A;color:#FFFFFF;border-bottom-right-radius:4px}
+
+/* 입력칸이 있는 아래쪽 영역 — 카드 안에서 늘 같은 위치(로그 바로 아래)에
+   고정되고, 내용이 긴 위젯(검진 카드 등)은 이 영역 안에서만 스크롤되어
+   카드 전체 크기에는 영향을 주지 않습니다. */
+.chat-input-area{flex:none;border-top:1px solid var(--border);padding-top:14px;
+  max-height:280px;overflow-y:auto}
+.chat-confirm{display:flex;flex-direction:column;gap:10px;background:#FDECEC;
+  border:1px solid #F3B4B4;border-radius:12px;padding:14px 16px}
+.chat-confirm .sub2{font:600 13px/1.5 var(--ff);color:#7F1D1D}
+
+.chat-inputrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.chat-textin{flex:1;min-width:160px;font:400 13.5px/1.4 var(--ff);
+  border:1px solid var(--border);border-radius:10px;padding:11px 13px}
+.chat-textin:focus{outline:2px solid #1E3A8A;outline-offset:-1px;border-color:#1E3A8A}
+.chat-textin.err{border-color:#DC2626;background:#FDECEC}
+.chat-textin.err::placeholder{color:#DC2626}
+.chat-chips{gap:8px}
+.chip-btn{font:600 13px/1.4 var(--ff);border:1px solid var(--border);border-radius:999px;
+  padding:9px 15px;background:#FFFFFF;color:#374151;cursor:pointer}
+.chip-btn:hover{background:#F6F8FD;border-color:#1E3A8A;color:#1E3A8A}
+.chip-btn.on{border-color:#1E3A8A;background:#EAEFF9;color:#1E3A8A;font-weight:700}
+.chat-sendrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.chat-card-inline{margin:0}
+.chat-summary{display:flex;flex-wrap:wrap;gap:8px}
+.btn-solid.sm{padding:9px 16px;font-size:12.5px}
+.btn-line.sm{padding:9px 16px;font-size:12.5px}
+
+/* 선택형 질문 아래 붙는 '문장으로 답하기' 한 줄 — 버튼과 구분되도록
+   점선으로 살짝 떼어 둡니다. */
+.chat-freerow{margin-top:10px;padding-top:10px;border-top:1px dashed var(--border)}
+.chat-fieldnote{display:block;margin:8px 0}
+
+@media print{.mode-toggle{display:none}}
+
+/* =========================================================================
+   [블록 -11] 메인(홈) 화면 — 상단바의 서비스 이름을 누르면 여기로 옵니다.
+   -------------------------------------------------------------------------
+   서비스의 메인 색: 짙은 남색 → 파란색 → 하늘색으로 이어지는 그라데이션에
+   흰색을 더해 '고급스러운 파랑·하늘색·흰색' 톤을 만듭니다. 나머지 화면
+   (입력·리포트 등)의 실용적인 톤은 그대로 두고, 첫인상을 주는 메인 화면만
+   더 공들여 꾸밉니다.
+   ========================================================================= */
+.tb-logo-btn{font:800 16px/1 var(--ff);color:#1E3A8A;background:none;
+  border:none;padding:4px 2px;cursor:pointer}
+.tb-logo-btn:hover{color:#15803D}
+
+.home-page{gap:24px}
+
+/* ---- 히어로: 그라데이션 배경 + 은은한 빛망울 장식 ------------------------- */
+.home-hero-wrap{position:relative;overflow:hidden;border-radius:var(--radius);
+  padding:64px 44px;display:flex;flex-direction:column;gap:18px;
+  background:linear-gradient(135deg,#0B1E4D 0%,#123A8C 32%,#1D5FD6 62%,#38BDF8 100%);
+  box-shadow:0 24px 60px -20px rgba(11,30,77,.55)}
+.home-hero-wrap::before,.home-hero-wrap::after{content:'';position:absolute;
+  border-radius:50%;filter:blur(70px);pointer-events:none}
+.home-hero-wrap::before{width:360px;height:360px;background:#7DD3FC;opacity:.35;
+  top:-140px;right:-100px}
+.home-hero-wrap::after{width:280px;height:280px;background:#60A5FA;opacity:.30;
+  bottom:-120px;left:-70px}
+.home-hero-inner{position:relative;z-index:1;display:flex;flex-direction:column;gap:16px;max-width:720px}
+.home-eyebrow{align-self:flex-start;background:rgba(255,255,255,.14);color:#FFFFFF;
+  border:1px solid rgba(255,255,255,.4);backdrop-filter:blur(3px)}
+.home-hero-inner .h1{color:#FFFFFF;font:800 34px/1.35 var(--ff);text-wrap:pretty;max-width:none}
+.home-hero-inner .sub{color:rgba(255,255,255,.86);font-size:14px;max-width:600px}
+.home-hero-inner .hero-meta span{color:#EAF3FF;background:rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:6px 12px}
+.home-hero-inner .hero-row{margin-top:6px}
+.home-cta-primary{font:800 14px/1.4 var(--ff);color:#123A8C;background:#FFFFFF;
+  border:none;border-radius:12px;padding:13px 22px;cursor:pointer;
+  box-shadow:0 10px 24px -6px rgba(6,15,40,.5)}
+.home-cta-primary:hover{background:#EAF3FF}
+.home-cta-ghost{font:700 14px/1.4 var(--ff);color:#FFFFFF;background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.55);border-radius:12px;padding:12px 21px;cursor:pointer}
+.home-cta-ghost:hover{background:rgba(255,255,255,.2)}
+
+/* ---- 섹션 공통 — 흰색과 옅은 하늘색 배경을 번갈아 써서 리듬을 만듭니다 --- */
+.home-sec{padding:34px 30px 36px;display:flex;flex-direction:column;gap:20px;
+  border-radius:var(--radius);background:#FFFFFF;border:1px solid var(--border);
+  box-shadow:0 1px 2px rgba(16,24,40,.04)}
+.home-sec.tint{background:#F0F7FF;border-color:#DCEBFF}
+.home-sec.plain{background:none;border:none;box-shadow:none;padding:30px 4px 6px}
+.home-sec-eyebrow{font:800 11px/1 var(--ff);letter-spacing:.04em;color:#1D5FD6}
+.home-sec-head{display:flex;flex-direction:column;gap:6px}
+.home-sec-head .h2{font-size:22px}
+
+.home-feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.home-feat{border:1px solid #E3ECFC;border-radius:14px;padding:20px 19px;
+  background:#FFFFFF;display:flex;flex-direction:column;gap:10px;
+  transition:transform .15s ease,box-shadow .15s ease}
+.home-feat:hover{transform:translateY(-3px);box-shadow:0 14px 28px -12px rgba(30,58,138,.25)}
+.home-badge{width:36px;height:36px;border-radius:11px;flex:none;
+  background:linear-gradient(135deg,#123A8C,#38BDF8);color:#FFFFFF;
+  display:flex;align-items:center;justify-content:center;font:800 13.5px/1 var(--ff)}
+.home-feat-t{font:700 14.5px/1.35 var(--ff)}
+.home-feat-d{margin:0;font:400 12px/1.7 var(--ff);color:#6B7280;text-wrap:pretty}
+
+.home-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.home-step{display:flex;flex-direction:column;gap:10px;position:relative}
+.home-step-t{font:700 14px/1.4 var(--ff)}
+.home-step-d{margin:0;font:400 12px/1.65 var(--ff);color:#6B7280;text-wrap:pretty}
+
+.home-usecase-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.home-usecase{border:1px solid #E3ECFC;border-radius:14px;padding:20px 19px;
+  background:#FFFFFF;display:flex;flex-direction:column;gap:10px}
+.home-usecase-t{font:700 14px/1.4 var(--ff);color:#123A8C}
+.home-usecase-d{margin:0;font:400 12px/1.7 var(--ff);color:#6B7280;text-wrap:pretty}
+
+.home-faq{border-color:#E3ECFC}
+.home-faq .sec-t{color:#0F2957}
+.home-faq .sec-body{padding:0 24px 20px}
+.home-faq[open]{box-shadow:0 10px 22px -14px rgba(30,58,138,.35)}
+
+.home-final{background:linear-gradient(120deg,#123A8C,#1D5FD6);border-radius:var(--radius);
+  padding:36px 34px;display:flex;flex-direction:column;align-items:flex-start;gap:14px}
+.home-final .h2{color:#FFFFFF}
+.home-final .sub{color:rgba(255,255,255,.85)}
+
+@media (max-width:900px){
+  .home-feat-grid, .home-usecase-grid{grid-template-columns:repeat(2,1fr)}
+  .home-steps{grid-template-columns:repeat(2,1fr)}
+  .home-hero-wrap{padding:44px 28px}
+  .home-hero-inner .h1{font-size:26px}
+}
+@media (max-width:640px){
+  .home-feat-grid, .home-usecase-grid, .home-steps{grid-template-columns:1fr}
+  .home-sec{padding:26px 20px 28px}
+}
+
+</style>
+</head>
+<body>
+<header id="topbar" hidden></header>
+<div id="app"></div>
+<div id="authModal"></div>
+<script>
 /* ###########################################################################
 
    MyHerb — 영양제 섭취 리포트 (프론트엔드)
@@ -154,21 +885,21 @@ const TONE = {
    백엔드는 level 로 아래 여섯 개 키 중 하나만 내려보냅니다
    (over · near · low · none · unknown · met).
    그 키를 무슨 색·무슨 글자로 보여 줄지는 이 표가 정합니다.
-     text  카드에 나오는 이름
-     rank  카드 정렬 순서. 숫자가 클수록 앞에 옵니다.
+     rda / ul  탭별로 다르게 부르는 이름
+     rank      카드 정렬 순서. 숫자가 클수록 앞에 옵니다.
    ------------------------------------------------------------------------- */
 const LEVEL = {
-  over   : {tone:'crit'  , text:'매우 과다', rank:5},
-  near   : {tone:'orange', text:'상한 근접', rank:4},
+  over   : {tone:'crit'  , rda:'매우 과다', ul:'매우 과다', rank:5},
+  near   : {tone:'orange', rda:'상한 근접', ul:'상한 근접', rank:4},
   /* '부족'과 '미섭취'는 파랑입니다. 빨강은 '상한을 넘었다'는 위험 신호에만
      씁니다. 식사 기준으로 보면 대부분의 성분이 부족으로 나오는데, 이걸
      전부 빨강으로 칠하면 화면이 경고로 뒤덮여 진짜 위험이 묻힙니다.
      또 권장량의 92%를 빨강으로 보여 주면 위험한 상태로 오해하게 됩니다.
      되돌리시려면 이 두 줄의 tone 을 'red' 로 바꾸면 됩니다. */
-  low    : {tone:'blue'  , text:'부족'    , rank:3},
-  none   : {tone:'blue'  , text:'미섭취'  , rank:2},
-  unknown: {tone:'gray'  , text:'확인 불가', rank:1},
-  met    : {tone:'green' , text:'충족'    , rank:0},
+  low    : {tone:'blue'  , rda:'부족'    , ul:'부족'    , rank:3},
+  none   : {tone:'blue'  , rda:'미섭취'  , ul:'미섭취'  , rank:2},
+  unknown: {tone:'gray'  , rda:'확인 불가', ul:'확인 불가', rank:1},
+  met    : {tone:'green' , rda:'충족'    , ul:'적정'    , rank:0},
 };
 
 const LAYOUT = {maxCols:4, gaugeArc:163.4};   // 반원 길이 = π×52
@@ -183,38 +914,6 @@ const LAYOUT = {maxCols:4, gaugeArc:163.4};   // 반원 길이 = π×52
 
 /* 영양제 함량 입력칸의 단위 선택지 */
 const UNITS = ['mg','µg','g','IU','mL','억CFU'];
-
-/* -------------------------------------------------------------------------
-   검진 판정에 쓰는 작은 부품들 — EXAM 의 ref·show·judge 가 이 이름들을 씁니다.
-   ※ 원래 목업 블록 안에 있었지만, 대화형 입력에서 "방금 넣으신 값" 을 다시
-     읽어 줄 때 show() 를 쓰기 때문에 목업을 지워도 남아 있어야 합니다.
-     그래서 목업 블록 밖(여기)으로 옮겨 두었습니다.
-   ------------------------------------------------------------------------- */
-/* =========================================================================
-   1-B. 건강검진 판정기준
-        출처: 건강검진 실시기준 [별표 4] 및 [별표 4의 별첨] 검사항목별 판정기준
-        판정 코드  A = 정상A   B = 정상B(경계)   D = 질환의심   '' = 미입력
-        각 항목은 입력칸(inputs) 여러 개를 묶어 하나의 판정을 냅니다.
-   ========================================================================= */
-const JUDGE = {
-  A: {code:'A', text:'정상A',   tone:'green'},
-  B: {code:'B', text:'경계',    tone:'orange'},
-  D: {code:'D', text:'질환의심', tone:'red'},
-  N: {code:'',  text:'미입력',   tone:'gray'},
-};
-/** 코드에 다른 문구를 붙이고 싶을 때 (예: 청력 '정상', 우울증 '가벼운 우울증상') */
-const J = (code, text) => ({...JUDGE[code], text: text || JUDGE[code].text});
-
-const num = v => (v === '' || v == null || Number.isNaN(Number(v))) ? null : Number(v);
-const isMale = ctx => ctx.sex === '남성';
-
-/** 키·몸무게로 BMI 를 계산합니다. 여러 곳에서 씁니다. */
-function bmiOf(v){
-  const h = num(v.height), w = num(v.weight);
-  if(!h || !w) return null;
-  return w / ((h / 100) ** 2);
-}
-
 
 /* -------------------------------------------------------------------------
    검진 항목 EXAM — 입력 화면을 만드는 설계도
@@ -524,8 +1223,8 @@ const CHRONIC = ['고혈압','당뇨병','이상지질혈증','폐결핵','우�
    예시와 함께 정리되어 있습니다.
    ========================================================================= */
 
-const USE_MOCK = false;      /* ← 백엔드가 준비되면 false 로 */
-const API_BASE = 'http://localhost:8000';        /* ← 예: 'https://api.myherb.co.kr' */
+const USE_MOCK = true;      /* ← 백엔드가 준비되면 false 로 */
+const API_BASE = '';        /* ← 예: 'https://api.myherb.co.kr' */
 
 /** 서버 오류를 화면이 알아들을 수 있는 형태로 감쌉니다.
     code 로 무엇이 잘못됐는지 구분하고, message 는 사용자에게 보여 줍니다. */
@@ -543,25 +1242,15 @@ class ApiError extends Error {
     그 밖의 요청은 서버 메시지를 detail(개발자용)에만 남기고, 화면에는
     두루뭉술한 문구를 보여 주는 게 안전합니다(문구가 사용자 안내로
     다듬어져 있다는 보장이 없으므로). */
-async function call(path, {method = 'GET', body, raw, form, timeout = 60000, surfaceMessage = false} = {}){
+async function call(path, {method = 'GET', body, timeout = 60000, surfaceMessage = false} = {}){
   const ctrl  = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeout);
   try {
-    /* raw 는 JSON 이 아닌 것을 그대로 보낼 때 씁니다(검진표 사진 한 장).
-       파일 하나뿐이라 multipart 로 감싸지 않고 바이트를 그대로 실어 보냅니다
-       — 그 편이 서버도 훨씬 단순합니다. */
-    /* form(FormData) 으로 보낼 때는 Content-Type 을 우리가 정하면 안 됩니다.
-       multipart 는 헤더에 boundary 가 들어가야 하는데, 그 값은 브라우저만
-       알고 있습니다. 직접 적으면 boundary 가 빠져서 서버가 못 읽습니다. */
-    const headers = form ? {}
-                  : raw  ? (raw.type ? {'Content-Type': raw.type} : {})
-                         : {'Content-Type': 'application/json'};
-
     const res = await fetch(API_BASE + path, {
       method,
-      headers,
+      headers    : {'Content-Type': 'application/json'},
       credentials: 'include',        /* 로그인 쿠키를 함께 보냅니다 */
-      body       : form ? form : (raw ? raw : (body ? JSON.stringify(body) : undefined)),
+      body       : body ? JSON.stringify(body) : undefined,
       signal     : ctrl.signal,
     });
 
@@ -619,19 +1308,10 @@ const API = {
     return call('/api/draft', {method:'PUT', body:input, timeout:15000});
   },
 
-  /** ★ 판정 요청. AI 가 처리하므로 수십 초가 걸립니다.
-      검진표 사진을 올렸다면 그 사진도 함께 보냅니다 — 서버가 사진을
-      보관하지 않으므로, 분석할 때마다 브라우저가 다시 실어 보냅니다. */
+  /** ★ 판정 요청. AI 가 처리하므로 수 초가 걸립니다. */
   analyze(input){
     if(USE_MOCK) return MOCK.analyze(input);
-    const file = CHAT.examFile;
-    if(file){
-      const fd = new FormData();
-      fd.append('input', JSON.stringify(input));
-      fd.append('file', file, file.name || 'exam');
-      return call('/api/analyze', {method:'POST', form:fd, timeout:180000});
-    }
-    return call('/api/analyze', {method:'POST', body:input, timeout:180000});
+    return call('/api/analyze', {method:'POST', body:input, timeout:60000});
   },
 
   /* -----------------------------------------------------------------------
@@ -646,21 +1326,13 @@ const API = {
   },
 
   login(email, password){
-    console.log(USE_MOCK)
     if(USE_MOCK) return MOCK.login(email, password);
-    const formData = new URLSearchParams();
-    formData.append('id', email);
-    formData.append('pwd', password);
-    return call('/api/login', {method:'POST', body:formData, timeout:15000, surfaceMessage:true});
+    return call('/api/login', {method:'POST', body:{email, password}, timeout:15000, surfaceMessage:true});
   },
 
   signup(name, email, password){
     if(USE_MOCK) return MOCK.signup(name, email, password);
-    const formData = new URLSearchParams();
-    formData.append('id', email);
-    formData.append('pwd', password);
-    formData.append('name', name);
-    return call('/api/signup', {method:'POST', body:formData, timeout:15000, surfaceMessage:true});
+    return call('/api/signup', {method:'POST', body:{name, email, password}, timeout:15000, surfaceMessage:true});
   },
 
   logout(){
@@ -682,21 +1354,6 @@ const API = {
   getReport(id){
     if(USE_MOCK) return MOCK.getReport(id);
     return call('/api/reports/' + encodeURIComponent(id), {timeout:15000});
-  },
-
-  /** 리포트 하나 지우기. 되돌릴 수 없으므로 화면에서 한 번 더 확인받습니다. */
-  deleteReport(id){
-    if(USE_MOCK) return MOCK.deleteReport(id);
-    return call('/api/reports/' + encodeURIComponent(id), {method:'DELETE', timeout:15000});
-  },
-
-  /** ★ 검진표 사진 한 장을 보내 검진값을 읽어 옵니다.
-      판독은 서버가 합니다 — 화면은 사진을 그대로 넘기고 결과를 받아 채우기만
-      합니다. 응답 모양은 vision.py 의 read_exam_image() 주석에 있습니다.
-      사람이 읽는 모델을 거치므로 analyze 와 같은 60초를 기다립니다. */
-  readExamImage(file){
-    if(USE_MOCK) return MOCK.readExamImage(file);
-    return call('/api/exam-image', {method:'POST', raw:file, timeout:60000});
   },
 };
 
@@ -839,6 +1496,31 @@ const MED_RULES = [
    text:'스타틴과 고용량 나이아신을 함께 쓰면 근육 관련 이상반응 위험이 올라갑니다.'},
 ];
 
+/* =========================================================================
+   1-B. 건강검진 판정기준
+        출처: 건강검진 실시기준 [별표 4] 및 [별표 4의 별첨] 검사항목별 판정기준
+        판정 코드  A = 정상A   B = 정상B(경계)   D = 질환의심   '' = 미입력
+        각 항목은 입력칸(inputs) 여러 개를 묶어 하나의 판정을 냅니다.
+   ========================================================================= */
+const JUDGE = {
+  A: {code:'A', text:'정상A',   tone:'green'},
+  B: {code:'B', text:'경계',    tone:'orange'},
+  D: {code:'D', text:'질환의심', tone:'red'},
+  N: {code:'',  text:'미입력',   tone:'gray'},
+};
+/** 코드에 다른 문구를 붙이고 싶을 때 (예: 청력 '정상', 우울증 '가벼운 우울증상') */
+const J = (code, text) => ({...JUDGE[code], text: text || JUDGE[code].text});
+
+const num = v => (v === '' || v == null || Number.isNaN(Number(v))) ? null : Number(v);
+const isMale = ctx => ctx.sex === '남성';
+
+/** 키·몸무게로 BMI 를 계산합니다. 여러 곳에서 씁니다. */
+function bmiOf(v){
+  const h = num(v.height), w = num(v.weight);
+  if(!h || !w) return null;
+  return w / ((h / 100) ** 2);
+}
+
 /* 어떤 항목이 고혈압·당뇨병·이상지질혈증에 속하는지 (종합 판정 구분에 필요) */
 const HTN_DM_LIPID = ['bp','glu','tc','hdl','tg','ldl'];
 
@@ -966,35 +1648,15 @@ function computeNutrients(state){
     const level = levelOf(b.supp, total, std);
     const rda   = std ? std.rda : null;
     const ul    = std ? std.ul  : null;
-    const ulSuppOnly = !!(std && std.ulBasis === 'supp');
-    const ulAmount   = ulSuppOnly ? b.supp : total;
-
-    /* ── 막대의 기준 길이 ──────────────────────────────────────────────────
-       막대의 오른쪽 끝은 **상한이 아닙니다.** 상한을 끝에 두면 상한을 넘은
-       값이 전부 막대 끝에 딱 붙어 버려서, 살짝 넘었는지 두 배로 넘었는지가
-       구분되지 않습니다. 그래서 눈금 뒤에 항상 여유를 둡니다.
-
-         0 ─────────┬──────────┬──────────── 끝
-                   권장       상한      ← 상한 뒤에 남는 자리가 '초과분'
-
-       아래 후보 중 가장 큰 값이 한 칸 전체가 됩니다.
-         권장×1.6   권장만 있는 성분도 눈금이 가운데쯤 오도록
-         상한×1.25  상한 뒤에 20% 정도 자리가 남도록
-         섭취량×1.15 이미 크게 넘긴 값도 끝에 붙지 않고 다 보이도록
-       ※ 서버(analyze.py)의 같은 계산과 반드시 똑같아야 합니다 —
-         목업 화면과 실서버 화면이 다른 그림을 그리면 안 되니까요. */
-    const scale = Math.max(...[
-      (total || 0) * 1.15, (ulAmount || 0) * 1.15,
-      rda != null ? rda * 1.6  : 0,
-      ul  != null ? ul  * 1.25 : 0,
-    ].filter(v => v > 0), 1) || 1;
+    const scale = ul != null ? ul : (rda != null ? rda * 2 : (total || 1));
 
     return {
       key:b.key, name:b.label, unit:b.unit, rda, ul, std,
       supp:b.supp, meal, total, level,
       /* 상한을 실제로 무엇과 비교했는지. 마그네슘·엽산처럼 영양제분만
          비교하는 성분은 total 이 아니라 supp 가 기준입니다. */
-      ulAmount, ulSuppOnly,
+      ulAmount: (std && std.ulBasis === 'supp') ? b.supp : total,
+      ulSuppOnly: !!(std && std.ulBasis === 'supp'),
       sources:b.sources, unmapped:b.unmapped,
       basis: !std ? '표준 기준 미등록'
            : (rda != null && ul != null) ? `권장 ${fmt(rda)} · 상한 ${fmt(ul)}${std.unit}${std.ulBasis === 'supp' ? ' (영양제 기준)' : ''}`
@@ -1005,13 +1667,10 @@ function computeNutrients(state){
         supp   : Math.min(b.supp / scale, 1) * 100,
         meal   : Math.max(0, Math.min(meal / scale, 1 - b.supp / scale)) * 100,
         rdaMark: (rda != null && rda <= scale) ? rda / scale * 100 : null,
-        /* 상한 눈금의 위치(%). 예전에는 화면이 늘 오른쪽 끝(100%)에
-           그렸지만, 이제 끝이 상한이 아니므로 좌표를 함께 내려보냅니다. */
-        ulMark : (ul  != null && ul  <= scale) ? ul  / scale * 100 : null,
       },
       pct: {
         rda: rda ? total / rda : (ul ? total / ul : null),
-        ul : ul  ? ulAmount / ul : (rda ? total / rda : null),
+        ul : ul  ? (std && std.ulBasis === 'supp' ? b.supp : total) / ul : (rda ? total / rda : null),
       },
     };
   }).sort((a, b) =>
@@ -1267,7 +1926,6 @@ const MOCK = {
       summaryLine: `${(r.report.badges && r.report.badges[0] && r.report.badges[0].text) || '리포트'} · 성분 ${r.report.nutrients.length}개`,
       worst: r.report.worst,
       badges: r.report.badges,
-      info: mockReportInfo(r.report),
     }))};
   },
 
@@ -1278,127 +1936,7 @@ const MOCK = {
     if(!rec) throw new ApiError('HTTP_404', '리포트를 찾을 수 없습니다.');
     return rec.report;
   },
-
-  async deleteReport(id){
-    await nap(200);
-    if(!MOCK._session) throw new ApiError('LOGIN_REQUIRED', '로그인이 필요합니다.');
-    const i = MOCK._reports.findIndex(r => r.id === id);
-    if(i < 0) throw new ApiError('HTTP_404', '리포트를 찾을 수 없습니다.');
-    MOCK._reports.splice(i, 1);
-    return {deleted:id, remaining: MOCK._reports.length};
-  },
-
-  /* ★ 검진표 사진 판독. 실제로는 서버의 비전 모델이 합니다(vision.py).
-     목업은 사진 내용의 해시로 견본 넷 중 하나를 고릅니다 — 무작위가 아니라
-     해시라서, 같은 사진은 늘 같은 결과가 나옵니다. */
-  async readExamImage(file){
-    if(!MOCK._session) throw new ApiError('LOGIN_REQUIRED', '로그인이 필요합니다.');
-    const buf = new Uint8Array(await file.arrayBuffer());
-    if(!sniffImage(buf))
-      throw new ApiError('HTTP_400', '이미지 파일만 올릴 수 있습니다. (PNG · JPG · GIF · WEBP · HEIC)');
-    if(buf.length > MAX_IMAGE_BYTES)
-      throw new ApiError('HTTP_400', `이미지가 너무 큽니다. ${MAX_IMAGE_BYTES / 1048576}MB 이하로 올려 주세요.`);
-    await nap(1100 + Math.random() * 700);      // 판독에 걸리는 시간 흉내
-    let h = 0;
-    for(let i = 0; i < buf.length; i += 997) h = (h * 31 + buf[i]) >>> 0;
-    return {...cleanExamReading(DEMO_SHEETS[h % DEMO_SHEETS.length]), source:'demo'};
-  },
 };
-
-/* -------------------------------------------------------------------------
-   검진표 판독 — 목업용 (실제로는 vision.py 가 같은 일을 합니다)
-   ※ 크기 제한 MAX_IMAGE_BYTES 는 이 블록 밖(대화형 입력 쪽)에 있습니다.
-     화면이 파일을 고른 순간에도 쓰는 값이라, 목업이 빠진 실서버용
-     파일에도 남아 있어야 하기 때문입니다.
-   ------------------------------------------------------------------------- */
-
-/** 확장자나 브라우저가 알려 준 형식은 믿지 않고, 파일 앞머리의 고정된
-    바이트(매직 넘버)로 직접 확인합니다. 둘 다 마음대로 적어 보낼 수 있으니까요. */
-function sniffImage(b){
-  const at = (i, ...sig) => sig.every((v, k) => b[i + k] === v);
-  if(b.length < 12) return null;
-  if(at(0, 0x89, 0x50, 0x4E, 0x47)) return 'image/png';
-  if(at(0, 0xFF, 0xD8, 0xFF))       return 'image/jpeg';
-  if(at(0, 0x47, 0x49, 0x46, 0x38)) return 'image/gif';
-  if(at(0, 0x52, 0x49, 0x46, 0x46) && at(8, 0x57, 0x45, 0x42, 0x50)) return 'image/webp';
-  if(at(0, 0x42, 0x4D))             return 'image/bmp';
-  if(at(4, 0x66, 0x74, 0x79, 0x70)) return 'image/heic';
-  return null;
-}
-
-/* 실제 검진 결과지에 흔히 있는 조합 넷. 채워지는 검진 그룹이 서로 달라서,
-   어떤 사진을 올리느냐에 따라 '남은 질문'도 달라집니다. */
-const DEMO_SHEETS = [
-  {name:'홍길동', age:'45', sex:'남성', date:'2026-03-10', chronic:[],
-   exam:{sbp:'132', dbp:'84', height:'175', weight:'88', waist:'94', hb:'15.1', glu:'108',
-         tc:'226', hdl:'42', tg:'189', ldl:'146', ast:'38', alt:'45', ggt:'71',
-         upro:'음성(-)', cr:'1.0', egfr:'88'}},
-  {name:'김영자', age:'68', sex:'여성', date:'2025-11-18', chronic:['고혈압'],
-   exam:{cxr:'정상', sbp:'148', dbp:'88', height:'156', weight:'52', waist:'82', hb:'11.4',
-         glu:'132', tc:'210', hdl:'55', tg:'143', ldl:'128', ast:'26', alt:'22', ggt:'28',
-         upro:'약양성(±)', cr:'1.1', egfr:'58', tscore:'-2.7', bmd:'78'}},
-  {name:'이수민', age:'34', sex:'여성', date:'2026-01-07', chronic:[],
-   exam:{cxr:'정상', sbp:'112', dbp:'71', height:'163', weight:'54', waist:'71', hb:'12.8',
-         glu:'88', tc:'178', hdl:'68', tg:'82', ldl:'96', ast:'18', alt:'15', ggt:'14',
-         upro:'음성(-)', cr:'0.7', egfr:'104'}},
-  {name:'박정호', age:'57', sex:'남성', date:'2025-09-02', chronic:['이상지질혈증'],
-   exam:{cxr:'비활동성 폐결핵', sbp:'126', dbp:'79', height:'171', weight:'79', waist:'91',
-         hb:'14.6', glu:'97', tc:'188', hdl:'47', tg:'168', ldl:'112', ast:'62', alt:'58',
-         ggt:'96', upro:'음성(-)', cr:'1.2', egfr:'76', ratio:'68', fev1:'74', fvc:'89'}},
-];
-
-/** 판독 결과를 화면이 아는 모양으로 다듬습니다. 모델이 엉뚱한 key 나 말도
-    안 되는 값을 뱉어도 그대로 입력에 들어가면 안 되므로, 견본이든 모델이든
-    반드시 이 함수를 지나갑니다. */
-function cleanExamReading(raw){
-  raw = raw || {};
-  const exam = {};
-  EXAM.forEach(g => g.items.forEach(it => it.inputs.forEach(inp => {
-    const v = (raw.exam || {})[inp.key];
-    if(v == null || v === '') return;
-    if(inp.type === 'select'){
-      if((inp.options || []).includes(String(v))) exam[inp.key] = String(v);
-      return;
-    }
-    if(!Number.isNaN(Number(v))) exam[inp.key] = String(v).trim();
-  })));
-
-  const sex = ['남성', '여성'].includes(raw.sex) ? raw.sex : '';
-  const groups = EXAM.filter(g => g.items.some(it => it.inputs.some(inp => inp.key in exam)))
-                     .map(g => g.group);
-  const fields = [];
-  EXAM.forEach(g => g.items.forEach(it => {
-    if(!it.inputs.some(inp => inp.key in exam)) return;
-    fields.push({group:g.group, name:it.name, text: it.show(exam, {sex})});
-  }));
-
-  return {
-    name: String(raw.name || '').trim().slice(0, 40),
-    age : String(raw.age || '').trim(),
-    sex,
-    date: String(raw.date || '').trim().slice(0, 40),
-    exam, chronic: (raw.chronic || []).filter(c => CHRONIC.includes(c)),
-    groups, fields,
-  };
-}
-
-/** 목록 카드에 '무엇을 넣고 뽑은 리포트인지' 보여 주기 위한 요약.
-    (실제로는 서버가 analyze.py 의 report_info() 로 만들어 내려줍니다) */
-function mockReportInfo(report){
-  const s = report.input || {};
-  const products = s.products || [], meds = s.meds || [], exam = s.exam || {};
-  return {
-    name: s.name || '', age: s.age || '', sex: s.sex || '', date: s.date || '',
-    countMeal: !!s.countMeal, chronic: s.chronic || [],
-    products: products.map(p => p.name || '이름 없는 제품').slice(0, 3),
-    productCount: products.length,
-    meds: meds.map(m => m.name).filter(Boolean).slice(0, 3),
-    medCount: meds.length,
-    examCount: Object.values(exam).filter(v => v !== '' && v != null).length,
-    examOverall: ((report.exam || {}).overall || {}).label || '',
-    nutrientCount: (report.nutrients || []).length,
-  };
-}
 
 /* -------------------------------------------------------------------------
    계산 결과를 화면이 쓰는 형태(Report)로 포장합니다.
@@ -1650,50 +2188,39 @@ function renderHeader(m){
 }
 
 /* ---- [블록 2] 성분 카드 하나 --------------------------------------------- */
-function renderCard(n){
+function renderCard(n, tab){
   const lv = LEVEL[n.level], t = TONE[lv.tone];
+  const pct = n.gauge[tab];
 
-  /* 게이지 — 권장량 대비 몇 %인지 하나만 보여 줍니다.
-     상한을 넘었는지는 아래 막대에서 눈금을 지나쳤는지로 바로 보이므로,
-     같은 이야기를 게이지로 한 번 더 할 필요가 없습니다. */
-  const pct = n.gauge.rda;
-  let label = '—', arc = 0;
-  const arcColor = t.fg;
-  if(pct != null && n.level !== 'unknown'){
+  /* 게이지 */
+  let label = '—', arc = 0, arcColor = t.fg;
+  if(n.level === 'over'){ label = '초과'; arc = LAYOUT.gaugeArc; arcColor = TONE.crit.fg; }
+  else if(pct != null && n.level !== 'unknown'){
     label = Math.round(pct * 100) + '%';
-    arc   = LAYOUT.gaugeArc * Math.min(pct, 1);   // 100%를 넘어도 반원은 꽉 찬 데까지만
+    arc   = LAYOUT.gaugeArc * Math.min(pct, 1);
   }
   const track = `<path d="M8,60 A52,52 0 0 1 112,60" fill="none" stroke="#EEF0F3" stroke-width="12" stroke-linecap="round"/>`;
   const fill  = arc > 0
     ? `<path d="M8,60 A52,52 0 0 1 112,60" fill="none" stroke="${arcColor}" stroke-width="12" stroke-linecap="round" stroke-dasharray="${arc.toFixed(1)} 200"/>`
     : '';
 
-  /* ── 막대 ────────────────────────────────────────────────────────────────
-     오른쪽 끝은 **상한이 아닙니다.** 상한 눈금 뒤에 자리가 남아 있어서,
-     상한을 넘은 값도 '얼마나 넘었는지'가 그대로 보입니다.
-
-        │████████████│░░░░│      │
-        0           권장  상한   끝            ← 넘으면 눈금을 지나쳐 뻗습니다
-
-     예전에는 상한을 넘으면 막대를 통째로 빨갛게 채웠는데, 그러면 살짝
-     넘은 것과 두 배로 넘은 것이 똑같아 보였습니다. */
-  const over = n.level === 'over';
-  const bar = `<div class="bar">
-         <div style="width:${n.bar.supp.toFixed(2)}%;background:${over ? TONE.crit.fg : '#1E3A8A'}"></div>
-         <div style="width:${n.bar.meal.toFixed(2)}%;background:${over ? '#F3B4B4' : '#D8DBE0'}"></div>
+  /* 막대 */
+  const bar = n.level === 'over'
+    ? `<div class="bar"><div style="width:100%;background:${TONE.crit.fg}"></div></div>`
+    : `<div class="bar">
+         <div style="width:${n.bar.supp.toFixed(2)}%;background:#1E3A8A"></div>
+         <div style="width:${n.bar.meal.toFixed(2)}%;background:#D8DBE0"></div>
        </div>`;
-
-  const rm = n.bar.rdaMark, um = (n.hasStd && n.ul != null) ? n.bar.ulMark : null;
-  const mark = (pos, kind, text) => pos == null ? '' :
-    `<i class="mk mk-${kind}" style="left:${pos.toFixed(2)}%"></i>` +
-    (text ? `<b class="mkl mkl-${kind}" style="left:${pos.toFixed(2)}%">${text}</b>` : '');
-
-  /* 마그네슘처럼 권장량과 상한이 같은 성분은 두 눈금이 포개집니다.
-     그때는 글자를 하나로 합쳐 적습니다 — 겹쳐 쓰면 둘 다 못 읽습니다. */
-  const merged = rm != null && um != null && Math.abs(um - rm) < 9;
-  const marks = merged
-    ? mark(rm, 'rda', '') + mark(um, 'ul', '권장·상한')
-    : mark(rm, 'rda', '권장') + mark(um, 'ul', '상한');
+  /* 권장 마커. 상한 마커(오른쪽 끝)와 겹칠 만큼 가까우면 글자는 생략합니다
+     — 마그네슘처럼 권장량과 상한이 같은 성분에서 '권장'과 '상한'이
+     포개져 읽히지 않는 것을 막습니다. */
+  const rdaMark = n.bar.rdaMark == null ? '' :
+    `<i class="mk mk-rda" style="left:${n.bar.rdaMark.toFixed(2)}%"></i>` +
+    (n.bar.rdaMark >= 94 ? ''
+      : `<b class="mkl mkl-rda" style="left:${n.bar.rdaMark.toFixed(2)}%">권장</b>`);
+  /* 상한이 정해져 있지 않은 성분에는 상한 마커를 그리지 않습니다. */
+  const ulMark = (n.ul == null || !n.hasStd) ? '' :
+    `<i class="mk mk-ul" style="left:100%"></i><b class="mkl mkl-ul">상한</b>`;
 
   /* 캡션과 코멘트는 서버가 써서 내려줍니다(실서비스에서는 AI 가 쓴 문장).
      혹시 비어 있어도 카드가 깨지지 않도록 기본값을 둡니다. */
@@ -1709,8 +2236,8 @@ function renderCard(n){
   <div class="nc-head"><span class="nc-name">${esc(n.name)}</span>${srcTag}</div>
   <div><span class="nc-cap" style="background:${TONE.gray.bg};color:${TONE.gray.fg}">${esc(cap)}</span></div>
   <svg class="gauge" viewBox="0 0 120 70">${track}${fill}<text x="60" y="54" text-anchor="middle" style="font:800 ${gaugeSize(label)}px var(--ff);fill:${arcColor}">${esc(label)}</text></svg>
-  <div class="nc-level" style="color:${arcColor}">${esc(lv.text)}</div>
-  <div class="barwrap">${bar}${marks}</div>
+  <div class="nc-level" style="color:${arcColor}">${esc(lv[tab])}</div>
+  <div class="barwrap">${bar}${rdaMark}${ulMark}</div>
   <div class="nc-vals"><span class="b">${n.supp > 0 || n.meal > 0 ? fmt(n.total) + n.unit : '—'}</span><span>${esc(n.basis || '')}</span></div>
   <div class="nc-note" style="background:${t.bg};border-color:${t.bd};color:${t.ink}"><b>${esc(note.title)}</b> ${esc(note.body)}</div>
 </div>`;
@@ -1718,6 +2245,7 @@ function renderCard(n){
 
 /* ---- [블록 2] 섭취량 섹션 ------------------------------------------------ */
 function renderIntake(m){
+  const uid = 'r1';
   /* 영양제를 넣었는지에 따라 제목과 설명이 달라집니다.
      식사 기준만으로 본 결과인데 '내 섭취량'이라고 하면 오해를 부릅니다. */
   const title = !m.hasSupp ? '아직 계산할 섭취량이 없습니다'
@@ -1751,16 +2279,21 @@ function renderIntake(m){
     </section>`;
   }
 
-  /* (B) 성분 카드 — 한 화면입니다.
-     예전에는 '권장 대비'와 '상한 대비' 탭이 따로 있었는데, 권장량과 상한은
-     한 눈금자 위의 두 지점일 뿐이라 굳이 나눌 이유가 없었습니다. 오히려
-     탭을 오갈 때마다 같은 카드의 숫자만 바뀌어서, 지금 보는 게 어느
-     기준인지 헷갈렸습니다. 이제 막대 하나에 권장·상한 눈금이 함께
-     찍히므로 한 번에 다 읽힙니다. */
-  return `<section class="intake">${head}
-  <div class="pane always">
-    <div class="grid" data-cols="${m.cols}">${m.nutrients.map(renderCard).join('')}</div>
+  /* (B) 영양제가 있을 때 — 탭 두 개 + pane 두 개 */
+  const pane = tab => `<div class="pane pane-${tab}">
+      <div class="grid" data-cols="${m.cols}">${m.nutrients.map(n => renderCard(n, tab)).join('')}</div>
+    </div>`;
+
+  /* 어느 탭이 선택돼 있는지는 화면만의 상태입니다(서버로 보내지 않습니다). */
+  const cur = UI.tab === 'ul' ? 'ul' : 'rda';
+  return `<input type="radio" name="tab-${uid}" id="tab-rda-${uid}" value="rda" class="tabin"${cur === 'rda' ? ' checked' : ''}>
+<input type="radio" name="tab-${uid}" id="tab-ul-${uid}" value="ul" class="tabin"${cur === 'ul' ? ' checked' : ''}>
+<section class="intake">${head}
+  <div class="tabs">
+    <label class="lb-rda" for="tab-rda-${uid}">권장 대비</label>
+    <label class="lb-ul" for="tab-ul-${uid}">상한 대비</label>
   </div>
+  ${pane('rda')}${pane('ul')}
 </section>`;
 }
 
@@ -1803,6 +2336,7 @@ function renderIssues(m){
     ? m.issues.map(i => `<div class="ix-row">
         <span class="ix-kind" style="background:${TONE[i.tone].bg};color:${TONE[i.tone].fg}">${esc(i.kind)}</span>
         <span class="ix-text">${esc(i.text)}</span>
+        <a class="link" href="#">자세히</a>
       </div>`).join('')
     : emptyCard('점검된 항목이 없습니다',
                 '등록한 제품과 약 사이에서 겹치거나 부딪히는 성분이 발견되지 않았습니다.', null, true);
@@ -1871,65 +2405,6 @@ const renderReport = m =>
     </div>
     ${renderHeader(m)}${renderRecommend(m)}${renderIntake(m)}${renderIssues(m)}${renderSummary(m)}${renderFooter()}</div>`;
 
-/** 결과 화면 하나를 고릅니다.
-    -------------------------------------------------------------------------
-    서버가 완성된 HTML(m.html)을 보내 주면 그것을 그대로 씁니다 — 판정도
-    문장도 전부 서버가 만든 것이므로 화면은 손대지 않습니다. html 이 없으면
-    예전처럼 이 화면이 직접 그립니다(목업으로 볼 때가 그렇습니다).
-
-    위아래의 '인쇄 · 입력 수정' 줄은 어느 쪽이든 붙입니다. 이게 없으면
-    결과를 본 뒤 돌아갈 방법이 사라집니다. */
-/** 분석 서버가 보지 못한 입력이 있는지.
-    -------------------------------------------------------------------------
-    결과보기는 분석 서버가 처리하는데, 그 서버는 나이·성별·체중·이름만
-    받습니다. 영양제·복용 약·건강검진 수치는 넘길 자리가 아예 없어서
-    그쪽 리포트에는 반영되지 않습니다.
-
-    그런데 그 입력들에 대한 판정은 이 응답 안에 이미 함께 들어 있습니다
-    (서버가 같은 요청에서 계산해 둡니다). 그냥 버리면 사용자는 와파린과
-    오메가3를 같이 적어 놓고도 출혈 주의 안내를 못 보게 됩니다 —
-    '경고가 없다'로 읽히는 쪽이 위험합니다. 그래서 아래에 따로 붙입니다. */
-function serverMissedInput(m){
-  const issues = (m.issues || []).length;
-  const flagged = (m.nutrients || []).filter(n => n.level === 'over' || n.level === 'near').length;
-  const abnormal = ((m.exam || {}).abnormal || []).length;
-  return {issues, flagged, abnormal, any: issues + flagged + abnormal > 0};
-}
-
-const reportHtml = m => {
-  /* 분석 서버가 구조화된 값(성분·상한·충족률)을 보내 주면 화면이 그것으로
-     직접 그립니다. 그러면 리포트가 위(서버 html)와 아래(보완 섹션)로
-     쪼개지지 않고 한 덩어리가 됩니다.
-     서버가 아직 html 만 보내는 동안에는 아래 기존 경로로 그대로 갑니다 —
-     그래서 서버를 먼저 고치든 화면을 먼저 고치든 화면이 깨지지 않습니다. */
-  if(m && m.fromAgent) return renderReport(m);
-  if(!m || !m.html) return renderReport(m);
-
-  const missed = serverMissedInput(m);
-  const extra = !missed.any ? '' : `
-    <div class="rp-extra-head">
-      <span class="h3">입력하신 영양제 · 약 · 검진 결과로 확인한 내용</span>
-      <span class="sub">위 리포트에는 포함되지 않은 항목입니다.
-        ${missed.issues ? `점검 ${missed.issues}건 · ` : ''}${missed.flagged ? `주의 성분 ${missed.flagged}개 · ` : ''}${missed.abnormal ? `검진 이상 ${missed.abnormal}건` : ''}</span>
-    </div>
-    ${missed.issues ? renderIssues(m) : ''}
-    ${missed.flagged ? renderIntake(m) : ''}`;
-
-  return `<div class="page">
-    ${UI.sample ? sampleBanner() : mockBanner()}
-    <div class="rp-top">
-      <div><span class="h2">영양제 섭취 리포트</span>
-        <span class="sub" style="display:block">입력하신 내용으로 분석했습니다.</span></div>
-      <div class="rp-acts">
-        <button type="button" class="btn-line" data-act="print">인쇄 · PDF 저장</button>
-        <button type="button" class="rp-back" data-act="edit">입력 수정</button>
-      </div>
-    </div>
-    <section class="card rp-server">${m.html}</section>
-    ${extra}
-  </div>`;
-};
-
 
 /* =========================================================================
    [G] 화면 — 다섯 가지 상태
@@ -1995,68 +2470,14 @@ const fmtDate = iso => {
   } catch(e){ return iso || ''; }
 };
 
-/** 목록 카드에 '무엇을 넣고 뽑은 리포트인지' 적습니다.
-    -------------------------------------------------------------------------
-    날짜와 배지만 있으면 같은 날 여러 번 돌린 리포트가 전부 똑같아 보여서,
-    하나씩 열어 보기 전에는 어느 것이 어느 것인지 알 수 없었습니다.
-    그래서 서버가 info 로 입력 요약을 함께 내려보냅니다(규격서 §3.5).
-
-    옛 서버가 info 없이 응답하더라도 카드가 깨지지 않아야 하므로,
-    없으면 이 줄들만 빠지고 나머지는 그대로 나옵니다. */
-function historyInfoLines(info){
-  if(!info) return '';
-  const who = [];
-  if(info.name) who.push(info.name);
-  if(info.age)  who.push(`${info.age}세`);
-  if(info.sex)  who.push(info.sex);
-  if(info.date) who.push(`검진일 ${info.date}`);
-
-  const what = [];
-  if(info.productCount){
-    const names = (info.products || []).join(', ');
-    const more  = info.productCount - (info.products || []).length;
-    what.push(`영양제 ${info.productCount}종${names ? ` (${names}${more ? ` 외 ${more}` : ''})` : ''}`);
-  } else if(info.countMeal){
-    what.push('식사 평균 추정치 기준');
-  }
-  if(info.medCount){
-    const names = (info.meds || []).join(', ');
-    const more  = info.medCount - (info.meds || []).length;
-    what.push(`약 ${info.medCount}건${names ? ` (${names}${more ? ` 외 ${more}` : ''})` : ''}`);
-  }
-  if(info.examCount) what.push(`검진 ${info.examCount}개 항목`);
-  if((info.chronic || []).length) what.push(`진단 질환 ${info.chronic.join(' · ')}`);
-
-  return `${who.length ? `<span class="hist-who">${esc(who.join(' · '))}</span>` : ''}
-    ${what.length ? `<span class="hist-what">${esc(what.join(' · '))}</span>` : ''}`;
-}
-
-const historyCard = r => {
-  const asking = UI.deleteAsk === r.id;
-  return `<div class="hist-card${asking ? ' asking' : ''}">
+const historyCard = r => `<div class="hist-card">
   <div class="hist-l">
     <span class="hist-date">${esc(fmtDate(r.createdAt))}</span>
-    ${historyInfoLines(r.info)}
     <span class="hist-sum">${esc(r.summaryLine || '')}</span>
     <div class="hist-badges">${(r.badges || []).slice(0, 3).map(b => chip(b.text, b.tone)).join('')}</div>
   </div>
-  ${asking
-    /* 지우기 전 확인은 카드 안에서 받습니다 — 브라우저 기본 확인창은
-       화면 밖에 떠서 '무엇을 지우는 중인지'가 보이지 않습니다. */
-    ? `<div class="hist-acts hist-confirm">
-         <span class="hist-confirm-t">이 리포트를 지울까요?<br>되돌릴 수 없어요.</span>
-         <div class="hist-actrow">
-           <button type="button" class="btn-line sm" data-act="cancel-delete-report">취소</button>
-           <button type="button" class="btn-danger sm" data-act="confirm-delete-report" data-id="${esc(r.id)}">지우기</button>
-         </div>
-       </div>`
-    : `<div class="hist-acts">
-         <button type="button" class="btn-line" data-act="open-report" data-id="${esc(r.id)}">다시 보기</button>
-         <button type="button" class="hist-del" data-act="ask-delete-report" data-id="${esc(r.id)}"
-                 title="이 리포트 지우기" aria-label="이 리포트 지우기">삭제</button>
-       </div>`}
+  <button type="button" class="btn-line" data-act="open-report" data-id="${esc(r.id)}">다시 보기</button>
 </div>`;
-};
 
 function renderHistory(){
   const list = UI.historyList || [];
@@ -2066,7 +2487,6 @@ function renderHistory(){
         <span class="sub" style="display:block">${list.length}건</span></div>
       <button type="button" class="btn-solid" data-act="new-report">새 리포트 시작</button>
     </div>
-    ${UI.deleteError ? `<div class="banner warn"><b>지우지 못했습니다.</b> ${esc(UI.deleteError)}</div>` : ''}
     ${list.length
       ? `<div class="hist-list">${list.map(historyCard).join('')}</div>`
       : `<section class="card">${emptyCard('아직 리포트가 없습니다',
@@ -2140,6 +2560,10 @@ function screenHome(){
        <button type="button" class="home-cta-ghost" data-act="history">지난 리포트 보기</button>`
     : `<button type="button" class="home-cta-primary" data-act="signup">무료로 시작하기</button>
        <button type="button" class="home-cta-ghost" data-act="login">로그인</button>`;
+  const finalCtas = AUTH.user
+    ? `<button type="button" class="home-cta-primary" data-act="start-input">입력 시작하기</button>`
+    : `<button type="button" class="home-cta-primary" data-act="signup">무료로 시작하기</button>
+       <button type="button" class="home-cta-ghost" data-act="login">이미 계정이 있으신가요? 로그인</button>`;
 
   return `<div class="page home-page">
     ${mockBanner()}
@@ -2207,6 +2631,12 @@ function screenHome(){
         <span class="h2">자주 묻는 질문</span>
       </div>
       ${HOME_FAQ().map(faqItem).join('')}
+    </section>
+
+    <section class="home-final">
+      <span class="h2">지금 바로 확인해 보세요</span>
+      <span class="sub">나이와 성별만 있어도 시작할 수 있어요. 나머지는 대화하듯 편하게 채우시면 돼요.</span>
+      <div class="hero-row">${finalCtas}</div>
     </section>
 
     <footer class="ft">
@@ -2300,18 +2730,6 @@ function modeToggle(){
   </div>`;
 }
 
-/** 폼 화면에서 '전체 초기화'를 눌렀을 때 한 번 더 확인받는 카드.
-    대화형 화면과 똑같이, 누르자마자 지우지 않습니다. */
-function formClearConfirmHtml(){
-  return `<div class="chat-confirm">
-    <span class="sub2">정말 지금까지 입력한 내용을 모두 지울까요? 이 작업은 되돌릴 수 없어요.</span>
-    <div class="chat-sendrow">
-      <button type="button" class="btn-solid sm" data-act="form-clear-yes">네, 전부 지울게요</button>
-      <button type="button" class="btn-line sm" data-act="form-clear-no">아니요, 계속할게요</button>
-    </div>
-  </div>`;
-}
-
 function renderInputScreen(){
   return `<div class="page">
     <datalist id="nutlist">${APP.hints.map(h => `<option value="${esc(h)}">`).join('')}</datalist>
@@ -2320,13 +2738,7 @@ function renderInputScreen(){
     ${modeToggle()}
 
     <section class="card hero">
-      <div class="hero-head">
-        <span class="h1">지금 나에게 부족한 영양소, 확인해 보세요</span>
-        <div class="chat-tools">
-          <button type="button" class="chat-tool-btn danger" data-act="form-clear"
-                  title="지금까지 입력한 내용을 모두 지우고 처음부터 다시 시작합니다.">전체 초기화</button>
-        </div>
-      </div>
+      <span class="h1">지금 나에게 부족한 영양소, 확인해 보세요</span>
       <span class="sub">나이와 성별만 넣으면 식사에서 섭취하는 평균 추정치로 부족한 성분을 찾아
         드립니다. 복용 중인 영양제와 약을 더 넣으면 합산량·상한 초과·상호작용까지 함께 봅니다.</span>
       <div class="hero-meta">
@@ -2338,7 +2750,6 @@ function renderInputScreen(){
         <button type="button" class="btn-line" data-act="history">지난 리포트 보기</button>
         <span class="savestate" id="savestate"></span>
       </div>
-      ${UI.confirmClear ? formClearConfirmHtml() : ''}
     </section>
 
     ${section({
@@ -2446,11 +2857,9 @@ function chatBubbleText(step){
     case 'name': return '먼저 이름을 알려주시겠어요? 답하지 않으셔도 괜찮아요.';
     case 'age':  return `${nm}나이가 어떻게 되세요?`;
     case 'sex':  return '성별을 알려주세요.';
-    case 'meal': return '식사에서 섭취하는 영양성분은 평균 추정치를 반영하여 계산할까요?';
+    case 'meal': return '식사에서 섭취하는 영양성분은 평균 추정치를 반영하여 계산할까요? 반영하면 영양제를 넣지 않아도 부족한 성분을 알려드려요.';
     case 'examAsk': return '건강검진 결과가 있으신가요? 있으시면 몇 가지만 여쭤볼게요.';
-    case 'examGroups': return CHAT.importedGroups.length
-      ? `검진표에서 읽은 항목(${CHAT.importedGroups.join(', ')})은 이미 채워 두었어요. 이 밖에 결과가 더 있는 항목만 골라 주세요.`
-      : '어떤 항목의 검진 결과가 있으신가요? 해당하는 것을 모두 골라 주세요.';
+    case 'examGroups': return '어떤 항목의 검진 결과가 있으신가요? 해당하는 것을 모두 골라 주세요.';
     case 'examGroupDetail': return `${CHAT.examQueue[0]} 결과를 알려주세요. 모르는 값은 비워 두셔도 괜찮아요.`;
     case 'examDate': return '검진 받으신 날짜를 알고 계신가요?';
     case 'chronic': return '진단 후 약물 치료 중인 질환이 있으신가요? 있으시면 골라 주세요.';
@@ -2578,7 +2987,7 @@ function chatSubmitExamFree(){
   const g = EXAM.find(x => x.group === CHAT.examQueue[0]);
   if(!g) return;
   fillExamFieldsFromText(g, raw);
-  chatConfirmExamGroup(raw);      // 대화에는 사용자가 쓴 문장을 그대로 남깁니다
+  chatConfirmExamGroup();
 }
 
 /** 영양제 성분도 항목별 칸을 하나씩 클릭해서 채우지 않아도, 문장으로
@@ -2659,7 +3068,7 @@ function chatSubmitProdFree(){
       if([...unitEl.options].some(o => o.value === p.unit)) unitEl.value = p.unit;
     }
   });
-  chatConfirmProduct(raw);        // 대화에는 사용자가 쓴 문장을 그대로 남깁니다
+  chatConfirmProduct();
 }
 
 function chatSummaryWidget(){
@@ -2711,14 +3120,12 @@ function chatWidgetHtml(step){
     }
     case 'prodAsk': return chatYesNo('있어요', '없어요', CHAT.wantsProd) + chatFreeTextRow('예: 있어요 / 없어요');
     case 'medAsk':  return chatYesNo('있어요', '없어요', CHAT.wantsMed) + chatFreeTextRow('예: 있어요 / 없어요');
-    /* 고치는 중일 때는 지금 값이 칸에 그대로 들어가 있어야 합니다 —
-       빈 칸이 뜨면 무엇을 고치는 중인지 알 수 없기 때문입니다. */
-    case 'prodName': return chatTextWidget({placeholder:'종합비타민', value: editValueOf('prodName')});
+    case 'prodName': return chatTextWidget({placeholder:'종합비타민'});
     case 'prodIngredients': return chatProductCard();
     case 'prodMore': return chatYesNo('네, 더 있어요', '아니요, 다 됐어요', CHAT.prodMoreYes) + chatFreeTextRow('예: 네 / 아니요');
     case 'medMore':  return chatYesNo('네, 더 있어요', '아니요, 다 됐어요', CHAT.medMoreYes) + chatFreeTextRow('예: 네 / 아니요');
-    case 'medName': return chatTextWidget({placeholder:'와파린 5mg', value: editValueOf('medName')});
-    case 'medDesc': return chatTextWidget({placeholder:'항응고제 · 1일 1회 (선택)', skippable:true, value: editValueOf('medDesc')});
+    case 'medName': return chatTextWidget({placeholder:'와파린 5mg'});
+    case 'medDesc': return chatTextWidget({placeholder:'항응고제 · 1일 1회 (선택)', skippable:true});
     case 'summary': return chatSummaryWidget();
     default: return '';
   }
@@ -2734,174 +3141,6 @@ function chatClearConfirmHtml(){
       <button type="button" class="btn-solid sm" data-act="chat-clear-yes">네, 전부 지울게요</button>
       <button type="button" class="btn-line sm" data-act="chat-clear-no">아니요, 계속할게요</button>
     </div>
-  </div>`;
-}
-
-/** 말풍선 하나. 사용자가 답한 말풍선에는 '수정'을 붙여, 뒤늦게 잘못 답한
-    것을 알아차렸을 때 처음부터 다시 하지 않아도 되게 합니다. */
-function chatMsgHtml(m, i){
-  const editable = m.role === 'user' && m.step && canEditStep(m.step) && !CHAT.editing;
-  return `<div class="chat-msg ${m.role}${m.edited ? ' edited' : ''}${m.auto ? ' auto' : ''}">
-    ${editable ? `<button type="button" class="chat-edit" data-chat-edit="${i}"
-        title="이 답변 고치기" aria-label="이 답변 고치기">수정</button>` : ''}
-    <span class="chat-bubble">${m.auto ? '<i class="chat-auto">검진표에서</i>' : ''}${esc(m.text)}</span>
-  </div>`;
-}
-
-/* =========================================================================
-   [G-3B] 검진표 사진 등록 — 대화 중 언제든 쓸 수 있는 ＋ 버튼
-   -------------------------------------------------------------------------
-   질문에 하나씩 답하는 대신, 건강검진 결과지를 사진으로 올리면 서버가 읽어
-   한꺼번에 채워 넣습니다. 그리고 그렇게 채워진 것은 **다시 묻지 않습니다.**
-
-   ★ 이미지만 받습니다. 파일 선택 창에서도 이미지만 보이게 하고(accept),
-     고르고 난 뒤에도 한 번 더 확인합니다 — accept 는 '권장'일 뿐이라
-     사용자가 '모든 파일'로 바꿔서 아무거나 고를 수 있기 때문입니다.
-     서버도 파일 앞머리 바이트로 다시 확인합니다(3중 확인).
-   ========================================================================= */
-const IMAGE_ACCEPT = 'image/png,image/jpeg,image/gif,image/webp,image/bmp,image/heic';
-
-/* 사진 한 장의 크기 상한. 요즘 폰 사진이 3~6MB 쯤이라 10MB 면 넉넉합니다.
-   서버(vision.py)도 같은 값으로 다시 확인합니다 — 화면에서 막는 것은
-   사용자를 기다리게 하지 않으려는 것일 뿐, 방어는 서버가 합니다. */
-const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
-
-function chatAttachToolHtml(){
-  if(CHAT.imgBusy){
-    return `<span class="chat-tool-btn attach busy" aria-live="polite">
-      <span class="spin sm"></span>
-      <span>검진표를 읽고 있어요…</span>
-    </span>`;
-  }
-  const done = CHAT.imported;
-  /* 안내 문구('이미지 파일만 · 10MB 이하')는 버튼 옆에 따로 두지 않고
-     title 로 옮겼습니다 — 머리글 줄은 좁아서 글자가 늘어나면 줄이
-     밀립니다. 무엇을 읽었는지는 어차피 대화에 그대로 남습니다. */
-  return `<button type="button" class="chat-tool-btn attach" data-act="pick-exam-image"
-          title="건강검진 결과지 사진을 올리면 읽어서 자동으로 채워 드려요 (이미지 파일만 · 10MB 이하)">
-    <span class="chat-attach-plus" aria-hidden="true">＋</span>
-    <span>${done ? '검진표 다시 올리기' : '검진표 이미지 등록'}</span>
-  </button>`;
-}
-
-/** 사진을 읽지 못한 이유. 머리글 바로 아래에 한 줄로 붙습니다.
-    파일 형식·크기 때문에 막힌 경우는 대화에 아무것도 남지 않으므로,
-    이 줄이 없으면 왜 아무 일도 일어나지 않았는지 알 수 없습니다. */
-function chatAttachErrHtml(){
-  return CHAT.imgError
-    ? `<div class="chat-attach-err">${esc(CHAT.imgError)}</div>`
-    : '';
-}
-
-/** 파일을 고른 순간 — 서버에 보내기 전에 화면에서 먼저 걸러 냅니다.
-    (서버까지 갔다 와서 거절당하면 그만큼 사용자가 기다립니다) */
-async function handleExamImageFile(file){
-  if(!file) return;
-  CHAT.imgError = null;
-
-  if(!/^image\//.test(file.type || '')){
-    CHAT.imgError = '이미지 파일만 올릴 수 있어요. (PNG · JPG · GIF · WEBP · HEIC)';
-    rerenderChat();
-    return;
-  }
-  if(file.size > MAX_IMAGE_BYTES){
-    CHAT.imgError = `사진이 너무 큽니다. ${MAX_IMAGE_BYTES / 1048576}MB 이하로 올려 주세요.`;
-    rerenderChat();
-    return;
-  }
-
-  /* 결과보기 때 이 사진을 서버로 함께 보냅니다. 서버는 사진을 저장하지
-     않기 때문에(민감정보), 분석하는 순간까지 브라우저가 들고 있습니다. */
-  CHAT.examFile = file;
-
-  CHAT.imgBusy = true;
-  CHAT.log.push({role:'user', text:`🖼 ${file.name}`});
-  rerenderChat();
-
-  try {
-    applyExamReading(await API.readExamImage(file));
-  } catch(e){
-    /* 판독에 실패해도 대화는 그대로 이어집니다 — 사진이 흐리다고 입력을
-       처음부터 다시 하게 만들 수는 없으니까요. */
-    CHAT.log.push({role:'bot', text:'사진을 읽지 못했어요. 질문에 직접 답해 주시면 그대로 채워 드릴게요.'});
-    CHAT.imgError = e.code === 'LOGIN_REQUIRED'
-      ? '로그인이 풀렸어요. 다시 로그인한 뒤 올려 주세요.'
-      : (e.message || '사진을 읽지 못했습니다.');
-  } finally {
-    CHAT.imgBusy = false;
-    rerenderChat();
-  }
-}
-
-/** 판독 결과를 입력값에 넣고, 이미 채워진 질문은 건너뜁니다.
-    -------------------------------------------------------------------------
-    무엇을 덮어쓰고 무엇을 남길지 —
-      검진 수치   사진이 원본이므로 **덮어씁니다**
-      만성질환    이미 고른 것에 **더합니다** (사진에 없다고 지우면 안 됩니다)
-      검진일      사진의 날짜로 덮어씁니다 (검진표에 찍힌 날이 정확합니다)
-      이름·나이·성별
-        이번 대화에서 **직접 답하신 적이 있으면 그대로 둡니다.** 방금 손으로
-        적은 값을 사진이 밀어내면 안 되니까요. 반대로 지난번에 저장해 둔
-        값(임시저장)만 있다면 사진 쪽을 씁니다 — 사용자가 방금 이 검진표를
-        올린 것 자체가 '이 문서 기준으로 봐 달라'는 뜻이기 때문입니다. */
-function chatAnsweredByUser(step){
-  return CHAT.log.some(m => m.role === 'user' && m.step === step && !m.auto);
-}
-
-function applyExamReading(r){
-  const keys = Object.keys(r.exam || {});
-  Object.entries(r.exam || {}).forEach(([k, v]) => { state.exam[k] = v; });
-  (r.chronic || []).forEach(c => { if(!state.chronic.includes(c)) state.chronic.push(c); });
-
-  const auto = [];   // [단계, 대화에 남길 문구]
-  if(r.name && !chatAnsweredByUser('name')){ state.name = r.name; auto.push(['name', r.name]); }
-  if(r.age  && !chatAnsweredByUser('age') ){ state.age  = r.age;  auto.push(['age', `${r.age}세`]); }
-  if(r.sex  && !chatAnsweredByUser('sex') ){ state.sex  = r.sex;  auto.push(['sex', r.sex]); }
-  if(r.date && !chatAnsweredByUser('examDate')){ state.date = r.date; auto.push(['examDate', r.date]); }
-
-  CHAT.imported = {source: r.source, count: keys.length, at: Date.now()};
-  CHAT.importedGroups = r.groups || [];
-  CHAT.wantsExam = true;
-
-  /* 사진에서 읽은 것은 다시 묻지 않습니다. */
-  CHAT.known = ['examAsk', ...auto.map(([step]) => step)];
-  if((r.chronic || []).length) CHAT.known.push('chronic');
-
-  /* 무엇을 읽었는지 그대로 보여 줍니다 — 잘못 읽었을 때 사용자가 바로
-     알아채고 고칠 수 있어야 하기 때문입니다. */
-  const head = r.source === 'demo'
-    ? '⚠ 예시 판독입니다(실제 사진을 읽은 결과가 아니에요). 검진표에서 이렇게 읽었다고 가정할게요.'
-    : '검진표에서 이렇게 읽었어요.';
-  const lines = (r.fields || []).map(f => `· ${f.name} ${f.text}`);
-  CHAT.log.push({role:'bot', text: keys.length
-    ? `${head}\n${lines.join('\n')}\n\n다르게 읽은 값이 있으면 아래 '수정'으로 고칠 수 있어요.`
-    : '사진에서 읽어낼 수 있는 검진값이 없었어요. 질문에 직접 답해 주시면 그대로 채워 드릴게요.'});
-
-  /* 자동으로 채워진 답들도 대화에 남깁니다 — 그래야 '수정' 버튼이 붙어서
-     나중에 고칠 수 있고, 무엇이 저절로 채워졌는지도 눈에 보입니다. */
-  auto.forEach(([step, text]) => CHAT.log.push({role:'user', text, step, auto:true}));
-  if(CHAT.importedGroups.length){
-    CHAT.importedGroups.forEach(g => CHAT.log.push({
-      role:'user', text: chatExamGroupConfirmText(g), step:'examGroupDetail', ref:g, auto:true}));
-  }
-
-  /* 사진에서 채워지지 않은 검진 그룹만 큐에 남깁니다. */
-  CHAT.examQueue = CHAT.examQueue.filter(g => !CHAT.importedGroups.includes(g));
-  CHAT.step = chatFirstUnknownFrom(CHAT.step);
-}
-
-/** 지금 단계부터 앞으로 나아가면서, 이미 아는 질문은 지나칩니다. */
-function chatFirstUnknownFrom(step){
-  let s = step;
-  for(let i = 0; i < 40 && CHAT.known.includes(s); i++) s = nextChatStep(s);
-  return s;
-}
-
-/** 고치는 중일 때 입력칸 위에 뜨는 안내 줄. */
-function chatEditBarHtml(){
-  return `<div class="chat-editbar">
-    <span class="chat-editbar-t">답변을 고치고 있어요. 새로 답하시면 원래 보시던 자리로 돌아가요.</span>
-    <button type="button" class="chat-tool-btn" data-act="chat-edit-cancel">고치기 취소</button>
   </div>`;
 }
 
@@ -2922,26 +3161,19 @@ function renderChatScreen(){
           <span class="sub">질문에 답하시면 그대로 채워져요. 버튼을 누르거나 문장으로 직접 답해도 돼요.</span>
         </div>
         <div class="chat-tools">
-          ${CHAT.editing || CHAT.confirmClear ? '' : chatAttachToolHtml()}
           <button type="button" class="chat-tool-btn danger" data-act="chat-clear"
                   title="지금까지 입력한 내용을 모두 지우고 처음부터 다시 시작합니다.">전체 초기화</button>
         </div>
       </div>
-      ${chatAttachErrHtml()}
 
       <div class="chat-log" id="chatLog">
-        ${CHAT.log.map(chatMsgHtml).join('')}
+        ${CHAT.log.map(m => `<div class="chat-msg ${m.role}"><span class="chat-bubble">${esc(m.text)}</span></div>`).join('')}
         ${liveBubble}
       </div>
 
       <div class="chat-input-area" id="chatInputArea">
-        ${CHAT.editing ? chatEditBarHtml() : ''}
         ${CHAT.confirmClear ? chatClearConfirmHtml() : `<div id="chatWidget">${chatWidgetHtml(CHAT.step)}</div>`}
       </div>
-
-      <!-- 파일 선택 창을 여는 데만 쓰는 숨은 입력칸입니다. 위의 ＋ 버튼이
-           이걸 대신 눌러 줍니다(기본 파일 선택 버튼은 모양을 맞추기 어렵습니다). -->
-      <input type="file" id="examImageInput" accept="${IMAGE_ACCEPT}" hidden>
     </section>
 
     <footer class="ft">
@@ -2982,151 +3214,13 @@ function focusChatInput(){
     챗봇이 한 번 더 확인해 줍니다 — 특히 검진 수치처럼 문장에서 여러 값을
     뽑아 채우는 경우, 제대로 이해했는지 사용자가 바로 알 수 있어야 하기
     때문입니다. */
-function chatAdvance(step, botText, userText, confirmText, ref){
-  const ed = CHAT.editing;
-  if(ed && ed.index != null){
-    /* 고치는 중이면 새 말풍선을 아래에 덧붙이지 않고, 원래 답했던 그 자리의
-       내용을 고쳐 씁니다 — 대화 기록이 지금 값과 어긋나 있으면 나중에 무엇이
-       맞는 값인지 알 수 없게 되기 때문입니다. */
-    CHAT.log[ed.index] = {role:'user', text:userText, step, ref, edited:true};
-    const after = CHAT.log[ed.index + 1];
-    if(confirmText){
-      if(after && after.confirm) after.text = confirmText;
-      else CHAT.log.splice(ed.index + 1, 0, {role:'bot', text:confirmText, confirm:true});
-    }
-    ed.index = null;            // 이어지는 되묻기(있다면)는 평소처럼 아래에 쌓습니다
-  } else {
-    /* 고치는 중에 딸려 나온 질문을 다시 답한 것이라면, 같은 질문에 대한
-       예전 말풍선은 걷어냅니다 — 같은 질문과 답이 위아래로 두 번 남아 있으면
-       어느 쪽이 지금 값인지 알 수 없기 때문입니다. */
-    if(CHAT.editing) chatDropAnswers([step], ref !== undefined ? [ref] : null);
-    CHAT.log.push({role:'bot', text: botText});
-    if(userText != null) CHAT.log.push({role:'user', text: userText, step, ref});
-    if(confirmText) CHAT.log.push({role:'bot', text: confirmText, confirm:true});
-  }
-
-  CHAT.step = chatNextAfterAnswer(step);
+function chatAdvance(step, botText, userText, confirmText){
+  CHAT.log.push({role:'bot', text: botText});
+  if(userText != null) CHAT.log.push({role:'user', text: userText});
+  if(confirmText) CHAT.log.push({role:'bot', text: confirmText});
+  CHAT.step = nextChatStep(step);
   queueSave();
   rerenderChat();
-}
-
-/** 다음에 보여줄 질문을 정합니다.
-    평소에는 nextChatStep() 그대로지만, 답을 고치는 중이라면 고치기 전에
-    보고 있던 자리로 돌려보냅니다 — 나이 하나 고치려다 뒤의 질문을 전부
-    다시 답하게 되면 고치는 의미가 없기 때문입니다.
-    단, '검진 결과가 있으신가요?'처럼 답을 바꾸면 새로 물어봐야 할 것이
-    생기는 질문은, 그 딸린 질문들을 다 마친 뒤에 돌아갑니다. */
-function chatNextAfterAnswer(step){
-  /* 검진표 사진으로 이미 채워진 질문은 지나칩니다 — 사진을 올린 다음에도
-     "검진 결과가 있으신가요?" 를 다시 묻는다면 사진을 올린 의미가 없습니다.
-     (고치는 중일 때는 지나치지 않습니다. 일부러 그 질문으로 돌아온 것이니까요.) */
-  const next = CHAT.editing ? nextChatStep(step) : chatFirstUnknownFrom(nextChatStep(step));
-  if(!CHAT.editing) return next;
-  const flow = EDIT_SUBFLOW[CHAT.editing.step] || [];
-  if(flow.includes(next)) return next;          // 아직 딸린 질문이 남았습니다
-  const back = CHAT.editing.returnStep;
-  if(!flow.length) chatRestoreEditContext();    // 값만 고친 경우 — 하던 자리 그대로 복원
-  CHAT.editing = null;
-  return back;
-}
-
-/* ---- 이전 답변 고치기 -----------------------------------------------------
-   대화는 위에서 아래로 흐르지만, 중간에 잘못 답한 것을 알아차렸을 때 처음부터
-   다시 하게 만들면 안 됩니다. 그래서 답한 말풍선마다 '수정'을 붙이고, 누르면
-   그 질문으로 잠깐 되돌아갔다가 답하면 하던 자리로 되돌아옵니다.        */
-
-/** 이 답변에 '수정' 버튼을 붙일 수 있는지. */
-function canEditStep(step){ return EDITABLE_STEPS.includes(step); }
-
-/** 되돌아가기 전에, 지금 진행 중이던 상태를 통째로 넣어 둡니다.
-    (예: 검진 그룹을 순서대로 묻는 도중에 나이를 고치러 갔다가 돌아오면,
-     남아 있던 그룹 순서가 그대로 이어져야 합니다) */
-function chatSaveEditContext(){
-  return {
-    examQueue: CHAT.examQueue.slice(),
-    prodDraft: CHAT.prodDraft,
-    medDraft : CHAT.medDraft,
-    tempSelection: CHAT.tempSelection.slice(),
-    tempSeededFor: CHAT.tempSeededFor,
-  };
-}
-
-function chatRestoreEditContext(){
-  const s = CHAT.editing && CHAT.editing.saved;
-  if(!s) return;
-  CHAT.examQueue = s.examQueue;
-  CHAT.prodDraft = s.prodDraft;
-  CHAT.medDraft  = s.medDraft;
-  CHAT.tempSelection = s.tempSelection;
-  CHAT.tempSeededFor = s.tempSeededFor;
-}
-
-/** 되돌아간 질문이 '지금 값'을 그대로 보여주도록 준비합니다. */
-function chatPrepareEditContext(e){
-  if(e.step === 'examGroupDetail'){ CHAT.examQueue = [e.ref]; }
-  else if(e.step === 'chronic'){ CHAT.tempSelection = state.chronic.slice(); CHAT.tempSeededFor = 'chronic'; }
-  else if(e.step === 'examGroups'){ CHAT.tempSelection = deriveExamGroupsFromState(); CHAT.tempSeededFor = 'examGroups'; }
-  else if(e.step === 'prodIngredients'){
-    const p = state.products[e.ref];
-    CHAT.prodDraft = p ? {name:p.name, items:p.items.slice()} : {name:'', items:[{}]};
-  }
-}
-
-function chatStartEdit(index){
-  const e = CHAT.log[index];
-  if(!e || !e.step || !canEditStep(e.step)) return;
-  CHAT.editing = {index, step:e.step, ref:e.ref, returnStep: CHAT.step, saved: chatSaveEditContext()};
-  CHAT.confirmClear = false;
-  chatPrepareEditContext(e);
-  CHAT.step = e.step;
-  rerenderChat();
-}
-
-/** 고치다 말고 그만두기 — 값도 대화 기록도 건드리지 않고 하던 자리로. */
-function chatCancelEdit(){
-  if(!CHAT.editing) return;
-  const back = CHAT.editing.returnStep;
-  chatRestoreEditContext();
-  CHAT.editing = null;
-  CHAT.step = back;
-  rerenderChat();
-}
-
-/** 지금 고치는 중인 단계인지 (위젯에 지금 값을 미리 채워 넣을 때 씁니다) */
-function editingStep(step){
-  return CHAT.editing && CHAT.editing.step === step ? CHAT.editing : null;
-}
-
-/** 고치는 중인 항목의 지금 값 — 처음 답할 때는 빈 칸 그대로입니다. */
-function editValueOf(step){
-  const ed = editingStep(step);
-  if(!ed) return '';
-  if(step === 'prodName') return (state.products[ed.ref] || {}).name || '';
-  if(step === 'medName')  return (state.meds[ed.ref] || {}).name || '';
-  if(step === 'medDesc')  return (state.meds[ed.ref] || {}).desc || '';
-  return '';
-}
-
-/** '있어요 → 없어요'처럼 답을 되돌렸을 때, 그 답에 딸려 있던 값과 말풍선을
-    함께 걷어냅니다. 답은 '없어요'인데 아래에 그때 적은 수치가 그대로 남아
-    있으면 어느 쪽이 맞는지 알 수 없기 때문입니다. */
-function chatDropAnswers(steps, refs){
-  for(let i = CHAT.log.length - 1; i >= 0; i--){
-    const m = CHAT.log[i];
-    if(m.role !== 'user' || !steps.includes(m.step)) continue;
-    if(refs && !refs.includes(m.ref)) continue;
-    const from = (i > 0 && CHAT.log[i - 1].role === 'bot' && !CHAT.log[i - 1].confirm) ? i - 1 : i;
-    const to   = (CHAT.log[i + 1] && CHAT.log[i + 1].confirm) ? i + 1 : i;
-    CHAT.log.splice(from, to - from + 1);
-    i = from;
-  }
-}
-
-/** 검진 그룹 하나에 딸린 값들을 지웁니다. */
-function clearExamGroup(groupName){
-  const g = EXAM.find(x => x.group === groupName);
-  if(!g) return;
-  g.items.forEach(it => it.inputs.forEach(inp => { delete state.exam[inp.key]; }));
 }
 
 /* ---- 답변 처리 ------------------------------------------------------------
@@ -3203,7 +3297,7 @@ function chatSubmitFreeText(){
       if(/없|모름|모르겠|건너뛰/.test(raw)){
         CHAT.tempSelection = [];
         el.value = '';
-        chatSubmitChipMulti(raw);
+        chatSubmitChipMulti();
         return;
       }
       chatFlagFreeText(`해당하는 항목을 적어 주세요 (예: ${options[0]})`);
@@ -3211,7 +3305,7 @@ function chatSubmitFreeText(){
     }
     CHAT.tempSelection = [...new Set([...CHAT.tempSelection, ...matched])];
     el.value = '';
-    chatSubmitChipMulti(raw);
+    chatSubmitChipMulti();
     return;
   }
   if(step === 'summary'){
@@ -3230,7 +3324,7 @@ function chatSubmitText(){
   const el = document.getElementById('chatTextInput');
   const val = el ? el.value.trim() : '';
   const botText = chatBubbleText(step);
-  let userText, confirmText, ref;
+  let userText, confirmText;
   if(step === 'name'){
     state.name = val;
     userText = val || '(건너뜀)';
@@ -3247,49 +3341,36 @@ function chatSubmitText(){
     userText = val || '(건너뜀)';
     confirmText = val ? `검진일을 "${val}"(으)로 기록했어요.` : '검진일은 남기지 않고 넘어갈게요.';
   }
-  /* 이름을 고치는 중이면 이미 등록해 둔 제품·약의 이름을 그 자리에서 바꿉니다.
-     (평소처럼 draft 를 만들어 새로 밀어 넣으면 같은 제품이 두 개가 됩니다) */
   else if(step === 'prodName'){
     if(!val){ chatFlagRequired(); return; }
-    const ed = editingStep('prodName');
-    if(ed && state.products[ed.ref]) state.products[ed.ref].name = val;
-    else CHAT.prodDraft = {name: val, items: [{}]};
+    CHAT.prodDraft = {name: val, items: [{}]};
     userText = val;
-    ref = ed ? ed.ref : state.products.length;
-    confirmText = ed
-      ? `제품 이름을 "${val}"(으)로 고쳤어요.`
-      : `"${val}" 제품으로 등록할게요. 이제 성분을 여쭤볼게요.`;
+    confirmText = `"${val}" 제품으로 등록할게요. 이제 성분을 여쭤볼게요.`;
   }
   else if(step === 'medName'){
     if(!val){ chatFlagRequired(); return; }
-    const ed = editingStep('medName');
-    if(ed && state.meds[ed.ref]) state.meds[ed.ref].name = val;
-    else CHAT.medDraft = {name: val, desc: ''};
+    CHAT.medDraft = {name: val, desc: ''};
     userText = val;
-    ref = ed ? ed.ref : state.meds.length;
-    confirmText = ed ? `약 이름을 "${val}"(으)로 고쳤어요.` : `"${val}" 약으로 등록할게요.`;
+    confirmText = `"${val}" 약으로 등록할게요.`;
   }
   else if(step === 'medDesc'){
-    const ed = editingStep('medDesc');
-    const med = ed ? state.meds[ed.ref] : CHAT.medDraft;
-    if(!med) return;
-    const medName = med.name;
-    med.desc = val;
-    if(!ed){ state.meds.push(CHAT.medDraft); CHAT.medDraft = null; }
+    const medName = CHAT.medDraft.name;
+    CHAT.medDraft.desc = val;
+    state.meds.push(CHAT.medDraft);
+    CHAT.medDraft = null;
     userText = val || '(건너뜀)';
-    ref = ed ? ed.ref : state.meds.length - 1;
     confirmText = val
       ? `"${medName}" 복용법을 "${val}"(으)로 기록했어요.`
       : `"${medName}" 약을 복용법 메모 없이 등록했어요.`;
   }
   else return;
-  chatAdvance(step, botText, userText, confirmText, ref);
+  chatAdvance(step, botText, userText, confirmText);
 }
 
 function chatSubmitSkip(){
   const step = CHAT.step;
   const botText = chatBubbleText(step);
-  let confirmText = '', ref;
+  let confirmText = '';
   if(step === 'name'){
     state.name = '';
     confirmText = '이름은 남기지 않고 진행할게요.';
@@ -3299,16 +3380,13 @@ function chatSubmitSkip(){
     confirmText = '검진일은 남기지 않고 넘어갈게요.';
   }
   else if(step === 'medDesc'){
-    const ed = editingStep('medDesc');
-    const med = ed ? state.meds[ed.ref] : CHAT.medDraft;
-    if(!med) return;
-    const medName = med.name;
-    med.desc = '';
-    if(!ed){ state.meds.push(CHAT.medDraft); CHAT.medDraft = null; }
-    ref = ed ? ed.ref : state.meds.length - 1;
+    const medName = CHAT.medDraft.name;
+    CHAT.medDraft.desc = '';
+    state.meds.push(CHAT.medDraft);
+    CHAT.medDraft = null;
     confirmText = `"${medName}" 약을 복용법 메모 없이 등록했어요.`;
   }
-  chatAdvance(step, botText, '(건너뜀)', confirmText, ref);
+  chatAdvance(step, botText, '(건너뜀)', confirmText);
 }
 
 /** logText 를 따로 넘기면 그 문구를 대화 로그에 남깁니다 — 문장으로 답했을
@@ -3335,29 +3413,17 @@ function chatSubmitYesNo(yes, logText){
       ? '식사에서 드시는 영양성분도 평균 추정치로 함께 계산할게요.'
       : '식사 추정치는 반영하지 않고 넘어갈게요.';
   }
-  /* '있어요'를 '없어요'로 고친 경우에는, 그때 적어 둔 값과 그 질문에 딸린
-     말풍선까지 함께 걷어냅니다 — 답은 '없어요'인데 아래에 수치가 그대로
-     남아 있으면 어느 쪽이 맞는 값인지 알 수 없기 때문입니다. */
   else if(step === 'examAsk'){
     CHAT.wantsExam = yes;
-    const undo = editingStep('examAsk') && !yes;
-    if(undo){ state.exam = {}; CHAT.examQueue = []; chatDropAnswers(EDIT_SUBFLOW.examAsk); }
-    confirmText = yes ? '건강검진 결과를 몇 가지 여쭤볼게요.'
-                      : (undo ? '적어 주셨던 검진 결과는 지우고, 검진 결과 없이 진행할게요.' : '건강검진 결과 없이 진행할게요.');
+    confirmText = yes ? '건강검진 결과를 몇 가지 여쭤볼게요.' : '건강검진 결과 없이 진행할게요.';
   }
   else if(step === 'prodAsk'){
     CHAT.wantsProd = yes;
-    const undo = editingStep('prodAsk') && !yes;
-    if(undo){ state.products = []; CHAT.prodDraft = null; chatDropAnswers(EDIT_SUBFLOW.prodAsk); }
-    confirmText = yes ? '지금 드시는 영양제를 등록할게요.'
-                      : (undo ? '등록해 두셨던 영양제는 지우고 넘어갈게요.' : '영양제는 없는 것으로 하고 넘어갈게요.');
+    confirmText = yes ? '지금 드시는 영양제를 등록할게요.' : '영양제는 없는 것으로 하고 넘어갈게요.';
   }
   else if(step === 'medAsk'){
     CHAT.wantsMed = yes;
-    const undo = editingStep('medAsk') && !yes;
-    if(undo){ state.meds = []; CHAT.medDraft = null; chatDropAnswers(EDIT_SUBFLOW.medAsk); }
-    confirmText = yes ? '복용 중인 약을 등록할게요.'
-                      : (undo ? '등록해 두셨던 약은 지우고 넘어갈게요.' : '복용 중인 약은 없는 것으로 할게요.');
+    confirmText = yes ? '복용 중인 약을 등록할게요.' : '복용 중인 약은 없는 것으로 할게요.';
   }
   else if(step === 'prodMore'){
     CHAT.prodMoreYes = yes;
@@ -3382,34 +3448,14 @@ function chatToggleChipNone(){
   rerenderChat();
 }
 
-function chatSubmitChipMulti(logText){
+function chatSubmitChipMulti(){
   const step = CHAT.step;
   const botText = chatBubbleText(step);
   const picked = CHAT.tempSelection.slice();
   let confirmText;
   if(step === 'examGroups'){
-    if(CHAT.editing){
-      /* 항목을 고치는 중이면, 새로 고른 것만 물어봅니다 — 이미 수치를 적어
-         둔 항목까지 전부 다시 물어보면 고치는 게 더 번거로워집니다.
-         빼신 항목은 그때 적었던 수치와 말풍선을 함께 걷어냅니다. */
-      const had = deriveExamGroupsFromState();
-      const removed = had.filter(g => !picked.includes(g));
-      removed.forEach(clearExamGroup);
-      if(removed.length) chatDropAnswers(['examGroupDetail'], removed);
-      CHAT.examQueue = picked.filter(g => !had.includes(g));
-      confirmText = CHAT.examQueue.length
-        ? `${CHAT.examQueue.join(', ')} 결과를 이어서 여쭤볼게요.`
-        : (removed.length ? `${removed.join(', ')} 결과는 지웠어요.` : '고른 항목은 그대로예요.');
-    } else {
-      /* 사진에서 이미 채워진 항목은 큐에서 빼 둡니다 — 방금 읽어 들인 값을
-         처음부터 다시 물어보면 사진을 올린 의미가 없습니다.
-         (고치고 싶으면 그 말풍선의 '수정'을 누르면 됩니다) */
-      CHAT.examQueue = picked.filter(g => !CHAT.importedGroups.includes(g));
-      confirmText = CHAT.examQueue.length
-        ? `${CHAT.examQueue.join(', ')} 결과를 순서대로 여쭤볼게요.`
-        : (CHAT.importedGroups.length ? '검진표에서 읽은 값으로 충분해요. 다음으로 넘어갈게요.'
-                                      : '검진 결과 항목은 넘어갈게요.');
-    }
+    CHAT.examQueue = picked;
+    confirmText = picked.length ? `${picked.join(', ')} 결과를 순서대로 여쭤볼게요.` : '검진 결과 항목은 넘어갈게요.';
   }
   else if(step === 'chronic'){
     state.chronic = picked;
@@ -3417,7 +3463,7 @@ function chatSubmitChipMulti(logText){
   }
   CHAT.tempSelection = [];
   CHAT.tempSeededFor = null;   // 다음에 이 단계에 다시 오면(재검토) 새로 채워 넣어야 하므로
-  chatAdvance(step, botText, logText != null ? logText : (picked.length ? picked.join(', ') : '없음'), confirmText);
+  chatAdvance(step, botText, picked.length ? picked.join(', ') : '없음', confirmText);
 }
 
 /** 방금 답한 검진 그룹에서 실제로 어떤 값이 채워졌는지, 항목별 표시용
@@ -3436,40 +3482,17 @@ function chatExamGroupConfirmText(groupName){
     : `${groupName} 항목은 입력하신 값이 없어서 비워둘게요.`;
 }
 
-/** 사용자가 칸에 채워 넣은 값을 그대로 한 줄로 옮겨 적습니다 — 문장으로
-    적지 않고 칸을 직접 채운 경우에도, 대화 기록에 '무엇을 넣었는지'가
-    그대로 남아야 나중에 되짚어 볼 수 있기 때문입니다. */
-function chatExamFieldsText(g){
-  if(!g) return '';
-  const parts = [];
-  g.items.forEach(it => it.inputs.forEach(inp => {
-    const el = document.querySelector(`#chatWidget [data-exam="${inp.key}"]`);
-    if(!el || el.value === '') return;
-    parts.push(`${inp.name || it.name} ${el.value}${inp.unit ? inp.unit : ''}`);
-  }));
-  return parts.join(', ');
-}
-
-/** rawText 를 넘기면(문장으로 답한 경우) 사용자가 쓴 문장을 그대로 대화에
-    남깁니다. 칸을 직접 채운 경우에는 채운 값들을 그대로 옮겨 적습니다. */
-function chatConfirmExamGroup(rawText){
+function chatConfirmExamGroup(){
   const step = CHAT.step;
-  const name = CHAT.examQueue[0];
-  const g = EXAM.find(x => x.group === name);
+  const g = CHAT.examQueue[0];
   const botText = chatBubbleText(step);
-  const typed = (rawText && rawText.trim()) || chatExamFieldsText(g);
-  /* 비운 칸은 값에서도 지웁니다 — 고치는 중에 잘못 넣은 값을 지울 수
-     있어야 하기 때문입니다(처음 입력할 때는 어차피 없던 값이라 같습니다). */
-  $$('#chatWidget [data-exam]').forEach(el => {
-    if(el.value !== '') state.exam[el.dataset.exam] = el.value;
-    else delete state.exam[el.dataset.exam];
-  });
-  const confirmText = chatExamGroupConfirmText(name);
+  $$('#chatWidget [data-exam]').forEach(el => { if(el.value !== '') state.exam[el.dataset.exam] = el.value; });
+  const confirmText = chatExamGroupConfirmText(g);
   CHAT.examQueue.shift();
-  chatAdvance(step, botText, typed || `${name} 결과 없음`, confirmText, name);
+  chatAdvance(step, botText, `${g} 입력 완료`, confirmText);
 }
 
-function chatConfirmProduct(rawText){
+function chatConfirmProduct(){
   const step = CHAT.step;
   const botText = chatBubbleText(step);
   const prodName = CHAT.prodDraft ? CHAT.prodDraft.name : '';
@@ -3479,19 +3502,13 @@ function chatConfirmProduct(rawText){
     unit  : r.querySelector('[data-iunit]').value,
   })).filter(i => i.name);
   CHAT.prodDraft.items = items;
-  /* 성분을 고치는 중이면 원래 자리의 제품을 바꿔 끼웁니다(그냥 밀어 넣으면
-     같은 제품이 하나 더 생깁니다). */
-  const ed = editingStep('prodIngredients');
-  let ref;
-  if(ed && state.products[ed.ref]){ state.products[ed.ref] = CHAT.prodDraft; ref = ed.ref; }
-  else { state.products.push(CHAT.prodDraft); ref = state.products.length - 1; }
+  state.products.push(CHAT.prodDraft);
   CHAT.prodDraft = null;
   const parts = items.map(i => `${i.name} ${i.amount}${i.unit}`.trim());
   const confirmText = parts.length
     ? `"${prodName}"에 ${parts.join(', ')}(으)로 기록했어요.`
     : `"${prodName}"은 성분 없이 등록했어요.`;
-  const typed = (rawText && rawText.trim()) || parts.join(', ');
-  chatAdvance(step, botText, typed || '성분 없음', confirmText, ref);
+  chatAdvance(step, botText, `${items.length}개 성분 등록`, confirmText);
 }
 
 /** '결과 보기' — 폼의 #go-report 와 완전히 같은 일을 합니다. */
@@ -3535,17 +3552,14 @@ const state = {
 /** 화면에만 있는 값 = 서버로 보내지 않는 것 */
 const UI = {
   view   : 'loading',   // loading · input · analyzing · report · history · error
+  tab    : 'rda',       // 리포트의 '권장 대비 / 상한 대비' 탭
   sample : false,       // 샘플 리포트를 보고 있는지 (로그인 필수 버전에서는 항상 false)
-  deleteAsk  : null,    // 지난 리포트에서 '삭제'를 눌러 확인을 기다리는 리포트 id
-  deleteError: null,    // 방금 지우기에 실패한 이유
   report : null,        // 서버가 준 결과
   error  : null,
   retryAction: null,    // 오류 화면의 '다시 시도'가 부를 함수. 매번 상황에 맞게 지정합니다.
   pendingAfterLogin: null,  // 로그인 모달이 닫힌 뒤 이어서 할 일 (예: 끊겼던 분석 재시도)
   loadingMessage: '',
   historyList: null,
-  confirmClear: false,  // 폼 화면에서 '전체 초기화'를 눌러 확인을 기다리는 중인지.
-                        // (대화형 쪽은 CHAT.confirmClear 가 따로 들고 있습니다)
   inputMode: 'chat',    // 'chat' | 'form' — 입력 화면을 대화형으로 볼지 폼으로 볼지.
                          // 로그인 직후에는 대화형이 기본값이고, 사용자가 화면 위 토글로
                          // 언제든 자유롭게 바꿀 수 있습니다. 둘 다 같은 state 를 채웁니다.
@@ -3574,47 +3588,6 @@ const AUTH = {
 };
 
 /* =========================================================================
-   [블록 -6A] 세션 저장소 — 로그인한 사용자를 브라우저에도 한 벌 둡니다
-   -------------------------------------------------------------------------
-   진짜 세션은 서버가 쿠키(myherb_sid)로 들고 있습니다. 여기 담는 것은 그
-   사본입니다. 사본을 두는 이유는 하나뿐입니다 — 새로고침했을 때
-   GET /api/me 응답이 올 때까지 상단바가 비어 있다가 이름이 뒤늦게 나타나는
-   깜빡임을 없애기 위해서입니다.
-
-   ★ 그래서 이 값은 '표시용'입니다. 이 값이 있다고 해서 로그인된 것으로
-     치지 않습니다. 화면을 열 때 서버에 반드시 다시 물어보고(me), 서버가
-     아니라고 하면 이 사본을 지웁니다. 브라우저 저장소는 사용자가 직접
-     고칠 수 있으므로 권한의 근거로 쓰면 안 됩니다.
-
-   sessionStorage 는 탭 하나에만 살아 있고 탭을 닫으면 사라집니다.
-   시크릿 모드나 저장소가 막힌 환경에서는 접근 자체가 예외를 던지므로
-   전부 try 로 감쌌습니다 — 실패해도 화면은 그대로 동작합니다.
-   ========================================================================= */
-const SESSION_KEY = 'myherb.user';
-
-/** 로그인 성공·로그아웃 때마다 부릅니다. user 가 null 이면 지웁니다. */
-function saveSessionUser(user){
-  try {
-    if(user) sessionStorage.setItem(SESSION_KEY, JSON.stringify(user));
-    else     sessionStorage.removeItem(SESSION_KEY);
-  } catch(e){
-    console.warn('[session] 브라우저 저장소를 쓸 수 없습니다. 이름이 조금 늦게 뜰 뿐 동작에는 지장 없습니다.', e);
-  }
-}
-
-/** 저장해 둔 사본. 모양이 깨져 있으면 없는 것으로 봅니다. */
-function loadSessionUser(){
-  try {
-    const raw = sessionStorage.getItem(SESSION_KEY);
-    if(!raw) return null;
-    const u = JSON.parse(raw);
-    return (u && typeof u === 'object' && u.email) ? u : null;
-  } catch(e){
-    return null;
-  }
-}
-
-/* =========================================================================
    [블록 -9] 대화형 입력 상태 — 폼과 같은 state 를 채우는 또 하나의 방식
    -------------------------------------------------------------------------
    여기 담긴 값은 전부 '아직 진행 중인 대화'에 관한 것일 뿐입니다.
@@ -3631,41 +3604,10 @@ const CHAT = {
   examQueue: [],         // 고른 검진 그룹 중 아직 안 물어본 것들 (앞에서부터 하나씩 뺍니다)
   prodDraft: null,       // 지금 입력 중인 영양제 {name, items}
   medDraft : null,       // 지금 입력 중인 약 {name, desc}
-  examFile: null,        // 사용자가 고른 검진표 사진. 결과보기 때 함께 보냅니다.
-                         // (서버에 저장하지 않으므로 여기서만 들고 있습니다)
-  confirmClear: false,   // '전체 초기화' 버튼을 눌러서 확인을 기다리는 중인지 (대화형)
+  confirmClear: false,   // '전체 초기화' 버튼을 눌러서 확인을 기다리는 중인지
   tempSeededFor: null,   // 다중 선택 칩에 이미 있던 값을 한 번 채워 넣은 단계 이름
                           // (계속 다시 채우면 사용자가 일부러 다 지워도 되돌아가 버립니다)
-  editing: null,         // 이전 답변을 고치는 중일 때 {index, step, ref, returnStep, saved}
-
-  /* ---- 검진표 사진 판독 ---------------------------------------------------
-     ＋ 버튼으로 검진 결과지 사진을 올리면 서버가 읽어서 값을 채워 줍니다.
-     그렇게 이미 채워진 질문은 다시 묻지 않기 위해, 무엇이 채워졌는지를
-     여기에 기억해 둡니다. */
-  imgBusy: false,        // 판독 중인지 (버튼을 잠그고 '읽는 중' 표시)
-  imgError: null,        // 방금 판독이 실패한 이유 (사용자에게 그대로 보여 줍니다)
-  imported: null,        // 판독에 성공했으면 {source, count, at}
-  importedGroups: [],    // 사진에서 값이 채워진 검진 그룹 이름
-  known: [],             // 사진 덕분에 물어보지 않아도 되는 단계 이름들
 };
-
-/** 답을 바꾸면 새로 물어봐야 할 것이 생기는 질문과, 그때 딸려 오는 질문들.
-    여기 없는 질문(이름·나이·검진 수치 등)은 값 하나만 바뀌므로, 고치고 나면
-    곧바로 원래 보고 있던 자리로 돌아갑니다. */
-const EDIT_SUBFLOW = {
-  examAsk   : ['examGroups', 'examGroupDetail', 'examDate'],
-  examGroups: ['examGroupDetail'],
-  prodAsk   : ['prodName', 'prodIngredients', 'prodMore'],
-  medAsk    : ['medName', 'medDesc', 'medMore'],
-};
-
-/** '수정' 버튼을 붙일 답변들.
-    '더 등록하시겠어요?'(prodMore·medMore)는 값이 아니라 그때그때의 진행
-    선택일 뿐이라 뺐습니다. 영양제나 약을 더 넣고 싶으면 '영양제가
-    있으신가요?'(prodAsk) 답을 수정하면 그 부분만 다시 물어봅니다. */
-const EDITABLE_STEPS = ['name', 'age', 'sex', 'meal', 'examAsk', 'examGroups',
-  'examGroupDetail', 'examDate', 'chronic', 'prodAsk', 'prodName',
-  'prodIngredients', 'medAsk', 'medName', 'medDesc'];
 
 /** 새 리포트를 시작하거나 로그아웃할 때, 또는 '처음부터 다시 입력'을 눌렀을 때
     — 대화 진행 상태만 초기화합니다. state(실제 입력값)는 건드리지 않으므로,
@@ -3681,13 +3623,6 @@ function resetChat(){
   CHAT.medDraft = null;
   CHAT.confirmClear = false;
   CHAT.tempSeededFor = null;
-  CHAT.editing = null;
-  CHAT.imgBusy = false;
-  CHAT.imgError = null;
-  CHAT.examFile = null;
-  CHAT.imported = null;
-  CHAT.importedGroups = [];
-  CHAT.known = [];
 }
 
 /** 입력값을 전부 빈 값으로 되돌립니다. state 의 처음 모양과 똑같아야 합니다.
@@ -3837,9 +3772,7 @@ function refreshForm(){
   $('#sum-line').textContent = line;
   $('#sum-hint').textContent = hint;
   $('#go-report').disabled   = !ready;
-  /* 버튼 이름은 늘 '결과 보기' 입니다 — 대화형 화면과 같은 말을 씁니다.
-     (예전에는 영양제를 안 넣었을 때만 '식사 기준으로 확인하기' 로 바뀌어서,
-      같은 일을 하는 버튼이 화면마다 다른 이름으로 보였습니다) */
+  $('#go-report').textContent = (ready && !items) ? '식사 기준으로 확인하기' : '결과 보기';
 
   queueSave();
 }
@@ -3898,10 +3831,6 @@ function nav(method, view, url){
 
 const HASH_OF = {report:'#report', history:'#history', home:'#home'};
 function go(view, {push = true} = {}){
-  /* 화면을 옮기면 폼의 '정말 지울까요?' 는 없던 일이 됩니다 — 확인 카드만
-     남겨 둔 채 다른 화면에 갔다가 돌아왔을 때 그대로 떠 있으면, 무엇을
-     지우려던 참이었는지 모른 채 '네' 를 누르게 됩니다. */
-  UI.confirmClear = false;
   UI.view = view;
   if(push){
     const url = HASH_OF[view] || '#input';
@@ -3929,7 +3858,7 @@ function paintView(){
   if(v === 'loading')   { app().innerHTML = screenLoading(UI.loadingMessage); return; }
   if(v === 'analyzing') { app().innerHTML = screenAnalyzing(); startStepTicker(); return; }
   if(v === 'error')     { app().innerHTML = screenError(UI.error, UI.retryLabel); return; }
-  if(v === 'report')    { app().innerHTML = reportHtml(UI.report); window.scrollTo(0, 0); return; }
+  if(v === 'report')    { app().innerHTML = renderReport(UI.report); window.scrollTo(0, 0); return; }
   if(v === 'history')   { app().innerHTML = renderHistory(); window.scrollTo(0, 0); return; }
   if(v === 'home')      { app().innerHTML = screenHome(); window.scrollTo(0, 0); return; }
 
@@ -4068,25 +3997,17 @@ async function afterLogin(){
     console.warn('[draft] 로그인 직후 불러오기 실패.', e);
   }
   if(UI.pendingAfterLogin){
-    /* 세션이 끊겨서 다시 로그인한 경우입니다. 하던 일(대개 끊겼던 분석)을
-       그대로 이어서 합니다 — 여기서 메인 화면으로 보내 버리면 사용자가
-       방금 하던 작업을 잃습니다. */
     const fn = UI.pendingAfterLogin;
     UI.pendingAfterLogin = null;
     await fn();
   } else {
-    /* 평범하게 로그인·회원가입한 경우입니다. 메인 화면으로 보냅니다.
-       (입력 화면으로 곧장 던져 넣지 않는 이유 — 방금 로그인한 사람은
-        '지난 리포트 보기'로 가고 싶을 수도, 새로 입력하고 싶을 수도
-        있습니다. 메인 화면에 두 갈래가 다 있으므로 거기서 고르게 합니다.) */
-    go('home');
+    go('input', {push:false});
   }
 }
 
 async function showHistory(){
   UI.loadingMessage = '지난 리포트를 불러오는 중입니다.';
   UI.view = 'loading';
-  UI.deleteAsk = UI.deleteError = null;   // 목록을 새로 열 때는 확인 중이던 것도 없던 일로
   paint();
   try {
     const res = await API.listReports();
@@ -4097,27 +4018,6 @@ async function showHistory(){
     UI.retryLabel = '다시 불러오기';
     UI.retryAction = showHistory;
     UI.view = 'error';
-    paint();
-  }
-}
-
-/** 리포트 하나 지우기. 카드 안에서 '지우기'를 눌렀을 때만 여기까지 옵니다.
-    -------------------------------------------------------------------------
-    목록을 통째로 다시 불러오지 않고 화면에서 그 줄만 걷어냅니다 — 지운
-    직후에 목록이 깜빡이며 다시 그려지면, 방금 무엇을 지웠는지 눈으로
-    따라가기 어렵습니다. */
-async function deleteReport(id){
-  UI.deleteError = null;
-  try {
-    await API.deleteReport(id);
-    UI.historyList = (UI.historyList || []).filter(r => r.id !== id);
-  } catch(e){
-    /* 이미 지워진 것(404)이라면 화면에서도 없애는 게 맞습니다 —
-       목록에만 남아 있는 유령 줄을 그대로 두면 눌러도 아무 일이 없습니다. */
-    if(e.code === 'HTTP_404') UI.historyList = (UI.historyList || []).filter(r => r.id !== id);
-    else UI.deleteError = e.message || '잠시 후 다시 시도해 주세요.';
-  } finally {
-    UI.deleteAsk = null;
     paint();
   }
 }
@@ -4147,7 +4047,6 @@ function resetToGuest(){
   clearInputState();
   UI.report = null;
   UI.historyList = null;
-  UI.deleteAsk = UI.deleteError = null;
   UI.sample = false;
   UI.inputMode = 'chat';   // 다음 사람이 로그인했을 때도 대화형이 기본값입니다
   resetChat();
@@ -4165,16 +4064,19 @@ function startStepTicker(){
       lis[i].classList.remove('on'); lis[i].classList.add('done');
       i++; lis[i].classList.add('on');
     }
-  }, 7000);
+  }, 900);
 }
 
-/** 리포트를 접힘 상태를 지키며 다시 그립니다. */
+/** 리포트 안에서 탭이 바뀌었을 때 — 접힘 상태를 지키며 다시 그립니다. */
 function rerenderReport(){
   const open = {};
   $$('#app details[data-k]').forEach(d => open[d.dataset.k] = d.open);
+  const tab = $('#app .tabin:checked');
+  if(tab) UI.tab = tab.value;
   /* #app 을 통째로 innerHTML 로 다시 그리면 화면이 맨 위로 튀어 버립니다.
-     보고 있던 자리를 유지한 채 내용만 바뀌어야 하므로, 다시 그리기 전
-     스크롤 위치를 기억해 뒀다가 그대로 되돌려 놓습니다. */
+     '권장 대비/상한 대비' 탭은 지금 보고 있던 위치를 유지한 채 숫자만
+     바뀌는 게 자연스러우므로, 다시 그리기 전 스크롤 위치를 기억해 뒀다가
+     그대로 되돌려 놓습니다. */
   const scrollY = window.scrollY;
   app().innerHTML = renderReport(UI.report);
   $$('#app details[data-k]').forEach(d => {
@@ -4216,15 +4118,8 @@ document.addEventListener('input', e => {
   if(UI.view === 'input' && e.target.closest('#app')) refreshForm();
 });
 document.addEventListener('change', e => {
-  /* 검진표 사진을 고른 순간. 같은 파일을 다시 고를 수도 있어야 하므로
-     처리한 뒤 값을 비웁니다(안 비우면 change 가 다시 일어나지 않습니다). */
-  if(e.target.id === 'examImageInput'){
-    const file = e.target.files && e.target.files[0];
-    e.target.value = '';
-    handleExamImageFile(file);
-    return;
-  }
   if(UI.view !== 'input' || !e.target.closest('#app')) return;
+  if(e.target.classList.contains('tabin')) return;
   refreshForm();
 });
 
@@ -4295,7 +4190,6 @@ document.addEventListener('click', e => {
       try { await API.logout(); }
       catch(err){ console.warn('[logout] 실패했지만 화면은 로그아웃 상태로 되돌립니다.', err); }
       AUTH.user = null;
-      saveSessionUser(null);      /* 서버 호출이 실패했더라도 사본은 반드시 지웁니다 */
       resetToGuest();
       paintTopbar();
       go('home', {push:false});
@@ -4321,37 +4215,8 @@ document.addEventListener('click', e => {
     openReport(el.dataset.id);
     return;
   }
-  /* 지난 리포트 삭제 — 되돌릴 수 없으므로 카드 안에서 한 번 더 확인받습니다.
-     (브라우저 기본 confirm 창은 화면 밖에 떠서 무엇을 지우는 중인지
-      보이지 않으므로 쓰지 않습니다) */
-  if(act === 'ask-delete-report'){ e.preventDefault(); UI.deleteAsk = el.dataset.id; paint(); return; }
-  if(act === 'cancel-delete-report'){ e.preventDefault(); UI.deleteAsk = null; paint(); return; }
-  if(act === 'confirm-delete-report'){ e.preventDefault(); deleteReport(el.dataset.id); return; }
 
   if(UI.view !== 'input') return;
-
-  /* 검진표 사진 고르기 — 숨겨 둔 파일 입력칸을 대신 눌러 줍니다. */
-  if(act === 'pick-exam-image'){
-    e.preventDefault();
-    const input = document.getElementById('examImageInput');
-    if(input) input.click();
-    return;
-  }
-
-  /* 폼 화면의 '전체 초기화' — 대화형과 똑같이 한 번 더 확인받고 지웁니다.
-     지울 때는 입력값(state)과 대화 진행 상태를 함께 되돌립니다. 폼에서
-     지웠는데 대화로 돌아가면 예전 대화가 그대로 남아 있으면 안 됩니다. */
-  if(act === 'form-clear'){ e.preventDefault(); UI.confirmClear = true; paint(); return; }
-  if(act === 'form-clear-no'){ e.preventDefault(); UI.confirmClear = false; paint(); return; }
-  if(act === 'form-clear-yes'){
-    e.preventDefault();
-    UI.confirmClear = false;
-    clearInputState();
-    resetChat();
-    queueSave();
-    paint();
-    return;
-  }
 
   /* --- 대화형 입력 화면 전용 ---
      성분 추가·삭제(data-add-ing/data-del-ing)는 폼과 똑같은 마크업을
@@ -4360,8 +4225,6 @@ document.addEventListener('click', e => {
   if(act === 'chat-clear'){ e.preventDefault(); chatRequestClear(); return; }
   if(act === 'chat-clear-yes'){ e.preventDefault(); chatConfirmClear(); return; }
   if(act === 'chat-clear-no'){ e.preventDefault(); chatCancelClear(); return; }
-  if(act === 'chat-edit-cancel'){ e.preventDefault(); chatCancelEdit(); return; }
-  if(el.dataset.chatEdit !== undefined){ e.preventDefault(); chatStartEdit(Number(el.dataset.chatEdit)); return; }
   if(el.dataset.chatSkip !== undefined){ chatSubmitSkip(); return; }
   if(el.dataset.chatReply !== undefined){ chatSubmitReply(el.dataset.chatReply); return; }
   if(el.dataset.chatYn !== undefined){ chatSubmitYesNo(el.dataset.chatYn === 'yes'); return; }
@@ -4399,6 +4262,31 @@ document.addEventListener('click', e => {
   refreshForm();
 });
 
+/* 리포트의 탭(권장 대비 / 상한 대비)이 바뀌면 UI.tab 만 기억해 둡니다.
+   두 탭의 내용은 이미 한 번에 같이 그려져 있고 CSS(:checked 선택자)로
+   보이는 쪽만 바꾸는 구조라서, #app 을 통째로 다시 그릴 필요가 없습니다.
+   (예전에는 여기서 rerenderReport() 로 화면을 통째로 다시 그렸는데, 그러면
+   보고 있던 스크롤 위치가 맨 위로 튀었습니다.)
+
+   그런데 다시 그리기를 없애도 여전히 스크롤이 튀는 진짜 원인이 하나 더
+   있었습니다 — 탭 라벨이 가리키는 실제 <input class="tabin"> 은 화면에
+   보이지 않게(opacity:0) 숨겨 둔 채 문서 맨 위쪽(항상 같은 자리, 화면에
+   보이는 라벨의 실제 위치와는 다른 곳)에 놓여 있어서, 라벨을 눌러 그
+   입력칸에 포커스가 갈 때 브라우저가 "포커스된 요소를 보이게" 자동으로
+   그 위치로 스크롤해 버립니다. 그래서 라벨을 누른 시점(mousedown, 포커스
+   이동보다 먼저 일어남)의 스크롤 위치를 기억해 뒀다가, change 가 끝난
+   직후 그대로 되돌려 놓습니다. */
+let tabinScrollY = null;
+document.addEventListener('pointerdown', e => {
+  if(e.target.closest('label.lb-rda, label.lb-ul')) tabinScrollY = window.scrollY;
+}, true);
+
+document.addEventListener('change', e => {
+  if(UI.view !== 'report' || !e.target.classList.contains('tabin')) return;
+  UI.tab = e.target.value;
+  if(tabinScrollY != null){ window.scrollTo(0, tabinScrollY); tabinScrollY = null; }
+});
+
 /* 브라우저 뒤로가기 */
 window.addEventListener('popstate', () => {
   if(UI.view === 'report' || UI.view === 'error' || UI.view === 'history' || UI.view === 'home'){ UI.sample = false; go('input', {push:false}); }
@@ -4428,7 +4316,6 @@ document.addEventListener('submit', e => {
   const req = mode === 'signup' ? API.signup(name, email, pw) : API.login(email, pw);
   req.then(user => {
     AUTH.user = user;
-    saveSessionUser(user);        /* 서버 세션과 별개로, 화면이 바로 읽을 사본 */
     AUTH.busy = false;
     AUTH.name = ''; AUTH.email = ''; AUTH.pw = '';
     closeAuthGate();
@@ -4483,19 +4370,11 @@ window.addEventListener('beforeunload', e => {
 
     /* 로그인 여부 확인 — 이 서비스는 로그인해야만 쓸 수 있습니다.
        실패(LOGIN_REQUIRED 포함)해도 화면은 열려야 하므로, 로그인 안 됨으로
-       보고 계속 진행합니다.
-
-       순서가 둘입니다. 먼저 브라우저에 남아 있는 사본으로 상단바를 그려
-       두고(=이름이 즉시 보입니다), 그 다음 서버에 진짜인지 물어봅니다.
-       서버 대답이 우선이며, 아니라고 하면 사본도 함께 버립니다. */
-    AUTH.user = loadSessionUser();
-    if(AUTH.user) paintTopbar();
+       보고 계속 진행합니다. */
     try {
       AUTH.user = await API.me();
-      saveSessionUser(AUTH.user);
     } catch(e){
       AUTH.user = null;
-      saveSessionUser(null);
     }
     paintTopbar();
 
@@ -4521,3 +4400,6 @@ window.addEventListener('beforeunload', e => {
   }
 })();
 
+</script>
+</body>
+</html>

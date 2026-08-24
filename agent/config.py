@@ -30,3 +30,7 @@ LANGSMITH_ENDPOINT = _get("LANGSMITH_ENDPOINT")
 
 # Session
 SESSION_SECRET_KEY = _get("SESSION_SECRET_KEY")
+
+# compliance 리포트 산문(LLM) 게이트. 기본 "0"(OFF): 결정적 Jinja 렌더만.
+# "1"(ON)일 때만 LLM 설명 산문 경로 시도(숫자 안전 가드레일+폴백 포함).
+COMPLIANCE_LLM_PROSE = _get("COMPLIANCE_LLM_PROSE", "0")

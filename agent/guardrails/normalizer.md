@@ -11,3 +11,4 @@
 - `normalized_data.gender` ∈ {male, female}이고 `gender_defaulted`가 False. (성별은 기본값으로 채우면 안 됨)
 - `normalized_data.is_pii` 태그 존재. (Compliance 마스킹이 참조)
 - `target_nutrients`는 비어있지 않은 list[str].
+- OCR은 전사(item명/value/unit)만 수행하고 임상 status나 허구 값을 만들지 않는다; 실패 시 빈 추출.

@@ -36,7 +36,7 @@ Phase 2 (에이전틱 강화)
   T2.4 compliance 에이전틱 프롬프트 템플릿 렌더러  (T2.3 이후)
 
 Phase 3 (외부 연동)
-  T3.1 OCR 실연동 (Upstage) — 독립, 언제든
+  T3.1 OCR 실연동 (LLM 비전) — 독립, 언제든
 ```
 
 ---
@@ -170,49 +170,78 @@ tool 선택/순서/parallel_group만, arg 값은 결정적 — 이게 **의도�
 **테스트**: aggregator 출력이 canonical 모델 검증 통과, 무인용 guideline 배제
 (`aggregator.py:59-72` 규칙) assert.
 
-### T2.4 — compliance 에이전틱 프롬프트 템플릿 렌더러 (T2.3 이후) ★핵심
-**배경**: `compliance.py:_render_html`(40-94) 거대 f-string. 요구: **에이전틱 프롬프트
-템플릿**으로 설명형 리포트 생성. 참고 https://wikidocs.net/231233 (LangChain
-PromptTemplate). 단, **LLM 숫자 생성 금지** — 하이브리드로 불변식 보존.
-**설계(불변식 준수 하이브리드)**:
-- **숫자/표는 Python이 렌더**(report dict → 결정적 HTML 표: RI·coverage·products).
-- **설명 산문만 LLM**: PromptTemplate에 *이미 계산된 숫자를 컨텍스트로 주입*, LLM은
-  그 숫자를 **바꾸지 말고** 한국어 설명·주의사항만 작성. 숫자를 새로 만들지 않음.
-- **폴백**: API 키 없음/실패 → 현재 결정적 템플릿(문자열)로 렌더. 서비스 정직성 유지.
-**파일**: `nodes/compliance.py`, 신규 `prompts/report_template.py`(또는 `.md`),
-`guardrails/compliance.md`, `guardrails/checks.py`, `config.py`
+### T2.4 — compliance `_render_html`을 프롬프트 템플릿으로 (T2.3 이후) ★핵심
+**배경**: `compliance.py:_render_html`(40-94) 거대 f-string. 요구: **`_render_html`을
+LangChain 프롬프트 템플릿 기반으로 교체**해 설명형 리포트 HTML 생성.
+- 템플릿 포맷 참고: **https://wikidocs.net/231233** (LangChain `PromptTemplate` /
+  `ChatPromptTemplate`, `{변수}` 치환·partial 방식).
+- 리포트 **내용/데이터 스키마 근거**: `my_hub2/qa/out/after/case{1..4}.json` — 실제
+  최종 리포트 JSON 규격(meta·input·badges·exam{groups,rows,counts,overall}·
+  nutrients[{level,supp,meal,total,rda,ul,bar,gauge,note}]·recommend·summary).
+- **디자인/HTML 구조 근거**: `prompts/report_1.html` — 완성형 스타일 리포트
+  exemplar(섹션: hero, intake, card rc/sm, chat-card 등, `${...}` 보간 구조).
+
+**데이터 계약 주의(중요)**: 위 `case*.json` 스키마는 현재 코드의 `aggregated_report`
+(T2.3의 `AggregatedReport`)보다 훨씬 풍부하다. 렌더러 입력을 **case*.json 규격**에
+맞추려면 aggregator(T2.3)가 그 규격까지 자라야 함 — 이 간극은 T2.4에서 렌더러가
+소비하는 **입력 규격을 case*.json으로 명문화**하고, aggregator 확장은 후속(별도
+Task 또는 T2.3 확장)으로 남긴다. 지금 단계에선 현 `aggregated_report` 필드를
+case*.json 섹션에 매핑하는 어댑터로 시작해도 됨.
+
+**불변식(변경 불가)**: **LLM은 숫자를 생성하지 않는다.** 아래 하이브리드로 보존:
+- **숫자/수치 표·게이지·바 = Python(Jinja2, 이미 설치)이 결정적 렌더**. 값은 전부
+  report JSON(엔진 유래)에서 옴. LLM이 만들지 않음.
+- **설명 산문만 LLM**: `PromptTemplate`에 *이미 계산된 숫자를 읽기전용 컨텍스트로
+  주입* + `report_1.html`을 디자인 exemplar(few-shot)로 제시. LLM은 그 숫자를
+  **바꾸지 말고** 한국어 설명·요약·주의만 작성.
+- **숫자 안전 가드레일**: LLM 산출 텍스트의 숫자 토큰이 입력 숫자 집합의 **부분집합**
+  인지 검증(`_numbers_in`). 새 숫자 등장 시 LLM 산문 폐기, 결정적 렌더로 안전 강등
+  (파이프라인 하드블록 아님).
+- **기본 OFF**: `.env`에 실 OPENAI_API_KEY가 있어 테스트가 네트워크를 타면 안 됨.
+  `config.COMPLIANCE_LLM_PROSE`(기본 "0") 플래그로 게이트. OFF면 현행 결정적 렌더와
+  동일. ON일 때만 에이전틱 산문 경로(가드레일+폴백 포함) 시도.
+
+**파일**: `nodes/compliance.py`, 신규 `prompts/report_template.py`(Jinja HTML)
++ `prompts/report_prompt.py`(LangChain PromptTemplate 텍스트), `config.py`,
+`.env.example`, `guardrails/compliance.md`, (필요시)`guardrails/checks.py`
 **작업**:
-1. `_render_html`을 (a)결정적 숫자 블록 + (b)LangChain `PromptTemplate`/
-   `ChatPromptTemplate` 기반 설명 블록으로 분리. 템플릿 파일 외부화(`prompts/`).
-2. LLM 입력: 마스킹된 profile + 계산 결과(숫자). 지시: "제공 숫자 불변, 설명만".
-3. **가드레일 검증**(checks.py post-compliance): LLM 산출 텍스트의 숫자 토큰이 입력
-   숫자 집합의 부분집합인지 확인 — 새 숫자 등장 시 블록(`on_violation="block"`
-   이미 설정됨). 위반 시 결정적 폴백.
-4. `compliance.md`에 렌더 규칙·면책·PII 원칙 명문화(하네스 가드레일).
-**완료조건**: 리포트 설명이 LLM 산문으로 풍부해지되, 표시 숫자는 100% 엔진 유래.
-키 없으면 결정적 폴백 동작.
-**테스트**:
-- 폴백 경로(키 없음) 렌더 성공 assert.
-- **숫자 불변식**: 산출 HTML의 수치가 입력 report 수치 집합에 포함됨 assert
-  (LLM이 숫자 조작 시 실패). ★가장 중요한 테스트.
-**ponytail**: 표=Python, 산문=LLM. 전체를 LLM에 맡기지 말 것(숫자 위험). Jinja2
-이미 설치됨 — 결정적 블록은 Jinja, LLM 블록은 PromptTemplate.
+1. `_render_html`을 (a)Jinja2 결정적 HTML(숫자/표/게이지, `report_1.html` 구조 참고)
+   + (b)`PromptTemplate` 기반 설명 산문 블록으로 분리. 템플릿 외부화(`prompts/`).
+2. 렌더러 입력 규격을 `case*.json` 섹션 기준으로 문서화. 현 `aggregated_report`는
+   어댑터로 그 규격에 매핑.
+3. `_numbers_in` + 숫자 부분집합 검증 + 위반/실패/키없음 시 결정적 폴백.
+4. `config.COMPLIANCE_LLM_PROSE` 게이트(기본 OFF), `.env.example` 문서화.
+5. `compliance.md`에 렌더 규칙·면책·PII·숫자안전 원칙 명문화(하네스 가드레일).
+**완료조건**: `_render_html`이 프롬프트 템플릿 기반. 기본(OFF)은 현행과 동일 동작
+(테스트 결정적). ON이면 산문 풍부화 + 표시 숫자 100% 엔진 유래. 디자인은
+`report_1.html` 계열, 데이터는 `case*.json` 규격.
+**검증(신규 테스트 파일 없이)**: 기존 두 스위트 `ALL PASS`(기본 OFF 경로) + 수동
+1줄: `_numbers_in`이 주입된 가짜 숫자(예 `9999`)를 입력 집합 밖으로 탐지함 확인.
+**ponytail**: 표=Python(Jinja), 산문=LLM. 전체를 LLM에 맡기지 말 것(숫자 위험).
+`report_1.html` 통째 재현 말고 섹션 구조만 차용 — 226KB CSS 인라인 복사 금지.
 
 ---
 
 ## Phase 3 — 외부 연동
 
-### T3.1 — OCR 실연동 (Upstage Document AI)
-**배경**: `services/ocr.py`가 하드코딩 가짜 검사수치 반환 stub(TODO만). 실제 OCR 없음.
-**파일**: `services/ocr.py`, `config.py`, `.env(.example)`
+### T3.1 — OCR 실연동 (LLM 비전 OCR)
+**배경**: `services/ocr.py`가 하드코딩 가짜 검사수치를 반환하던 stub. 실제 OCR 없음.
+**파일**: `services/ocr.py`, `prompts/ocr_prompt.py`, `schemas/ocr.py`, `config.py`,
+`.env(.example)`
 **작업**:
-1. Upstage Document AI 클라이언트 연동. `UPSTAGE_API_KEY` config 추가.
-2. 파싱 결과 → 기존 `extracted_indicators` 스키마 매핑(단위 정규화 포함).
-3. **status 필드는 OCR이 넣지 않음** — T1.3와 정합. OCR은 값/단위만, 임상 flag는
-   `normalize_medical_data` 툴 소관.
-4. 폴백: 키 없음/실패 → 현 stub(명시적 라벨) 유지, 개발 편의.
-**완료조건**: 실이미지 → 실수치 추출. 키 없으면 stub.
-**테스트**: 매핑 함수(파싱 원시 → indicators 스키마) 단위 테스트. 실 API 호출은
+1. 기존 OpenAI 환경변수(`OPENAI_API_KEY/OPENAI_MODEL/OPENAI_BASE_URL`)로 비전 모델
+   호출. 별도 OCR 벤더/키 없음(Upstage 제거). 이미지를 base64 data URI로 인코딩해
+   `ChatOpenAI`(temperature=0)에 text+image_url 블록으로 전달.
+2. structured output(`OcrExtraction`, function_calling)으로 항목명·값·단위를 문자열
+   원문 그대로 추출 → 기존 `extracted_indicators` 스키마 매핑(중복명 last-wins).
+   프록시가 tool-calling을 거부하면 평문 JSON 재시도.
+3. **status 필드는 OCR이 넣지 않음** — T1.3와 정합. OCR은 전사(값/단위)만, 임상 flag는
+   `normalize_medical_data` 툴 소관. 숫자를 만들지 않고 이미지 원문을 읽을 뿐이라
+   TB-1("LLM은 숫자를 만들지 않는다")에 위배되지 않음.
+4. 폴백: 키 없음/이미지 없음/실패 → **빈 추출**(`{"raw_text": "",
+   "extracted_indicators": {}}`). status·허구 값 없음, 사유 로그 출력.
+**완료조건**: 실이미지 → 실수치 추출. 키/이미지 없거나 실패 시 빈 추출.
+**테스트**: 빈 폴백 스모크(키/이미지 없이 빈 dict 반환) + import 확인. 실 API 호출은
 목/스킵.
 **주의**: 실 API 키는 `.env`(이미 gitignore됨)만. 커밋 금지.
 
