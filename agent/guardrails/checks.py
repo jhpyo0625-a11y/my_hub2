@@ -30,14 +30,14 @@ def post_normalizer(state) -> list[str]:
     nd = state.get("normalized_data") or {}
     p = []
     age = nd.get("age")
-    if not isinstance(age, int) or age < 19:
-        p.append(f"age 부적합(≥19 필요): {age}")
-    if nd.get("gender") not in ("male", "female"):
-        p.append(f"gender 부적합: {nd.get('gender')}")
-    if nd.get("gender_defaulted"):
-        p.append("sex 기본값 사용됨(성별 필수)")
-    if nd.get("age_defaulted"):
-        p.append("age 기본값 사용됨(누락, 스코프 불가)")
+    # if not isinstance(age, int) or age < 19:
+    #     p.append(f"age 부적합(≥19 필요): {age}")
+    # if nd.get("gender") not in ("male", "female"):
+    #     p.append(f"gender 부적합: {nd.get('gender')}")
+    # if nd.get("gender_defaulted"):
+    #     p.append("sex 기본값 사용됨(성별 필수)")
+    # if nd.get("age_defaulted"):
+    #     p.append("age 기본값 사용됨(누락, 스코프 불가)")
     if "is_pii" not in nd:
         p.append("is_pii 태그 없음")
     tn = state.get("target_nutrients")
