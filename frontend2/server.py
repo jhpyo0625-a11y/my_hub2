@@ -38,9 +38,10 @@ from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from analyze import report_info, summary_line, to_report
+from exam import compute_exam
 from schema_bridge import (BLOCKED, FAIL, has_structured,
                            looks_like_internal_error, to_recommend_form,
-                           to_report_view, to_session_user, to_user_id)
+                           to_report_view, to_session_user, to_sex, to_user_id)
 from standards import nut_hints
 from vision import MAX_IMAGE_BYTES, read_exam_image, sniff_image
 
@@ -601,6 +602,90 @@ async def delete_report(report_id: str, request: Request):
 # 그대로** 받습니다 — 파일 하나뿐이라 경계 파싱이 필요 없고, 의존성
 # (python-multipart)도 늘지 않기 때문입니다.
 # =============================================================================
+# 성별에 따라 기준이 달라지는 항목. 성별을 모르는 채로 판정하면
+# exam.py 의 is_male() 이 거짓이 되어 **조용히 여성 기준**이 적용됩니다.
+# 허리둘레 88cm 는 남성이면 정상A 인데 성별 미상이면 경계로 나옵니다.
+# 그래서 성별을 모를 때는 이 세 항목의 판정을 붙이지 않습니다.
+SEX_DEPENDENT = {"waist", "hb", "ggt"}
+
+
+def judge_read_values(exam: dict, sex: str, age: str) -> dict:
+    """검진표에서 읽은 값에 판정 기준과 판정 결과를 붙입니다.
+
+    돌려주는 모양 —
+        {"rows": [{"key","name","value","ref","judge":{code,text,tone},
+                   "needSex": bool}],
+         "counts": {"A":n,"B":n,"D":n}, "overall": {...},
+         "sexUnknown": bool}
+
+    화면이 '내 수치 / 기준 / 판정' 세 칸을 그대로 그릴 수 있게 맞춘 것입니다.
+    """
+    if not exam:
+        return {"rows": [], "counts": {}, "overall": None,
+                "sexUnknown": not sex}
+
+    judged = compute_exam({"sex": sex, "age": age, "exam": exam})
+    rows = []
+    for r in judged.get("rows", []):
+        if r.get("value") in (None, "", "—"):
+            continue                       # 안 읽힌 항목은 보여 줄 게 없습니다
+        need_sex = (not sex) and r.get("key") in SEX_DEPENDENT
+        rows.append({
+            "key": r.get("key"),
+            "name": r.get("name"),
+            "value": r.get("value"),
+            "ref": r.get("ref"),
+            # 성별을 모르면 판정을 비워 둡니다. 틀린 판정을 보여 주는 것보다
+            # '아직 판정 못 함'이 낫습니다.
+            "judge": None if need_sex else r.get("judge"),
+            "needSex": need_sex,
+        })
+    return {
+        "rows": rows,
+        "counts": judged.get("counts") or {},
+        "overall": judged.get("overall"),
+        "sexUnknown": not sex,
+    }
+
+
+async def read_exam_via_agent(data: bytes, mime: str):
+    """검진표 판독을 분석 서버에 맡겨 봅니다. 수치를 못 받으면 None.
+
+    ※ 지금 /api/v1/normalize 는 정규화된 인적사항만 돌려주고 판독 결과
+      (ocr_result·target_nutrients)는 응답에 싣지 않습니다. 그래서 이 함수는
+      항상 None 을 돌려주고 화면이 직접 읽습니다. 분석 서버가 실어 주기
+      시작하면(schema/api_contract.md §9) 여기서 걸러져 위임됩니다.
+
+      이미지는 흘려보내기만 하고 저장하지 않습니다.
+    """
+    try:
+        files = {"file": ("exam", data, mime)}
+        async with httpx.AsyncClient(timeout=AGENT_TIMEOUT_RECOMMEND) as client:
+            res = await client.post(API_URL + "/api/v1/normalize", files=files)
+        body = res.json()
+    except Exception as e:                                    # noqa: BLE001
+        print(f"[exam-image] 분석 서버 판독 실패, 화면이 직접 읽습니다: {e}")
+        return None
+
+    payload = body.get("data") or {}
+    ocr = payload.get("ocr_result") or {}
+    values = ocr.get("exam") or ocr.get("extracted_indicators") or {}
+    if not values:
+        return None                       # 아직 수치를 안 주는 상태입니다
+
+    return {
+        "source": "agent",
+        "name": payload.get("name") or "",
+        "age": str(payload.get("age") or ""),
+        "sex": to_sex(payload.get("gender")),
+        "date": "",
+        "exam": values,
+        "chronic": payload.get("chronic") or [],
+        "groups": ocr.get("groups") or [],
+        "fields": ocr.get("fields") or [],
+    }
+
+
 @app.post("/api/exam-image")
 async def exam_image(request: Request):
     """검진표 사진에서 읽어 낸 입력값을 돌려줍니다.
@@ -630,7 +715,18 @@ async def exam_image(request: Request):
         raise HTTPException(status_code=400,
                             detail="이미지 파일만 올릴 수 있습니다. (PNG · JPG · GIF · WEBP · HEIC)")
 
-    return read_exam_image(data, mime)
+    # 판독은 분석 서버가 맡는 것이 맞습니다(화면은 그리는 쪽입니다).
+    # 그쪽이 아직 수치를 돌려주지 않으므로, 받아 보고 비어 있으면 화면이
+    # 직접 읽습니다. 분석 서버가 준비되는 날 이 코드는 그대로 두고
+    # 위쪽 가지로 넘어갑니다.
+    read = await read_exam_via_agent(data, mime) or read_exam_image(data, mime)
+
+    # 읽은 값을 판정 기준과 나란히 붙여 돌려줍니다. 수치만 보여 주면
+    # '148/88' 이 높은 건지 사용자가 알 수 없습니다.
+    sex = (request.query_params.get("sex") or "").strip()
+    age = (request.query_params.get("age") or "").strip()
+    read["judged"] = judge_read_values(read.get("exam") or {}, sex, age)
+    return read
 
 
 # =============================================================================

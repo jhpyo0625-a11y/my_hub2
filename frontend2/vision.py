@@ -287,7 +287,8 @@ def read_exam_image(data: bytes, mime: str) -> dict:
     돌려주는 모양 (화면이 이 필드들을 그대로 씁니다) —
 
         {
-          "source" : "claude" | "demo",     판독 방식. demo 면 화면이 '예시 판독' 표시
+          "source" : "claude" | "demo" | "unavailable",
+                                          판독 방식. demo 면 화면이 '예시 판독' 표시
           "name"   : "홍길동",              비어 있을 수 있습니다
           "age"    : "45",                  전부 문자열입니다
           "sex"    : "남성" | "여성" | "",
@@ -301,6 +302,14 @@ def read_exam_image(data: bytes, mime: str) -> dict:
     판독에 실패해도 예외를 던지지 않습니다 — 사진이 흐리다고 서비스가 막히면
     안 되기 때문입니다. 읽어 낸 것이 없으면 exam 이 빈 채로 돌아오고, 화면은
     "읽지 못했어요, 직접 알려 주시겠어요?" 로 이어서 물어봅니다.
+
+    ★ 견본 판독(demo)은 기본으로 꺼져 있습니다 ------------------------------
+    판독할 수단이 없을 때 예전에는 견본 검진표 넷 중 하나를 골라 돌려주었습니다.
+    그런데 그 값은 **다른 사람의 수치**이고, 화면은 그걸 그대로 받아 판정까지
+    해 버립니다. 1x1 픽셀 그림을 올려도 검진 20항목이 채워졌습니다.
+
+    건강 정보에서 '읽은 척'은 '못 읽었다'보다 위험합니다. 그래서 기본을
+    '못 읽음(unavailable)'으로 두고, 시연이 필요할 때만 DEMO_OCR=1 로 켭니다.
     """
     key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
     if key:
@@ -309,10 +318,16 @@ def read_exam_image(data: bytes, mime: str) -> dict:
             out["source"] = "claude"
             return out
         except (urllib.error.URLError, ValueError, KeyError, TimeoutError, OSError) as e:
-            # 모델 호출이 실패하면 서비스를 멈추는 대신 예시 판독으로 넘어갑니다.
-            # 화면에는 '예시 판독' 이라고 표시되므로 사용자가 오해하지 않습니다.
-            print(f"[vision] 실제 판독에 실패해 예시 판독으로 넘어갑니다: {e}")
+            # 모델 호출이 실패하면 서비스를 멈추는 대신 아래로 내려갑니다.
+            print(f"[vision] 실제 판독에 실패했습니다: {e}")
 
-    out = _clean(_read_demo(data))
-    out["source"] = "demo"
+    if os.environ.get("DEMO_OCR", "").strip() == "1":
+        out = _clean(_read_demo(data))
+        out["source"] = "demo"
+        return out
+
+    # 읽을 수단이 없습니다. 빈 결과를 돌려주면 화면이 "읽지 못했어요, 직접
+    # 알려 주시겠어요?" 로 이어 갑니다(이미 구현돼 있는 경로입니다).
+    out = _clean({})
+    out["source"] = "unavailable"
     return out

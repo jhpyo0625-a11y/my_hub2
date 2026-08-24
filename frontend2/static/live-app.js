@@ -682,7 +682,14 @@ const API = {
       합니다. 응답 모양은 vision.py 의 read_exam_image() 주석에 있습니다.
       사람이 읽는 모델을 거치므로 analyze 와 같은 60초를 기다립니다. */
   readExamImage(file){
-    return call('/api/exam-image', {method:'POST', raw:file, timeout:60000});
+    /* 성별·나이를 함께 보냅니다. 서버가 읽은 값에 판정 기준을 나란히
+       붙여 주는데, 허리둘레·혈색소·γ-GTP 는 남녀 기준이 달라서 성별을
+       모르면 판정을 못 붙입니다(그때는 판정 없이 수치와 기준만 옵니다). */
+    const q = new URLSearchParams();
+    if(state.sex) q.set('sex', state.sex);
+    if(state.age) q.set('age', state.age);
+    const qs = q.toString() ? ('?' + q.toString()) : '';
+    return call('/api/exam-image' + qs, {method:'POST', raw:file, timeout:60000});
   },
 };
 
@@ -2047,9 +2054,27 @@ function applyExamReading(r){
   const head = r.source === 'demo'
     ? '⚠ 예시 판독입니다(실제 사진을 읽은 결과가 아니에요). 검진표에서 이렇게 읽었다고 가정할게요.'
     : '검진표에서 이렇게 읽었어요.';
-  const lines = (r.fields || []).map(f => `· ${f.name} ${f.text}`);
+  /* 읽은 수치를 판정 기준과 나란히 보여 줍니다 — '148/88' 만 보여 주면
+     그게 높은 건지 사용자가 알 수 없습니다. 서버가 judged 로 붙여 줍니다.
+     성별을 아직 모르면 남녀 기준이 다른 항목(허리둘레·혈색소·γ-GTP)은
+     판정 없이 수치와 기준만 나옵니다. */
+  const jd = r.judged || {};
+  const lines = (jd.rows && jd.rows.length)
+    ? jd.rows.map(x => {
+        const verdict = x.judge ? `  ${x.judge.text}`
+                                : (x.needSex ? '  (성별을 알려 주시면 판정해 드려요)' : '');
+        return `· ${x.name} ${x.value}  (기준 ${x.ref})${verdict}`;
+      })
+    : (r.fields || []).map(f => `· ${f.name} ${f.text}`);
+
+  /* 기준을 벗어난 항목이 몇 개인지 한 줄로 먼저 알려 줍니다. */
+  const off = jd.counts || {};
+  const abnormal = (off.B || 0) + (off.D || 0);
+  const summary = abnormal
+    ? ` 읽은 항목 중 ${abnormal}개가 기준을 벗어났어요.`
+    : ((jd.rows && jd.rows.length) ? ' 읽은 항목은 모두 기준 안에 있어요.' : '');
   CHAT.log.push({role:'bot', text: keys.length
-    ? `${head}\n${lines.join('\n')}\n\n다르게 읽은 값이 있으면 아래 '수정'으로 고칠 수 있어요.`
+    ? `${head}${summary}\n${lines.join('\n')}\n\n다르게 읽은 값이 있으면 아래 '수정'으로 고칠 수 있어요.`
     : '사진에서 읽어낼 수 있는 검진값이 없었어요. 질문에 직접 답해 주시면 그대로 채워 드릴게요.'});
 
   /* 자동으로 채워진 답들도 대화에 남깁니다 — 그래야 '수정' 버튼이 붙어서

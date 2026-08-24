@@ -280,6 +280,9 @@ import json
 `recommend` 와 **같은 10필드**를 받습니다(§2.2 ⑤). 이미지 판독 전용이므로
 `file` 이 핵심입니다.
 
+※ 이 엔드포인트는 **출력 쪽에도 요청이 있습니다** — 판독 결과가 응답에
+실리지 않습니다. §9 참조.
+
 ---
 
 ## 3. Output 규격
@@ -815,3 +818,125 @@ http://localhost:3000/api/agent-status
 | 변환이 규격대로인가 | `frontend2/check_bridge.py` | **68/68 통과** |
 | 구버전 에이전트에서 화면이 그대로인가 | 3층 기동 후 실제 분석 | `fromAgent` 없음 → 기존 경로 |
 | 규격 적용 후 동작하는가 | 규격대로 응답하는 임시 서버로 대체 시험 | 입력 10/10 · 출력 14/14 · 구조화 렌더 |
+
+---
+
+## 9. 백엔드 작업 요청서 — 검진표 판독
+
+> 지시사항 3 관련. 화면 쪽은 **위임 배선까지 끝나 있습니다.**
+> 아래 요청 1이 적용되면 화면이 곧바로 분석 서버의 판독 결과를 씁니다.
+
+### 지금 어떻게 돌고 있나
+
+`POST /api/exam-image` 는 이렇게 동작합니다.
+
+```
+① 분석 서버 /api/v1/normalize 를 먼저 호출
+     ├─ 응답에 판독 수치가 있으면  →  그것을 사용        ← 요청 1 적용 후
+     └─ 없으면(지금)              →  화면이 직접 판독    ← 현재
+② 읽은 값에 판정 기준·판정 결과를 붙여 화면으로
+```
+
+실제로 호출은 이미 일어나고 있습니다(에이전트 로그에 `POST /api/v1/normalize`
+와 `[Node 1] Normalizer` 가 찍힙니다). 다만 응답에 수치가 없어 매번 ②로
+내려갑니다.
+
+---
+
+### 요청 1 — `normalize` 응답에 판독 결과를 실어 주세요 ★
+
+**파일**: `agent/server.py` 의 `normalize_checkup`
+**작업량**: **약 3줄**
+
+`input_normalization_node` 는 판독 결과를 `state["ocr_result"]` 와
+`state["target_nutrients"]` 에 담습니다. 그런데 반환은 `normalized_data` 만
+합니다 — **읽은 값이 응답 밖에 남습니다.**
+
+**지금**
+
+```python
+normalized_result = normalized_state.get(
+    "normalized_data",
+    normalized_state.get("user_input", {}))
+return success_response(data=normalized_result)
+```
+
+**요청**
+
+```python
+normalized_result = normalized_state.get(
+    "normalized_data",
+    normalized_state.get("user_input", {}))
+# 판독 결과를 함께 싣는다. 이게 없으면 화면이 읽은 값을 받을 수 없다.
+normalized_result["ocr_result"] = normalized_state.get("ocr_result", {})
+normalized_result["target_nutrients"] = normalized_state.get("target_nutrients", [])
+return success_response(data=normalized_result)
+```
+
+**화면이 기대하는 모양** — `ocr_result` 안에 아래 중 하나가 있으면 씁니다.
+
+```json
+"ocr_result": {
+  "exam": {"sbp": "148", "dbp": "88", "glu": "132", "tg": "210"},
+  "groups": ["고혈압", "당뇨병"],
+  "fields": [{"group": "고혈압", "name": "혈압", "text": "148/88"}]
+}
+```
+
+`exam` 은 §2.3 의 40개 키를 씁니다(값은 전부 문자열). `groups` 와 `fields` 는
+없어도 되고, 있으면 화면이 그대로 보여 줍니다.
+
+`extracted_indicators`(지금 stub 이 돌려주는 모양)도 받도록 해 두었으니
+과도기에는 그쪽으로 주셔도 됩니다.
+
+---
+
+### 요청 2 — OCR 실구현
+
+**파일**: `agent/services/ocr.py`
+**작업량**: 큼 · **T3.1 로 이미 계획돼 있습니다**
+
+현재 49줄 전부 TODO 이고 `image_bytes` 를 **길이만 출력하고 버립니다.**
+어떤 사진을 넣어도 고정 3지표(비타민D 12.3 / 칼슘 9.5 / 중성지방 180)가
+나옵니다.
+
+```python
+print(f"[OCR] 파일({filename}, {len(image_bytes)} bytes) 파싱 및 ...")
+parsed_medical_data = {"extracted_indicators": {
+    "Vitamin_D": {"value": 12.3, ...}, ...}}   # 입력과 무관한 고정값
+```
+
+**요청 1 과 순서는 무관합니다.** 요청 1만 먼저 적용하면 화면이 stub 값을
+받게 되는데, 그건 지금 화면이 자체 견본을 쓰는 것과 다르지 않으므로
+손해가 없습니다. 요청 2가 끝나면 그 자리에 진짜 수치가 들어갑니다.
+
+**참고**: 화면 쪽 `frontend2/vision.py` 에 프롬프트와 파싱·검증 코드가 있습니다
+(`_PROMPT`, `_clean`, 40개 키 화이트리스트). 옮겨 쓰실 수 있습니다.
+
+---
+
+### 화면 쪽에서 이미 처리해 둔 것
+
+| | 내용 |
+|---|---|
+| 위임 호출 | `/api/v1/normalize` 를 먼저 부르고, 수치가 없으면 폴백 |
+| 판정 부착 | 읽은 값에 **판정 기준과 판정 결과**를 붙여 화면에 내려보냄 |
+| 견본 차단 | 판독 수단이 없으면 가짜 값을 만들지 않고 `unavailable` 반환 |
+| 성별 미상 | 남녀 기준이 다른 항목(`waist`·`hb`·`ggt`)은 판정을 붙이지 않음 |
+
+**판정은 화면이 계산합니다.** 국가 건강검진 실시기준 [별표 4] 기준으로
+`frontend2/exam.py` 가 A/B/D/N 을 냅니다. 에이전트가 주는
+`lab_results[].flag`(`high`/`low`/`normal`)와는 다른 체계라 변환이 안 됩니다.
+당분간 이대로 두고, 나중에 백엔드로 옮기실 계획이 잡히면 그때 이관하면 됩니다.
+
+---
+
+### 우선순위
+
+| 순서 | 요청 | 작업량 | 적용 후 |
+|---|---|---|---|
+| 1 | `normalize` 응답에 `ocr_result` | **3줄** | 화면이 **분석 서버 판독 결과**를 사용 |
+| 2 | OCR 실구현 | 큼 (T3.1) | 그 결과가 **진짜 수치**가 됨 |
+
+**1번이 3줄입니다.** §8 요청 1(`compliance.py` 3줄)과 성격이 같습니다 —
+값은 이미 만들어져 있는데 응답에 안 실려 있습니다.
