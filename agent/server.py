@@ -15,6 +15,7 @@ from services import db_helper
 
 from guardrails.harness import GuardViolation
 from nodes.compliance import DISCLAIMER
+from normalizer import input_normalization_node
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -121,6 +122,95 @@ async def login(
         return fail_response("아이디 또는 비밀번호가 올바르지 않습니다.")
 
     return success_response({"user": {"id": user["id"], "name": user["name"]}})
+
+
+# ============================================================
+# 영양제 추천 및 검진표 정제 API
+# ============================================================
+
+@app.post(
+    "/api/v1/recommend",
+    summary="검진표 이미지 기반 개인 맞춤 영양 추천 생성",
+)
+async def recommend_nutrition(
+    file: Optional[UploadFile] = File(
+        None,
+        description="검진표 이미지 또는 PDF 파일",
+    ),
+    name: Optional[str] = Form(
+        None,
+        description="사용자 이름",
+    ),
+    birth_date: Optional[str] = Form(
+        None,
+        description="생년월일 (YYYY-MM-DD)",
+    ),
+    age: Optional[int] = Form(
+        None,
+        description="나이",
+    ),
+    gender: Optional[str] = Form(
+        None,
+        description="성별 (male/female)",
+    ),
+    weight_kg: Optional[float] = Form(
+        None,
+        description="체중 (kg)",
+    ),
+):
+    try:
+        image_bytes = None
+        filename = None
+
+        if file:
+            image_bytes = await file.read()
+            filename = file.filename
+
+        # 1. 전달받은 정보를 user_input 딕셔너리로 패킹
+        user_input = {
+            "name": name,
+            "birth_date": birth_date,
+            "age": age,
+            "gender": gender,
+            "weight_kg": weight_kg,
+            "image_bytes": image_bytes,
+            "filename": filename,
+            "current_supplements": [],
+        }
+
+        # 2. initial_state에 사용자 정보 및 이미지 데이터 저장
+        initial_state: State = {
+            "user_input": user_input,
+            "retry_count": 0,
+        }
+
+        # 3. input_normalization_node 에이전트 실행
+        # 노드의 동기/비동기 여부에 따라 처리
+        if asyncio.iscoroutinefunction(input_normalization_node):
+            normalized_state = await input_normalization_node(initial_state)
+        else:
+            normalized_state = await asyncio.to_thread(input_normalization_node, initial_state)
+
+        # 4. 에이전트 처리 결과 추출
+        normalized_result = normalized_state.get(
+            "normalized_data", 
+            normalized_state.get("user_input", {})
+        )
+
+        # 5. 공통 success_response 형식(JSON)으로 반환
+        return success_response(data=normalized_result)
+
+    # except GuardViolation as gv:
+    #     print(f"[BLOCKED] {gv.node}: {gv.problems}")
+    #     return {
+    #         "status": "blocked",
+    #         "message": "안전 검증에서 문제가 발견되어 리포트를 제공할 수 없습니다.",
+    #         "disclaimer": DISCLAIMER,
+    #     }
+
+    except Exception as e:
+        print(f"[recommend] 실패: {type(e).__name__}: {e}")
+        return fail_response("검진표 분석 처리 중 오류가 발생했습니다.")
 
 
 # ============================================================

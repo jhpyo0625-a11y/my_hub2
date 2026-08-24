@@ -597,8 +597,7 @@ def main():
     import uvicorn
     port = int(os.environ.get("PORT", "3000"))
     print(f"\n  MyHerb  →  http://localhost:{port}\n"
-          f"  API 문서   →  http://localhost:{port}/api/docs\n"
-          f"  로그인은 아무 이메일·비밀번호나 넣으면 그대로 통과합니다.\n")
+          f"  API 문서   →  http://localhost:{port}/api/docs\n")
     uvicorn.run(app, host="127.0.0.1", port=port, log_level="info")
 
 
