@@ -1897,6 +1897,12 @@ function serverMissedInput(m){
 }
 
 const reportHtml = m => {
+  /* 분석 서버가 구조화된 값(성분·상한·충족률)을 보내 주면 화면이 그것으로
+     직접 그립니다. 그러면 리포트가 위(서버 html)와 아래(보완 섹션)로
+     쪼개지지 않고 한 덩어리가 됩니다.
+     서버가 아직 html 만 보내는 동안에는 아래 기존 경로로 그대로 갑니다 —
+     그래서 서버를 먼저 고치든 화면을 먼저 고치든 화면이 깨지지 않습니다. */
+  if(m && m.fromAgent) return renderReport(m);
   if(!m || !m.html) return renderReport(m);
 
   const missed = serverMissedInput(m);

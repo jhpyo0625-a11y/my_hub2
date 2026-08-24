@@ -38,8 +38,9 @@ from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from analyze import report_info, summary_line, to_report
-from schema_bridge import (BLOCKED, FAIL, looks_like_internal_error,
-                           to_recommend_form, to_session_user, to_user_id)
+from schema_bridge import (BLOCKED, FAIL, has_structured,
+                           looks_like_internal_error, to_recommend_form,
+                           to_report_view, to_session_user, to_user_id)
 from standards import nut_hints
 from vision import MAX_IMAGE_BYTES, read_exam_image, sniff_image
 
@@ -289,6 +290,61 @@ async def bootstrap():
     return {"nutHints": nut_hints(), "unverified": UNVERIFIED}
 
 
+# 규격서(schema/api_contract.md) 가 정한 주고받을 필드.
+# 아래 agent_status 가 '지금 에이전트는 이 중 몇 개를 아는가'를 셉니다.
+CONTRACT_IN = ["name", "age", "gender", "weight_kg", "birth_date", "file",
+               "exam", "products", "meds", "chronic"]
+CONTRACT_OUT = ["html", "user_profile", "disclaimer", "partial_failure",
+                "compliance_checked", "health_indicators", "calculated_target",
+                "timing_guidance", "products", "ul_check", "coverage",
+                "lab_results", "guidelines", "failed_items"]
+
+
+@app.get("/api/agent-status")
+async def agent_status():
+    """분석 서버가 규격의 어디까지 왔는지 봅니다. 브라우저로 열어 보세요.
+
+    화면에는 아무것도 바꾸지 않습니다. 백엔드 작업이 병행되는 동안
+    '지금 몇 개가 연동됐나'를 매번 손으로 확인하지 않으려고 둔 창구입니다.
+    입력은 에이전트가 공개하는 OpenAPI 문서에서 읽고, 출력은 실제 응답에
+    들어 있는 키를 세므로(아래 analyze 가 기록) 선언과 실제가 갈릴 때도
+    드러납니다.
+    """
+    accepted, error = [], None
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            res = await client.get(API_URL + "/openapi.json")
+            spec = res.json()
+        body = spec["paths"]["/api/v1/recommend"]["post"]["requestBody"]
+        ref = body["content"]["multipart/form-data"]["schema"]["$ref"]
+        name = ref.rsplit("/", 1)[-1]
+        accepted = list(spec["components"]["schemas"][name]["properties"])
+    except Exception as e:                                    # noqa: BLE001
+        # 에이전트가 꺼져 있어도 이 창구 자체는 열려야 합니다.
+        error = f"{type(e).__name__}: {e}"
+
+    return {
+        "agentUrl": API_URL,
+        "error": error,
+        "input": {
+            "supported": [f for f in CONTRACT_IN if f in accepted],
+            "missing": [f for f in CONTRACT_IN if f not in accepted],
+            "count": f"{len([f for f in CONTRACT_IN if f in accepted])}/{len(CONTRACT_IN)}",
+        },
+        "output": {
+            "seen": sorted(LAST_AGENT_KEYS),
+            "missing": [f for f in CONTRACT_OUT if f not in LAST_AGENT_KEYS],
+            "count": f"{len(LAST_AGENT_KEYS & set(CONTRACT_OUT))}/{len(CONTRACT_OUT)}",
+            "note": "분석을 한 번 이상 돌려야 채워집니다.",
+        },
+    }
+
+
+# 마지막 분석 응답에 실제로 들어 있던 키. 선언(OpenAPI)이 아니라 실물이라,
+# '필드는 선언했는데 값이 안 온다' 같은 경우를 잡습니다.
+LAST_AGENT_KEYS: set = set()
+
+
 # =============================================================================
 # 2. 인증
 # -----------------------------------------------------------------------------
@@ -454,20 +510,31 @@ async def analyze(request: Request):
         file=upload,
     )
 
+    LAST_AGENT_KEYS.update(data.keys())      # /api/agent-status 가 읽습니다
+
     html = (data.get("html") or "").strip()
-    if not html:
+    structured = has_structured(data)
+    if not html and not structured:
         raise HTTPException(502, "분석 서버가 리포트를 만들지 못했습니다.")
 
-    # 화면에 보이는 내용은 위의 html 이 전부입니다. 그런데 '지난 리포트'
-    # 목록은 요약 한 줄·배지·최고 심각도를 리포트 구조에서 뽑아 쓰므로
-    # (list_reports 참고), html 만 저장하면 목록이 빈칸투성이가 됩니다.
-    # 그래서 목록에 쓸 뼈대는 여기서 그대로 만들어 두고, 화면이 실제로
-    # 그릴 html 만 얹습니다.
-    report = to_report(state)
-    report["html"] = html
-    if data.get("disclaimer"):
-        report["agentDisclaimer"] = data["disclaimer"]
-    report["partialFailure"] = bool(data.get("partial_failure"))
+    # 화면 자체 판정. 두 가지로 씁니다.
+    #   · '지난 리포트' 목록이 요약 한 줄·배지·최고 심각도를 리포트 구조에서
+    #     뽑아 쓰므로(list_reports 참고), 뼈대는 어느 경우든 있어야 합니다.
+    #   · 에이전트가 아직 주지 않는 칸(섭취 내역·약물 상호작용·검진 판정)을
+    #     메우는 데도 씁니다.
+    local = to_report(state)
+
+    if structured:
+        # 에이전트가 구조화된 값을 보내 주면 화면이 그것으로 직접 그립니다.
+        # (schema/api_contract.md §3.2 — compliance 가 통과시키기 시작하면
+        #  이 가지로 들어옵니다. 그전까지는 아래 else 로 지금과 똑같이 돕니다.)
+        report = to_report_view(data, state, local)
+    else:
+        report = local
+        report["html"] = html
+        if data.get("disclaimer"):
+            report["agentDisclaimer"] = data["disclaimer"]
+        report["partialFailure"] = bool(data.get("partial_failure"))
 
     entry = {
         "id": "r" + secrets.token_hex(8),
