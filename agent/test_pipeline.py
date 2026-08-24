@@ -8,6 +8,7 @@ import asyncio
 from nodes.reviewer import specialized_review_node, MAX_RETRIES
 from nodes.executor import executor_node, _batches
 from nodes.compliance import _mask_name, _mask_birth, legal_compliance_node
+from nodes.normalizer import input_normalization_node
 from nodes.planner import _deterministic_plan
 
 
@@ -97,10 +98,29 @@ async def test_compliance():
     print("  compliance OK")
 
 
+async def test_normalizer():
+    # image_bytes 없음 → OCR 스텁 경로(빈 indicators). PII는 원본 보존, 태깅만.
+    s = await input_normalization_node({
+        "user_input": {
+            "name": "홍길동",
+            "birth_date": "1990-01-01",
+            "age": 30,
+            "gender": "male",
+        }
+    })
+    nd = s["normalized_data"]
+    assert nd["name"] == "홍길동", nd          # 마스킹 금지(홍*동 아님)
+    assert nd["birth_date"] == "1990-01-01", nd
+    assert nd["is_pii"]["name"] is True, nd
+    assert nd["is_pii"]["birth_date"] is True, nd
+    print("  normalizer OK")
+
+
 async def main():
     await test_reviewer()
     await test_executor()
     await test_compliance()
+    await test_normalizer()
     print("ALL PASS")
 
 

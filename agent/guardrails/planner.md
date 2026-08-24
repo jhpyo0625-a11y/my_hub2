@@ -2,6 +2,11 @@
 
 계획 노드 계약. 존재하는 툴만, 의존 순서 준수.
 
+## 하드 규칙 (수치 안전 경계, TB-1)
+- LLM은 **tool_name·실행순서·parallel_group·재시도 전략·후속질문**만 결정한다.
+- LLM은 **dose/RI/UL 등 어떤 수치 arg도 절대 생성하지 않는다.** args 값은 오직 state 파생 결정값(deterministic)만 사용한다.
+- 이 경계는 `nodes/planner.py`의 `_repair_args`가 강제한다: LLM args는 `_contract_args` 결정값으로 전량 덮어쓰며, 수리 불가한(미지의) tool_name step은 LLM 수치 arg를 신뢰하지 않고 폐기한다.
+
 가용 tool_name (9개): resolve_nutrient_codes, normalize_medical_data, fill_missing_profile, calculate_dynamic_ri, search_products, check_nutrient_interactions, validate_ul_guardrail, compute_intake_coverage, search_evidence.
 
 ## pre

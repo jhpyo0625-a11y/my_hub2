@@ -31,3 +31,13 @@ class PlanStep(BaseModel):
 
 class ExecutionPlan(BaseModel):
     steps: list[PlanStep]
+
+
+class StepResult(BaseModel):
+    """executor_node가 방출하는 결과 dict의 공용 스키마 (성공/에러 공통)."""
+    step: int | None = None
+    task_name: str
+    tool_name: str
+    status: str
+    result: dict | None = None
+    error_message: str | None = None

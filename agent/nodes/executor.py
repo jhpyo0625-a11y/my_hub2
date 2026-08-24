@@ -1,6 +1,7 @@
 import asyncio
 
 from schemas.state import State
+from schemas.planner import PlanStep, StepResult
 from services.mcp_client import call_mcp_tool
 from services import db_helper
 
@@ -173,14 +174,13 @@ async def _run_step(step: dict) -> dict:
         except Exception as db_err:  # noqa: BLE001 - DB도 실패 시 결정적 stub
             result = _fallback(tool_name, args)
             print(f"    -> deterministic fallback 사용 (DB: {db_err})")
-    return {
-        "step": step["step"],
-        "task_name": step["task_name"],
-        "tool_name": tool_name,
-        "status": status,
-        "result": result,
-        "output": result,  # 하류 노드 호환용 별칭
-    }
+    return StepResult(
+        step=step["step"],
+        task_name=step["task_name"],
+        tool_name=tool_name,
+        status=status,
+        result=result,
+    ).model_dump()
 
 
 def _batches(plan: list[dict]) -> list[list[dict]]:
@@ -206,6 +206,9 @@ async def executor_node(state: State) -> State:
     )
 
     plan = state.get("execution_plan", [])
+    # 입력 공용 포맷 보증: 각 step을 PlanStep로 검증(실패 시 표면화). dict로 계속 작업.
+    for s in plan:
+        PlanStep.model_validate(s)
     results: list[dict] = []
     results_by_task: dict = {}
 
@@ -222,13 +225,12 @@ async def executor_node(state: State) -> State:
             )
             # gather 예외는 error 항목으로 정규화 (일부 실패해도 나머지 수집).
             batch_results = [
-                r if isinstance(r, dict) else {
-                    "step": None,
-                    "task_name": "unknown",
-                    "tool_name": "unknown",
-                    "status": "error",
-                    "error_message": str(r),
-                }
+                r if isinstance(r, dict) else StepResult(
+                    task_name="unknown",
+                    tool_name="unknown",
+                    status="error",
+                    error_message=str(r),
+                ).model_dump()
                 for r in batch_results
             ]
 

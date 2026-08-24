@@ -10,6 +10,7 @@ class State(TypedDict, total=False):
     ocr_result: Dict[str, Any]
 
     # Normalization (PII 원본 보존 + is_pii 태깅. 마스킹은 Compliance 단계에서만)
+    raw_lab_results: List[Dict[str, Any]]
     normalized_data: Dict[str, Any]
     target_nutrients: List[str]
 

@@ -3,14 +3,6 @@ from services.ocr import run_ocr_pipeline
 from schemas.models import NormalizedData
 
 
-# OCR 지표명 → 내부 nutrient_code 매핑(베스트 에포트).
-# ponytail: 최소 매핑만. 실제 코드 체계는 MCP 측 소관, 추가 지표는 여기 확장.
-_INDICATOR_TO_CODE = {
-    "Vitamin_D": "vitamin_d",
-    "Calcium": "calcium",
-    "Triglyceride": "epa_dha",
-}
-
 # 지표와 무관하게 항상 검토할 코어 영양소 (nutrient_codes 테이블 기준).
 _DEFAULT_TARGETS = ["vitamin_d", "calcium", "magnesium", "epa_dha"]
 
@@ -81,13 +73,8 @@ async def input_normalization_node(state: State) -> State:
     state["normalized_data"] = NormalizedData.model_validate(
         state["normalized_data"]).model_dump()
 
-    # 타깃 영양소: 이상 지표(deficient/warning) + 코어 셋.
-    targets = list(_DEFAULT_TARGETS)
-    for name, info in indicators.items():
-        if info.get("status") in ("warning", "deficient"):
-            code = _INDICATOR_TO_CODE.get(name)
-            if code and code not in targets:
-                targets.append(code)
-    state["target_nutrients"] = targets
+    # 타깃 영양소: 코어 셋만. 이상 지표(status) 해석은 정규화 계층의 책임이 아님 —
+    # 임상 판단은 하류(normalize_medical_data 툴 flag 기반)에서 수행. (task_new T1.3)
+    state["target_nutrients"] = list(_DEFAULT_TARGETS)
 
     return state

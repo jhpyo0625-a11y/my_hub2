@@ -189,20 +189,49 @@ class UlCheckResult(Base):
 # ===========================================================================
 # 리포트
 # ===========================================================================
+class Guideline(Base):
+    """근거 한 건. text 와 source(인용) 둘 다 필수 — 무인용 근거는 신뢰성상 금지.
+
+    aggregator 가 직접 조립(MCP search_evidence 또는 RAG 폴백)하므로,
+    executor 결과 pass-through 가 아니라 여기서 모양을 못박습니다.
+    """
+    text: str
+    source: str
+
+
 class AggregatedReport(Base):
-    """aggregator 노드의 출력."""
+    """★ 최종 리포트 JSON의 정본(canonical) 계약 — 소유자는 aggregator 노드.
+
+    통합 노드인 aggregator 가 사용자 대상 리포트 JSON의 **모양을 정의하고
+    검증**합니다(aggregator_node 말미의 model_validate). 하위 compliance
+    노드는 이 구조를 읽어 마스킹·렌더만 하며, 리포트 필드를 새로 만들지
+    않습니다. 필드를 추가/변경하려면 여기서부터 시작하십시오.
+
+    필드는 크게 두 종류입니다:
+    - aggregator 가 **직접 조립**: title, guidelines, failed_items.
+    - executor 결과를 **그대로 통과(pass-through)**: 나머지.
+      pass-through 필드는 dict/list 로 둡니다. post_aggregator 가드레일이
+      calculated_target·ul_check 를 executor 원본과 **완전 일치(==)** 로
+      검증하기 때문에, 내부 모델로 강제 변환하면 기본값이 주입되어 등식이
+      깨집니다. 내부 항목의 정본 모양은 아래 주석의 모델을 참조하십시오.
+    """
     title: str = "개인 맞춤형 정밀 영양 리포트"
+    # normalized_data 전체(NormalizedData). compliance 마스킹이 is_pii 로 참조.
     user_profile: dict[str, Any] = Field(default_factory=dict)
+    # ocr extracted_indicators: {지표명: {"status": Level, "value": ...}}
     health_indicators: dict[str, Any] = Field(default_factory=dict)
+    # calculate_dynamic_ri 전체 {"custom_ri": {영양소코드: NutrientTarget}}
     calculated_target: dict[str, Any] = Field(default_factory=dict)
+    # check_nutrient_interactions 전체 (InteractionResult 모양)
     timing_guidance: dict[str, Any] = Field(default_factory=dict)
     products: list[dict[str, Any]] = Field(default_factory=list)
+    # validate_ul_guardrail 전체 (UlCheckResult 모양)
     ul_check: dict[str, Any] = Field(default_factory=dict)
     failed_items: list[dict[str, Any]] = Field(default_factory=list)
-    guidelines: list[Any] = Field(default_factory=list)
-    # compute_intake_coverage 전체 결과 {"coverage":{...}}
+    guidelines: list[Guideline] = Field(default_factory=list)
+    # compute_intake_coverage 전체 {"coverage": {영양소코드: NutrientCoverage}}
     coverage: dict[str, Any] = Field(default_factory=dict)
-    # normalize_medical_data 전체 결과 {"results":[...]}
+    # normalize_medical_data 전체 {"results": [LabResult, ...]}
     lab_results: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -236,5 +265,5 @@ __all__ = [
     "UserInput", "NormalizedData", "ExamValues", "LabResult",
     "NutrientTarget", "NutrientCoverage",
     "UlViolation", "TimeSeparatedSchedule", "InteractionResult", "UlCheckResult",
-    "AggregatedReport", "FinalReport", "SessionUser",
+    "Guideline", "AggregatedReport", "FinalReport", "SessionUser",
 ]

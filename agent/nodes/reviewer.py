@@ -1,6 +1,5 @@
 from schemas.state import State
-
-MAX_RETRIES = 3
+from config import MAX_RETRIES
 
 
 async def specialized_review_node(state: State) -> State:

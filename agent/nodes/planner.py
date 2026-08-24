@@ -1,8 +1,48 @@
 import json
+from functools import lru_cache
+from pathlib import Path
 
 import config
 from schemas.state import State
-from schemas.planner import ExecutionPlan
+from schemas.planner import ExecutionPlan, PlanStep
+
+_SPECS_PATH = Path(__file__).resolve().parent.parent / "mcp" / "mcp_tool_specs.json"
+
+
+@lru_cache(maxsize=1)
+def _required_args_by_tool() -> dict[str, list[str]]:
+    """mcp_tool_specs.json을 1회 로드해 tool_name -> 필수 arg 이름 목록으로 노출.
+
+    각 tool의 arg 계약(필수 키 집합)의 단일 진실원천. 여기에 없는 tool
+    (resolve/fill/compute 등 specs 미기재)은 계약 검사 대상에서 제외된다.
+    """
+    data = json.loads(_SPECS_PATH.read_text(encoding="utf-8"))
+    return {
+        t["name"]: list(t.get("input", {}).get("required", []))
+        for t in data.get("tools", [])
+    }
+
+
+def _assert_contract(plan: list[dict]) -> list[dict]:
+    """각 step의 args가 specs.json의 필수 arg를 모두 담는지 검증.
+
+    specs에 계약이 있는 tool만 검사한다. 필수 arg 키가 누락되면 계약 위반이므로
+    조용히 통과시키지 않고 예외로 표면화한다(값은 None일 수 있으나 키는 존재해야 함).
+    """
+    required = _required_args_by_tool()
+    for step in plan:
+        tool = step.get("tool_name")
+        need = required.get(tool)
+        if not need:
+            continue
+        args = step.get("args") or {}
+        missing = [k for k in need if k not in args]
+        if missing:
+            raise ValueError(
+                f"contract violation: '{tool}' step missing required args "
+                f"{missing} (specs.json requires {need})"
+            )
+    return plan
 
 
 def _contract_args(
@@ -54,17 +94,29 @@ def _repair_args(
     names: list[str],
     raw_lab_results: list,
 ) -> list[dict]:
-    """LLM이 생성한 각 step의 args를 계약값으로 덮어쓴다(계약 위반 방지).
+    """수치 안전 경계 (TB-1): LLM args를 결정적 계약값으로 전량 교체한다.
 
-    LLM은 tool 선택/순서/parallel_group만 담당하고, args는 결정적 계약값을 쓴다.
+    핵심 불변식은 "LLM은 수치를 생성하지 않는다". LLM은 tool 선택/순서/
+    parallel_group만 담당하고 dose·RI·UL 등 args 값은 state 파생 결정값만 쓴다.
+    따라서 알려진 tool step은 무조건 `_contract_args` 결과로 args를 덮어쓴다.
+
+    미지/수리불가 tool_name(`_contract_args`가 None)은 계약 결정값을 만들 수 없다.
+    이때 LLM이 넣은 수치 arg를 그대로 두면 경계가 뚫리므로, 신뢰하지 않고
+    step 자체를 폐기한다(drop). 어차피 알려지지 않은 tool은 실행할 수 없고
+    post_planner가 거부하는 대상이므로 폐기가 가장 안전한 선택.
     """
+    repaired = []
     for step in plan:
         fixed = _contract_args(
             step.get("tool_name"), normalized, targets, names, raw_lab_results
         )
-        if fixed is not None:
-            step["args"] = fixed
-    return plan
+        if fixed is None:
+            # 미지 tool_name: LLM 수치 arg를 신뢰하지 않고 step 폐기.
+            print(f"  [Planner] 미지 tool_name step 폐기(수치 안전): {step.get('tool_name')}")
+            continue
+        step["args"] = fixed
+        repaired.append(step)
+    return repaired
 
 
 def _deterministic_plan(
@@ -85,7 +137,11 @@ def _deterministic_plan(
     weight = normalized.get("weight_kg")
     query = " ".join(targets) + " 영양소 권장 섭취 및 상호작용 근거"
 
-    return [
+    # PlanStep으로 검증(잘못된 tool_name은 여기서 실패)한 뒤 dict로 덤프.
+    # LLM 경로와 동일한 공통 포맷을 보장하는 단일 변환 지점.
+    steps = [
+        PlanStep(**s)
+        for s in [
         {
             "step": 1,
             "task_name": "resolve_nutrient_codes",
@@ -183,7 +239,9 @@ def _deterministic_plan(
             "description": "권장 섭취/상호작용 근거 문헌 검색",
             "parallel_group": 30,
         },
+        ]
     ]
+    return [s.model_dump() for s in steps]
 
 
 def _llm_plan(normalized: dict, targets: list[str], feedback: str | None):
@@ -259,9 +317,14 @@ async def planner_agent_node(state: State) -> State:
     raw_lab_results = state.get("raw_lab_results", [])
 
     llm_plan = _llm_plan(normalized, targets, feedback)
-    # LLM args는 계약을 어길 수 있으므로 결정적 계약값으로 수리. deterministic은 이미 정확.
+    # 수치 안전 경계(TB-1): LLM 경로는 반드시 _repair_args를 거친다. LLM은 수치 arg를
+    # 생성하지 않으며 여기서 args가 결정적 계약값으로 전량 교체된다(미지 tool은 폐기).
+    # deterministic 경로는 애초에 결정값이라 수리 불필요.
     plan = _repair_args(llm_plan, normalized, targets, names, raw_lab_results) if llm_plan \
         else _deterministic_plan(normalized, targets, names, raw_lab_results)
+
+    # specs.json 계약 검사: 두 경로 모두 필수 arg를 충족해야 함(위반 시 표면화).
+    _assert_contract(plan)
 
     state["execution_plan"] = plan
     return state
