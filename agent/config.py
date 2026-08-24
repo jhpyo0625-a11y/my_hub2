@@ -21,3 +21,6 @@ OPENAI_BASE_URL = _get("OPENAI_BASE_URL")
 DATABASE_URL = _get("DATABASE_URL")
 MCP_SERVER_URL = _get("MCP_SERVER_URL", "http://localhost:8080")
 MAX_RETRIES = int(_get("MAX_RETRIES", "3"))
+# compliance 리포트 산문(LLM) 게이트. 기본 "0"(OFF): 결정적 Jinja 렌더만.
+# "1"(ON)일 때만 LLM 설명 산문 경로 시도(숫자 안전 가드레일+폴백 포함).
+COMPLIANCE_LLM_PROSE = _get("COMPLIANCE_LLM_PROSE", "0")

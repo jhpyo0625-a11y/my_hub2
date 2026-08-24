@@ -1,12 +1,35 @@
-import html as html_lib
+import re
 
+import config
 from schemas.state import State
 from schemas.models import FinalReport
+from prompts.report_template import render_report
 
 DISCLAIMER = (
     "본 추천 리포트는 AI 분석에 기반한 참고용 영양 정보이며, "
     "의료법상 의사의 진단이나 처방을 대신할 수 없습니다."
 )
+
+_GENDER_KO = {"male": "남성", "female": "여성"}
+_COVERAGE_KO = {  # compute_intake_coverage status -> (라벨, tone)
+    "deficient": ("부족", "blue"),
+    "adequate": ("적정", "green"),
+    "excess": ("과잉", "orange"),
+}
+_LABFLAG_KO = {  # LabResult flag -> (라벨, tone)
+    "low": ("낮음", "blue"),
+    "normal": ("정상", "green"),
+    "high": ("높음", "orange"),
+}
+
+# 숫자 토큰: 정수/소수(1000, 1.2 등). 산문 숫자 안전 검증에 사용.
+_NUM_RE = re.compile(r"\d+(?:\.\d+)?")
+
+
+def _numbers_in(text: str) -> set[str]:
+    """텍스트의 숫자 토큰 집합. LLM 산문의 숫자가 엔진 유래 숫자의 부분집합인지
+    확인하는 데 쓴다(주입된 가짜 숫자 탐지)."""
+    return set(_NUM_RE.findall(text or ""))
 
 
 def _mask_name(name: str) -> str:
@@ -37,61 +60,141 @@ def _mask_profile(profile: dict) -> dict:
     return masked
 
 
-def _render_html(report: dict, profile: dict, failed: list) -> str:
-    esc = html_lib.escape
+def _build_context(report: dict, profile: dict, failed: list) -> dict:
+    """현 aggregated_report 필드를 리포트 템플릿(case*.json 계열) 섹션으로 매핑.
+
+    데이터 간극(중요): case*.json 의 exam.groups/badges/summary.chips/nutrients.bar·
+    gauge 는 현 파이프라인이 산출하지 않는다 → 조작하지 않고 생략한다. 여기서는
+    엔진이 실제로 내놓는 값만 채운다: 프로필, 권장(RI)+충족률, UL 검증, 복용시간,
+    검사수치, 제품, 근거.
+    """
     target = report.get("calculated_target", {}).get("custom_ri", {})
-    timing = report.get("timing_guidance", {})
-    schedule = timing.get("time_separated_schedule", {})
-    products = report.get("products", [])
-    guidelines = [g for g in report.get("guidelines", []) if g]
+    coverage = report.get("coverage", {}).get("coverage", {})
+    nutrients = []
+    for code, info in target.items():
+        cov = coverage.get(code, {}) or {}
+        label, tone = _COVERAGE_KO.get(cov.get("status"), ("", ""))
+        nutrients.append({
+            "name": code,
+            "value": info.get("value"),
+            "unit": info.get("unit", ""),
+            "pct": cov.get("pct"),
+            "status_label": label,
+            "status_tone": tone,
+        })
 
-    rows = "".join(
-        f"<tr><td>{esc(code)}</td><td>{esc(str(info.get('value')))} "
-        f"{esc(str(info.get('unit', '')))}</td></tr>"
-        for code, info in target.items()
-    ) or "<tr><td colspan='2'>산출된 목표치 없음</td></tr>"
+    ul_violations = [
+        {"nutrient": v.get("nutrient"), "total_intake": v.get("total_intake"),
+         "ul_limit": v.get("ul_limit")}
+        for v in report.get("ul_check", {}).get("ul_violations", [])
+    ]
 
-    product_items = "".join(
-        f"<li>{esc(str(p.get('product_name', '')))} "
-        f"({esc(str(p.get('brand') or ''))})</li>"
-        for p in products[:5]
-    ) or "<li>추천 제품 없음</li>"
+    schedule = report.get("timing_guidance", {}).get("time_separated_schedule", {})
+    timing = {
+        "am": ", ".join(schedule.get("morning_AM", [])),
+        "pm": ", ".join(schedule.get("evening_PM", [])),
+        "cautions": report.get("timing_guidance", {}).get("cautions", []),
+    }
 
-    guide_items = "".join(
-        f"<li>{esc(str(g.get('text', '')))} "
-        f"<span class=\"cite\">— {esc(str(g.get('source', '')))}</span></li>"
-        for g in guidelines
-    ) or "<li>참고 근거 없음</li>"
+    lab_results = []
+    for l in report.get("lab_results", {}).get("results", []):
+        label, tone = _LABFLAG_KO.get(l.get("flag"), ("", "gray"))
+        lab_results.append({
+            "test_name": l.get("test_name"), "value": l.get("value"),
+            "unit": l.get("unit", ""), "flag_label": label, "flag_tone": tone,
+        })
 
-    failure_notice = ""
-    if failed:
-        failure_notice = (
-            "<div class='notice'>일부 항목은 자동 검증을 완료하지 못해 "
-            "이번 결과에서 제외되었습니다. 해당 항목은 전문가와 상담하시기를 "
-            "권장드립니다.</div>"
-        )
+    products = [
+        {"name": p.get("product_name", ""), "brand": p.get("brand") or ""}
+        for p in report.get("products", [])[:5]
+    ]
+    guidelines = [
+        {"text": g.get("text", ""), "source": g.get("source", "")}
+        for g in report.get("guidelines", []) if g
+    ]
 
-    am = ", ".join(esc(x) for x in schedule.get("morning_AM", [])) or "-"
-    pm = ", ".join(esc(x) for x in schedule.get("evening_PM", [])) or "-"
+    return {
+        "title": report.get("title", "영양 리포트"),
+        "profile": {
+            "name": profile.get("name"),
+            "age": profile.get("age"),
+            "gender": _GENDER_KO.get(profile.get("gender"), profile.get("gender")),
+            "weight": profile.get("weight_kg"),
+        },
+        "failure_notice": bool(failed),
+        "nutrients": nutrients,
+        "ul_violations": ul_violations,
+        "timing": timing,
+        "lab_results": lab_results,
+        "products": products,
+        "guidelines": guidelines,
+        "disclaimer": DISCLAIMER,
+        "prose": None,
+    }
 
-    return f"""<section class="nutrition-report">
-  <h1>{esc(report.get('title', '영양 리포트'))}</h1>
-  <p class="profile">이름: {esc(str(profile.get('name')))} /
-     나이: {esc(str(profile.get('age')))} /
-     성별: {esc(str(profile.get('gender')))} /
-     체중: {esc(str(profile.get('weight_kg')))}kg</p>
-  {failure_notice}
-  <h2>맞춤 권장 섭취량</h2>
-  <table><thead><tr><th>영양소</th><th>목표</th></tr></thead>
-    <tbody>{rows}</tbody></table>
-  <h2>복용 시간</h2>
-  <p>아침: {am} / 저녁: {pm}</p>
-  <h2>추천 제품</h2>
-  <ul>{product_items}</ul>
-  <h2>참고 근거</h2>
-  <ul>{guide_items}</ul>
-  <footer class="disclaimer">{esc(DISCLAIMER)}</footer>
-</section>"""
+
+def _llm_prose(context: dict) -> str | None:
+    """엔진 숫자를 읽기전용 컨텍스트로 주입해 한국어 설명 산문만 생성. 실패 시 None.
+
+    호출 자체는 COMPLIANCE_LLM_PROSE=1 이고 키가 있을 때만 도달한다.
+    """
+    from langchain_openai import ChatOpenAI
+    from prompts.report_prompt import REPORT_PROSE_PROMPT
+
+    p = context["profile"]
+    profile_txt = (f"나이 {p['age']} · 성별 {p['gender']}"
+                   + (f" · 체중 {p['weight']}kg" if p.get("weight") else ""))
+    lines = [f"- {n['name']}: 맞춤 권장 {n['value']}{n['unit']}"
+             + (f", 충족률 {n['pct']}%" if n["pct"] is not None else "")
+             for n in context["nutrients"]]
+    for u in context["ul_violations"]:
+        lines.append(f"- 상한초과 {u['nutrient']}: 총섭취 {u['total_intake']} / 상한 {u['ul_limit']}")
+    numbers_txt = "\n".join(lines) or "(수치 없음)"
+
+    llm = ChatOpenAI(
+        model=config.OPENAI_MODEL,
+        api_key=config.OPENAI_API_KEY,
+        base_url=config.OPENAI_BASE_URL,
+        temperature=0,
+    )
+    msg = REPORT_PROSE_PROMPT.format(profile=profile_txt, numbers=numbers_txt)
+    resp = llm.invoke(msg)
+    text = getattr(resp, "content", "") or ""
+    return text.strip() or None
+
+
+def _maybe_prose(context: dict, deterministic_html: str) -> str | None:
+    """게이트 OFF/키없음/LLM실패/숫자위반이면 None(→결정적 렌더). 안전할 때만 산문 반환.
+
+    숫자 안전: 산문의 숫자 토큰이 결정적 렌더(엔진 유래)의 숫자 집합의 부분집합이어야
+    한다. 새 숫자가 하나라도 있으면 폐기(파이프라인 하드블록 아님, 안전 강등).
+    """
+    if config.COMPLIANCE_LLM_PROSE != "1" or not config.OPENAI_API_KEY:
+        return None
+    try:
+        prose = _llm_prose(context)
+    except Exception as e:  # noqa: BLE001
+        print(f"  [Compliance] LLM 산문 실패, 결정적 렌더로 폴백: {e}")
+        return None
+    if not prose:
+        return None
+    allowed = _numbers_in(deterministic_html)
+    injected = _numbers_in(prose) - allowed
+    if injected:
+        print(f"  [Compliance] 산문 숫자 위반(엔진 미유래 {sorted(injected)}) → 폐기")
+        return None
+    return prose
+
+
+def _render_html(report: dict, profile: dict, failed: list) -> str:
+    """결정적 Jinja 렌더 + (선택) LLM 설명 산문. 숫자/표는 항상 결정적."""
+    context = _build_context(report, profile, failed)
+    deterministic_html = render_report(context)
+    prose = _maybe_prose(context, deterministic_html)
+    if prose is None:
+        return deterministic_html
+    context["prose"] = prose
+    return render_report(context)
 
 
 async def legal_compliance_node(state: State) -> State:
