@@ -1,43 +1,75 @@
-[{
-  "컬럼명": "id",
-  "데이터 타입": "integer",
-  "최대 길이": "-",
-  "Null 허용": "NO",
-  "기본값": "nextval('product_ingredients_master_id_seq'::regclass)",
-  "PK 여부": "YES"
-}, {
-  "컬럼명": "product_id",
-  "데이터 타입": "character varying",
-  "최대 길이": "50",
-  "Null 허용": "NO",
-  "기본값": "-",
-  "PK 여부": "NO"
-}, {
-  "컬럼명": "product_name",
-  "데이터 타입": "character varying",
-  "최대 길이": "255",
-  "Null 허용": "NO",
-  "기본값": "-",
-  "PK 여부": "NO"
-}, {
-  "컬럼명": "nutrient_code",
-  "데이터 타입": "character varying",
-  "최대 길이": "50",
-  "Null 허용": "NO",
-  "기본값": "-",
-  "PK 여부": "NO"
-}, {
-  "컬럼명": "amount_per_serving",
-  "데이터 타입": "numeric",
-  "최대 길이": "-",
-  "Null 허용": "NO",
-  "기본값": "-",
-  "PK 여부": "NO"
-}, {
-  "컬럼명": "unit",
-  "데이터 타입": "character varying",
-  "최대 길이": "20",
-  "Null 허용": "NO",
-  "기본값": "-",
-  "PK 여부": "NO"
-}]
+[
+  {
+    "컬럼명": "id",
+    "데이터 타입": "integer",
+    "최대 길이": "-",
+    "Null 허용": "NO",
+    "기본값": "nextval('user_health_presets_id_seq'::regclass)",
+    "PK 여부": "YES"
+  },
+  {
+    "컬럼명": "user_id",
+    "데이터 타입": "character varying",
+    "최대 길이": "50",
+    "Null 허용": "NO",
+    "기본값": "-",
+    "PK 여부": "NO",
+    "UNIQUE 여부": "YES"
+  },
+  {
+    "컬럼명": "age",
+    "데이터 타입": "integer",
+    "최대 길이": "-",
+    "Null 허용": "NO",
+    "기본값": "-"
+  },
+  {
+    "컬럼명": "gender",
+    "데이터 타입": "character varying",
+    "최대 길이": "10",
+    "Null 허용": "NO",
+    "기본값": "-"
+  },
+  {
+    "컬럼명": "weight_kg",
+    "데이터 타입": "numeric",
+    "최대 길이": "5,2",
+    "Null 허용": "NO",
+    "기본값": "-"
+  },
+  {
+    "컬럼명": "activity_level",
+    "데이터 타입": "character varying",
+    "최대 길이": "30",
+    "Null 허용": "YES",
+    "기본값": "-"
+  },
+  {
+    "컬럼명": "routine_supplements",
+    "데이터 타입": "jsonb",
+    "최대 길이": "-",
+    "Null 허용": "YES",
+    "기본값": "-"
+  },
+  {
+    "컬럼명": "latest_checkup_data",
+    "데이터 타입": "jsonb",
+    "최대 길이": "-",
+    "Null 허용": "YES",
+    "기본값": "-"
+  },
+  {
+    "컬럼명": "allergies_conditions",
+    "데이터 타입": "jsonb",
+    "최대 길이": "-",
+    "Null 허용": "YES",
+    "기본값": "-"
+  },
+  {
+    "컬럼명": "updated_at",
+    "데이터 타입": "timestamp without time zone",
+    "최대 길이": "-",
+    "Null 허용": "YES",
+    "기본값": "CURRENT_TIMESTAMP"
+  }
+]

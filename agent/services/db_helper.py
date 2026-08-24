@@ -285,3 +285,94 @@ def delete_user(user_id: str) -> int:
     with get_db_connection() as conn, conn.cursor() as cur:
         cur.execute("DELETE FROM users WHERE id = %s", (key,))
         return cur.rowcount
+
+# =============================================================================
+# 처방/검사 이력 (prescription_histories)
+# =============================================================================
+
+def get_prescription_histories(
+    user_id: str,
+) -> List[Dict[str, Any]]:
+    """현재 로그인 사용자의 검사/추천 이력 목록을 조회합니다.
+
+    prescription_histories와 user_health_presets를 user_id 기준으로
+    조인하여 목록 화면에 필요한 사용자 건강 정보를 함께 반환합니다.
+    """
+
+    key = normalize_user_id(user_id)
+
+    if not key:
+        return []
+
+    with get_db_connection() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT
+                ph.id,
+                ph.title,
+                ph.created_at,
+
+                uhp.age,
+                uhp.gender,
+                uhp.weight_kg,
+                uhp.activity_level,
+                uhp.latest_checkup_data,
+                uhp.routine_supplements,
+                uhp.allergies_conditions,
+
+                ph.output_report
+
+            FROM prescription_histories ph
+
+            INNER JOIN user_health_presets uhp
+                ON ph.user_id = uhp.user_id
+
+            WHERE ph.user_id = %s
+
+            ORDER BY
+                ph.created_at DESC NULLS LAST,
+                ph.id DESC
+            """,
+            (key,),
+        )
+
+        rows = cur.fetchall()
+
+    return [dict(row) for row in rows]
+
+
+def get_prescription_history(
+    user_id: str,
+    history_id: int,
+) -> Dict[str, Any] | None:
+    """특정 사용자의 특정 처방/검사 이력 상세 정보를 조회합니다.
+
+    history_id만으로 조회하지 않고 user_id를 함께 조건에 사용하여
+    다른 사용자의 이력에 접근할 수 없도록 합니다.
+    """
+
+    key = normalize_user_id(user_id)
+
+    if not key:
+        return None
+
+    with get_db_connection() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT
+                id,
+                title,
+                user_health_preset_id,
+                output_report,
+                created_at
+            FROM prescription_histories
+            WHERE id = %s
+              AND user_id = %s
+            LIMIT 1
+            """,
+            (history_id, key),
+        )
+
+        row = cur.fetchone()
+
+    return dict(row) if row else None

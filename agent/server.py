@@ -7,7 +7,10 @@ from fastapi import (
     UploadFile,
     File,
     Form,
+    Request,
 )
+
+from starlette.middleware.sessions import SessionMiddleware
 
 from schemas.state import State
 from graph.workflow import graph
@@ -16,6 +19,7 @@ from services import db_helper
 from guardrails.harness import GuardViolation
 from nodes.compliance import DISCLAIMER
 from nodes.normalizer import input_normalization_node
+from config import SESSION_SECRET_KEY
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -29,6 +33,15 @@ app = FastAPI(
     version="1.2.0",
 )
 
+
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=SESSION_SECRET_KEY,
+    session_cookie="ai_nutrition_session",
+    max_age=60 * 60 * 24 * 7,  # 7일
+    same_site="lax",
+    https_only=False,  # 로컬 개발환경에서는 False
+)
 
 
 # ============================================================
@@ -104,24 +117,55 @@ async def signup(
     summary="사용자 로그인"
 )
 async def login(
+    request: Request,
     id: str = Form(...),
     pwd: str = Form(...),
 ):
     """users 테이블에서 찾아 비밀번호 해시를 대조합니다."""
+
     try:
         user = await asyncio.to_thread(
             db_helper.authenticate, id, pwd
         )
     except Exception as e:
         print(f"[login] 실패: {type(e).__name__}: {e}")
-        return fail_response("로그인을 처리하지 못했습니다. 잠시 후 다시 시도해주세요.")
+        return fail_response(
+            "로그인을 처리하지 못했습니다. 잠시 후 다시 시도해주세요."
+        )
 
     if user is None:
-        # ★ '없는 아이디' 와 '비밀번호 틀림' 을 구분해 알려 주지 않습니다.
-        #   구분하면 어떤 아이디가 가입되어 있는지 확인하는 데 쓰입니다.
-        return fail_response("아이디 또는 비밀번호가 올바르지 않습니다.")
+        return fail_response(
+            "아이디 또는 비밀번호가 올바르지 않습니다."
+        )
 
-    return success_response({"user": {"id": user["id"], "name": user["name"]}})
+    # 로그인 성공 → 세션 저장
+    request.session.clear()
+    request.session["user_id"] = user["id"]
+    request.session["user_name"] = user["name"]
+
+    return success_response({
+        "user": {
+            "id": user["id"],
+            "name": user["name"],
+        }
+    })
+
+
+# ============================================================
+# 로그아웃 API
+# ============================================================
+
+@app.post(
+    "/api/v1/logout",
+    summary="사용자 로그아웃",
+)
+async def logout(
+    request: Request,
+):
+    """사용자를 로그아웃 처리합니다."""
+    request.session.clear()
+
+    return success_response()
 
 
 # ============================================================
@@ -215,6 +259,93 @@ async def normalize_checkup(
     except Exception as e:
         print(f"[recommend] 실패: {type(e).__name__}: {e}")
         return fail_response("검진표 분석 처리 중 오류가 발생했습니다.")
+
+# ============================================================
+# 기존 검사/처방 이력 조회 API
+# ============================================================
+
+@app.get(
+    "/api/v1/prescription-histories",
+    summary="사용자의 기존 검사/처방 이력 조회",
+)
+async def get_prescription_histories(
+    request: Request,
+):
+    """현재 로그인한 사용자의 기존 검사/처방 이력 목록을 조회합니다."""
+
+    # 세션에서 user_id 획득
+    user_id = request.session.get("user_id")
+
+    if not user_id:
+        return fail_response(
+            "로그인이 필요한 서비스입니다."
+        )
+
+    try:
+        histories = await asyncio.to_thread(
+            db_helper.get_prescription_histories,
+            user_id,
+        )
+
+        return success_response(histories)
+
+    except Exception as e:
+        print(
+            f"[prescription-histories] "
+            f"실패: {type(e).__name__}: {e}"
+        )
+
+        return fail_response(
+            "검사 이력을 조회하지 못했습니다. 잠시 후 다시 시도해주세요."
+        )
+    
+
+# ============================================================
+# 특정 검사/처방 이력 상세 조회 API
+# ============================================================
+
+@app.get(
+    "/api/v1/prescription-histories/{history_id}",
+    summary="특정 검사/처방 이력 상세 조회",
+)
+async def get_prescription_history_detail(
+    history_id: int,
+    request: Request,
+):
+    """현재 로그인한 사용자의 특정 검사/처방 이력 상세 정보를 조회합니다."""
+
+    # 세션에서 user_id 획득
+    user_id = request.session.get("user_id")
+
+    if not user_id:
+        return fail_response(
+            "로그인이 필요한 서비스입니다."
+        )
+
+    try:
+        history = await asyncio.to_thread(
+            db_helper.get_prescription_history,
+            user_id,
+            history_id,
+        )
+
+        if history is None:
+            return fail_response(
+                "해당 검사 이력을 찾을 수 없습니다."
+            )
+
+        return success_response(history)
+
+    except Exception as e:
+        print(
+            f"[prescription-history-detail] "
+            f"실패: {type(e).__name__}: {e}"
+        )
+
+        return fail_response(
+            "검사 이력 상세 정보를 조회하지 못했습니다. "
+            "잠시 후 다시 시도해주세요."
+        )
 
 
 # ============================================================
