@@ -1,92 +1,73 @@
 {
   "meta": {
-    "generatedAt": "2026-08-24T13:36:00.597069Z",
+    "generatedAt": "2026-08-24T13:36:00.600221Z",
     "source": "server",
     "engine": "python (예시 기준값)"
   },
   "input": {
-    "name": "정우석",
-    "age": "35",
+    "name": "정한수",
+    "age": "71",
     "sex": "남성",
-    "date": "2026-06-01",
+    "date": "2026-02-18",
     "countMeal": true,
-    "exam": {
-      "height": "178",
-      "weight": "76",
-      "waist": "86",
-      "glu": "100",
-      "tc": "205",
-      "hdl": "52",
-      "ast": "30",
-      "alt": "33",
-      "upro": "약양성(±)"
-    },
     "chronic": [],
+    "products": [],
     "meds": [],
-    "products": [
-      {
-        "name": "마그네슘 350",
-        "items": [
-          {
-            "name": "마그네슘",
-            "amount": 350,
-            "unit": "mg"
-          }
-        ]
-      },
-      {
-        "name": "엽산 1000",
-        "items": [
-          {
-            "name": "엽산",
-            "amount": 1000,
-            "unit": "µg"
-          }
-        ]
-      },
-      {
-        "name": "눈에 좋은 비타민A",
-        "items": [
-          {
-            "name": "비타민 A",
-            "amount": 10000,
-            "unit": "IU"
-          }
-        ]
-      },
-      {
-        "name": "장에 좋은 유산균",
-        "items": [
-          {
-            "name": "코엔자임Q10",
-            "amount": 100,
-            "unit": "mg"
-          },
-          {
-            "name": "프로바이오틱스",
-            "amount": 100,
-            "unit": "억CFU"
-          }
-        ]
-      }
-    ]
+    "exam": {
+      "cxr": "비활동성 폐결핵",
+      "sbp": "138",
+      "dbp": "86",
+      "height": "168",
+      "weight": "74",
+      "waist": "94",
+      "hb": "12.6",
+      "glu": "131",
+      "tc": "228",
+      "hdl": "38",
+      "tg": "185",
+      "ldl": "142",
+      "ast": "44",
+      "alt": "33",
+      "ggt": "82",
+      "upro": "약양성(±)",
+      "cr": "1.2",
+      "egfr": "58",
+      "tscore": "-2.1",
+      "bmd": "96",
+      "leg": "13",
+      "balC": "7",
+      "balO": "22",
+      "phq9": "7",
+      "phq9q9": "0점",
+      "capeF": "3",
+      "capeD": "4",
+      "kdsq": "5",
+      "pta": "42",
+      "whisper": "한쪽이라도 3개 미만",
+      "ratio": "67",
+      "fev1": "76",
+      "fvc": "84",
+      "caries": "있음",
+      "suspect": "없음",
+      "filled": "있음",
+      "lost": "있음",
+      "gingiva": "경증",
+      "calculus": "중증",
+      "plaque": "4"
+    }
   },
   "hasSupp": true,
-  "mealOnly": false,
+  "mealOnly": true,
   "cols": 4,
-  "worst": "over",
+  "worst": "low",
   "badges": [
     {
-      "text": "정상B(경계)",
-      "tone": "orange"
-    },
-    {
-      "text": "영양제 4종",
-      "tone": "green"
-    },
-    {
-      "text": "성분 상한 초과",
+      "text": "고혈압·당뇨병·이상지질혈증 질환의심",
       "tone": "red"
+    },
+    {
+      "text": "식사 기준",
+      "tone": "gray"
     },
     {
       "text": "보충 권장 6",
@@ -102,11 +83,11 @@
             "key": "cxr",
             "name": "흉부방사선촬영",
             "ref": "정상",
-            "value": "—",
+            "value": "비활동성 폐결핵",
             "judge": {
-              "code": "",
-              "text": "미입력",
-              "tone": "gray"
+              "code": "B",
+              "text": "경계",
+              "tone": "orange"
             }
           }
         ]
@@ -118,11 +99,11 @@
             "key": "bp",
             "name": "혈압",
             "ref": "120/80 미만",
-            "value": "—",
+            "value": "138/86",
             "judge": {
-              "code": "",
-              "text": "미입력",
-              "tone": "gray"
+              "code": "B",
+              "text": "경계",
+              "tone": "orange"
             }
           }
         ]
@@ -134,22 +115,22 @@
             "key": "bmi",
             "name": "체질량지수(BMI)",
             "ref": "18.5~24.9",
-            "value": "24.0 kg/m²",
+            "value": "26.2 kg/m²",
             "judge": {
-              "code": "A",
-              "text": "정상A",
-              "tone": "green"
+              "code": "B",
+              "text": "경계",
+              "tone": "orange"
             }
           },
           {
             "key": "waist",
             "name": "허리둘레",
             "ref": "90 미만",
-            "value": "86 cm",
+            "value": "94 cm",
             "judge": {
-              "code": "A",
-              "text": "정상A",
-              "tone": "green"
+              "code": "B",
+              "text": "경계",
+              "tone": "orange"
             }
           }
         ]
@@ -161,11 +142,11 @@
             "key": "hb",
             "name": "혈색소",
             "ref": "13.0~16.5",
-            "value": "—",
+            "value": "12.6 g/dL",
             "judge": {
-              "code": "",
-              "text": "미입력",
-              "tone": "gray"
+              "code": "B",
+              "text": "경계",
+              "tone": "orange"
             }
           }
         ]
@@ -177,11 +158,11 @@
             "key": "glu",
             "name": "공복혈당",
             "ref": "100 미만",
-            "value": "100 mg/dL",
+            "value": "131 mg/dL",
             "judge": {
-              "code": "B",
-              "text": "경계",
-              "tone": "orange"
+              "code": "D",
+              "text": "질환의심",
+              "tone": "red"
             }
           }
         ]
@@ -193,7 +174,7 @@
             "key": "tc",
             "name": "총콜레스테롤",
             "ref": "200 미만",
-            "value": "205 mg/dL",
+            "value": "228 mg/dL",
             "judge": {
               "code": "B",
               "text": "경계",
@@ -204,7 +185,18 @@
             "key": "hdl",
             "name": "HDL 콜레스테롤",
             "ref": "60 이상",
-            "value": "52 mg/dL",
+            "value": "38 mg/dL",
+            "judge": {
+              "code": "D",
+              "text": "질환의심",
+              "tone": "red"
+            }
+          },
+          {
+            "key": "tg",
+            "name": "중성지방",
+            "ref": "150 미만",
+            "value": "185 mg/dL",
             "judge": {
               "code": "B",
               "text": "경계",
@@ -212,25 +204,14 @@
             }
           },
           {
-            "key": "tg",
-            "name": "중성지방",
-            "ref": "150 미만",
-            "value": "—",
-            "judge": {
-              "code": "",
-              "text": "미입력",
-              "tone": "gray"
-            }
-          },
-          {
             "key": "ldl",
             "name": "LDL 콜레스테롤",
             "ref": "130 미만",
-            "value": "—",
+            "value": "142 mg/dL",
             "judge": {
-              "code": "",
-              "text": "미입력",
-              "tone": "gray"
+              "code": "B",
+              "text": "경계",
+              "tone": "orange"
             }
           }
         ]
@@ -242,11 +223,11 @@
             "key": "ast",
             "name": "AST(SGOT)",
             "ref": "40 이하",
-            "value": "30 U/L",
+            "value": "44 U/L",
             "judge": {
-              "code": "A",
-              "text": "정상A",
-              "tone": "green"
+              "code": "B",
+              "text": "경계",
+              "tone": "orange"
             }
           },
           {
@@ -264,11 +245,11 @@
             "key": "ggt",
             "name": "γ-GTP",
             "ref": "11~63",
-            "value": "—",
+            "value": "82 U/L",
             "judge": {
-              "code": "",
-              "text": "미입력",
-              "tone": "gray"
+              "code": "D",
+              "text": "질환의심",
+              "tone": "red"
             }
           }
         ]
@@ -291,22 +272,22 @@
             "key": "cr",
             "name": "혈청크레아티닌",
             "ref": "1.5 이하",
-            "value": "—",
+            "value": "1.2 mg/dL",
             "judge": {
-              "code": "",
-              "text": "미입력",
-              "tone": "gray"
+              "code": "A",
+              "text": "정상A",
+              "tone": "green"
             }
           },
           {
             "key": "egfr",
             "name": "신사구체여과율(e-GFR)",
             "ref": "60 이상",
-            "value": "—",
+            "value": "58 mL/min/1.73m²",
             "judge": {
-              "code": "",
-              "text": "미입력",
-              "tone": "gray"
+              "code": "D",
+              "text": "질환의심",
+              "tone": "red"
             }
           }
         ]
@@ -318,22 +299,22 @@
             "key": "tscore",
             "name": "골밀도 T-score",
             "ref": "-1 이상",
-            "value": "—",
+            "value": "-2.1",
             "judge": {
-              "code": "",
-              "text": "미입력",
-              "tone": "gray"
+              "code": "B",
+              "text": "경계",
+              "tone": "orange"
             }
           },
           {
             "key": "bmd",
             "name": "골밀도(정량)",
             "ref": "120 초과",
-            "value": "—",
+            "value": "96 mg/㎤",
             "judge": {
-              "code": "",
-              "text": "미입력",
-              "tone": "gray"
+              "code": "B",
+              "text": "경계",
+              "tone": "orange"
             }
           }
         ]
@@ -345,33 +326,33 @@
             "key": "leg",
             "name": "하지기능",
             "ref": "10초 이내",
-            "value": "—",
+            "value": "13초",
             "judge": {
-              "code": "",
-              "text": "미입력",
-              "tone": "gray"
+              "code": "B",
+              "text": "경계",
+              "tone": "orange"
             }
           },
           {
             "key": "balC",
             "name": "평형성(눈 감은 상태)",
             "ref": "15초 이상",
-            "value": "—",
+            "value": "7초",
             "judge": {
-              "code": "",
-              "text": "미입력",
-              "tone": "gray"
+              "code": "B",
+              "text": "경계",
+              "tone": "orange"
             }
           },
           {
             "key": "balO",
             "name": "평형성(눈 뜬 상태)",
             "ref": "20초 이상",
-            "value": "—",
+            "value": "22초",
             "judge": {
-              "code": "",
-              "text": "미입력",
-              "tone": "gray"
+              "code": "A",
+              "text": "정상A",
+              "tone": "green"
             }
           }
         ]
@@ -383,33 +364,33 @@
             "key": "phq9",
             "name": "우울증(PHQ-9)",
             "ref": "0~4점",
-            "value": "—",
+            "value": "7점",
             "judge": {
-              "code": "",
-              "text": "미입력",
-              "tone": "gray"
+              "code": "B",
+              "text": "가벼운 우울증상",
+              "tone": "orange"
             }
           },
           {
             "key": "cape",
             "name": "조기정신증(CAPE-15)",
             "ref": "각 0~5점",
-            "value": "—",
+            "value": "빈도 3 · 고통 4",
             "judge": {
-              "code": "",
-              "text": "미입력",
-              "tone": "gray"
+              "code": "A",
+              "text": "특이소견 없음",
+              "tone": "green"
             }
           },
           {
             "key": "kdsq",
             "name": "인지기능(KDSQ-C)",
             "ref": "0~5점",
-            "value": "—",
+            "value": "5점",
             "judge": {
-              "code": "",
-              "text": "미입력",
-              "tone": "gray"
+              "code": "A",
+              "text": "특이소견 없음",
+              "tone": "green"
             }
           }
         ]
@@ -421,22 +402,22 @@
             "key": "pta",
             "name": "순음청력검사",
             "ref": "40dB 미만",
-            "value": "—",
+            "value": "42 dB",
             "judge": {
-              "code": "",
-              "text": "미입력",
-              "tone": "gray"
+              "code": "D",
+              "text": "질환의심",
+              "tone": "red"
             }
           },
           {
             "key": "whisper",
             "name": "귓속말 검사",
             "ref": "양쪽 3개 이상",
-            "value": "—",
+            "value": "한쪽이라도 3개 미만",
             "judge": {
-              "code": "",
-              "text": "미입력",
-              "tone": "gray"
+              "code": "D",
+              "text": "정밀검사 의뢰",
+              "tone": "red"
             }
           }
         ]
@@ -448,11 +429,11 @@
             "key": "spiro",
             "name": "폐기능검사",
             "ref": "FEV1/FVC 70 이상",
-            "value": "—",
+            "value": "FEV1/FVC 67%",
             "judge": {
-              "code": "",
-              "text": "미입력",
-              "tone": "gray"
+              "code": "D",
+              "text": "COPD 의심",
+              "tone": "red"
             }
           }
         ]
@@ -464,77 +445,77 @@
             "key": "caries",
             "name": "우식치아",
             "ref": "없음",
-            "value": "—",
+            "value": "있음",
             "judge": {
-              "code": "",
-              "text": "미입력",
-              "tone": "gray"
+              "code": "D",
+              "text": "치료필요",
+              "tone": "red"
             }
           },
           {
             "key": "suspect",
             "name": "우식의심치아",
             "ref": "없음",
-            "value": "—",
+            "value": "없음",
             "judge": {
-              "code": "",
-              "text": "미입력",
-              "tone": "gray"
+              "code": "A",
+              "text": "양호",
+              "tone": "green"
             }
           },
           {
             "key": "filled",
             "name": "수복치아",
             "ref": "없음",
-            "value": "—",
+            "value": "있음",
             "judge": {
-              "code": "",
-              "text": "미입력",
-              "tone": "gray"
+              "code": "B",
+              "text": "주의",
+              "tone": "orange"
             }
           },
           {
             "key": "lost",
             "name": "상실치아",
             "ref": "없음",
-            "value": "—",
+            "value": "있음",
             "judge": {
-              "code": "",
-              "text": "미입력",
-              "tone": "gray"
+              "code": "D",
+              "text": "치료필요",
+              "tone": "red"
             }
           },
           {
             "key": "gingiva",
             "name": "치은염증",
             "ref": "없음",
-            "value": "—",
+            "value": "경증",
             "judge": {
-              "code": "",
-              "text": "미입력",
-              "tone": "gray"
+              "code": "D",
+              "text": "질환의심",
+              "tone": "red"
             }
           },
           {
             "key": "calculus",
             "name": "치석",
             "ref": "없음",
-            "value": "—",
+            "value": "중증",
             "judge": {
-              "code": "",
-              "text": "미입력",
-              "tone": "gray"
+              "code": "D",
+              "text": "치료필요",
+              "tone": "red"
             }
           },
           {
             "key": "plaque",
             "name": "치면세균막검사",
             "ref": "1점 미만",
-            "value": "—",
+            "value": "4점",
             "judge": {
-              "code": "",
-              "text": "미입력",
-              "tone": "gray"
+              "code": "D",
+              "text": "개선요망",
+              "tone": "red"
             }
           }
         ]
@@ -545,62 +526,7 @@
         "key": "cxr",
         "name": "흉부방사선촬영",
         "ref": "정상",
-        "value": "—",
-        "judge": {
-          "code": "",
-          "text": "미입력",
-          "tone": "gray"
-        }
-      },
-      {
-        "key": "bp",
-        "name": "혈압",
-        "ref": "120/80 미만",
-        "value": "—",
-        "judge": {
-          "code": "",
-          "text": "미입력",
-          "tone": "gray"
-        }
-      },
-      {
-        "key": "bmi",
-        "name": "체질량지수(BMI)",
-        "ref": "18.5~24.9",
-        "value": "24.0 kg/m²",
-        "judge": {
-          "code": "A",
-          "text": "정상A",
-          "tone": "green"
-        }
-      },
-      {
-        "key": "waist",
-        "name": "허리둘레",
-        "ref": "90 미만",
-        "value": "86 cm",
-        "judge": {
-          "code": "A",
-          "text": "정상A",
-          "tone": "green"
-        }
-      },
-      {
-        "key": "hb",
-        "name": "혈색소",
-        "ref": "13.0~16.5",
-        "value": "—",
-        "judge": {
-          "code": "",
-          "text": "미입력",
-          "tone": "gray"
-        }
-      },
-      {
-        "key": "glu",
-        "name": "공복혈당",
-        "ref": "100 미만",
-        "value": "100 mg/dL",
+        "value": "비활동성 폐결핵",
         "judge": {
           "code": "B",
           "text": "경계",
@@ -608,10 +534,65 @@
         }
       },
       {
+        "key": "bp",
+        "name": "혈압",
+        "ref": "120/80 미만",
+        "value": "138/86",
+        "judge": {
+          "code": "B",
+          "text": "경계",
+          "tone": "orange"
+        }
+      },
+      {
+        "key": "bmi",
+        "name": "체질량지수(BMI)",
+        "ref": "18.5~24.9",
+        "value": "26.2 kg/m²",
+        "judge": {
+          "code": "B",
+          "text": "경계",
+          "tone": "orange"
+        }
+      },
+      {
+        "key": "waist",
+        "name": "허리둘레",
+        "ref": "90 미만",
+        "value": "94 cm",
+        "judge": {
+          "code": "B",
+          "text": "경계",
+          "tone": "orange"
+        }
+      },
+      {
+        "key": "hb",
+        "name": "혈색소",
+        "ref": "13.0~16.5",
+        "value": "12.6 g/dL",
+        "judge": {
+          "code": "B",
+          "text": "경계",
+          "tone": "orange"
+        }
+      },
+      {
+        "key": "glu",
+        "name": "공복혈당",
+        "ref": "100 미만",
+        "value": "131 mg/dL",
+        "judge": {
+          "code": "D",
+          "text": "질환의심",
+          "tone": "red"
+        }
+      },
+      {
         "key": "tc",
         "name": "총콜레스테롤",
         "ref": "200 미만",
-        "value": "205 mg/dL",
+        "value": "228 mg/dL",
         "judge": {
           "code": "B",
           "text": "경계",
@@ -622,7 +603,18 @@
         "key": "hdl",
         "name": "HDL 콜레스테롤",
         "ref": "60 이상",
-        "value": "52 mg/dL",
+        "value": "38 mg/dL",
+        "judge": {
+          "code": "D",
+          "text": "질환의심",
+          "tone": "red"
+        }
+      },
+      {
+        "key": "tg",
+        "name": "중성지방",
+        "ref": "150 미만",
+        "value": "185 mg/dL",
         "judge": {
           "code": "B",
           "text": "경계",
@@ -630,36 +622,25 @@
         }
       },
       {
-        "key": "tg",
-        "name": "중성지방",
-        "ref": "150 미만",
-        "value": "—",
-        "judge": {
-          "code": "",
-          "text": "미입력",
-          "tone": "gray"
-        }
-      },
-      {
         "key": "ldl",
         "name": "LDL 콜레스테롤",
         "ref": "130 미만",
-        "value": "—",
+        "value": "142 mg/dL",
         "judge": {
-          "code": "",
-          "text": "미입력",
-          "tone": "gray"
+          "code": "B",
+          "text": "경계",
+          "tone": "orange"
         }
       },
       {
         "key": "ast",
         "name": "AST(SGOT)",
         "ref": "40 이하",
-        "value": "30 U/L",
+        "value": "44 U/L",
         "judge": {
-          "code": "A",
-          "text": "정상A",
-          "tone": "green"
+          "code": "B",
+          "text": "경계",
+          "tone": "orange"
         }
       },
       {
@@ -677,11 +658,11 @@
         "key": "ggt",
         "name": "γ-GTP",
         "ref": "11~63",
-        "value": "—",
+        "value": "82 U/L",
         "judge": {
-          "code": "",
-          "text": "미입력",
-          "tone": "gray"
+          "code": "D",
+          "text": "질환의심",
+          "tone": "red"
         }
       },
       {
@@ -699,240 +680,29 @@
         "key": "cr",
         "name": "혈청크레아티닌",
         "ref": "1.5 이하",
-        "value": "—",
+        "value": "1.2 mg/dL",
         "judge": {
-          "code": "",
-          "text": "미입력",
-          "tone": "gray"
+          "code": "A",
+          "text": "정상A",
+          "tone": "green"
         }
       },
       {
         "key": "egfr",
         "name": "신사구체여과율(e-GFR)",
         "ref": "60 이상",
-        "value": "—",
+        "value": "58 mL/min/1.73m²",
         "judge": {
-          "code": "",
-          "text": "미입력",
-          "tone": "gray"
+          "code": "D",
+          "text": "질환의심",
+          "tone": "red"
         }
       },
       {
         "key": "tscore",
         "name": "골밀도 T-score",
         "ref": "-1 이상",
-        "value": "—",
-        "judge": {
-          "code": "",
-          "text": "미입력",
-          "tone": "gray"
-        }
-      },
-      {
-        "key": "bmd",
-        "name": "골밀도(정량)",
-        "ref": "120 초과",
-        "value": "—",
-        "judge": {
-          "code": "",
-          "text": "미입력",
-          "tone": "gray"
-        }
-      },
-      {
-        "key": "leg",
-        "name": "하지기능",
-        "ref": "10초 이내",
-        "value": "—",
-        "judge": {
-          "code": "",
-          "text": "미입력",
-          "tone": "gray"
-        }
-      },
-      {
-        "key": "balC",
-        "name": "평형성(눈 감은 상태)",
-        "ref": "15초 이상",
-        "value": "—",
-        "judge": {
-          "code": "",
-          "text": "미입력",
-          "tone": "gray"
-        }
-      },
-      {
-        "key": "balO",
-        "name": "평형성(눈 뜬 상태)",
-        "ref": "20초 이상",
-        "value": "—",
-        "judge": {
-          "code": "",
-          "text": "미입력",
-          "tone": "gray"
-        }
-      },
-      {
-        "key": "phq9",
-        "name": "우울증(PHQ-9)",
-        "ref": "0~4점",
-        "value": "—",
-        "judge": {
-          "code": "",
-          "text": "미입력",
-          "tone": "gray"
-        }
-      },
-      {
-        "key": "cape",
-        "name": "조기정신증(CAPE-15)",
-        "ref": "각 0~5점",
-        "value": "—",
-        "judge": {
-          "code": "",
-          "text": "미입력",
-          "tone": "gray"
-        }
-      },
-      {
-        "key": "kdsq",
-        "name": "인지기능(KDSQ-C)",
-        "ref": "0~5점",
-        "value": "—",
-        "judge": {
-          "code": "",
-          "text": "미입력",
-          "tone": "gray"
-        }
-      },
-      {
-        "key": "pta",
-        "name": "순음청력검사",
-        "ref": "40dB 미만",
-        "value": "—",
-        "judge": {
-          "code": "",
-          "text": "미입력",
-          "tone": "gray"
-        }
-      },
-      {
-        "key": "whisper",
-        "name": "귓속말 검사",
-        "ref": "양쪽 3개 이상",
-        "value": "—",
-        "judge": {
-          "code": "",
-          "text": "미입력",
-          "tone": "gray"
-        }
-      },
-      {
-        "key": "spiro",
-        "name": "폐기능검사",
-        "ref": "FEV1/FVC 70 이상",
-        "value": "—",
-        "judge": {
-          "code": "",
-          "text": "미입력",
-          "tone": "gray"
-        }
-      },
-      {
-        "key": "caries",
-        "name": "우식치아",
-        "ref": "없음",
-        "value": "—",
-        "judge": {
-          "code": "",
-          "text": "미입력",
-          "tone": "gray"
-        }
-      },
-      {
-        "key": "suspect",
-        "name": "우식의심치아",
-        "ref": "없음",
-        "value": "—",
-        "judge": {
-          "code": "",
-          "text": "미입력",
-          "tone": "gray"
-        }
-      },
-      {
-        "key": "filled",
-        "name": "수복치아",
-        "ref": "없음",
-        "value": "—",
-        "judge": {
-          "code": "",
-          "text": "미입력",
-          "tone": "gray"
-        }
-      },
-      {
-        "key": "lost",
-        "name": "상실치아",
-        "ref": "없음",
-        "value": "—",
-        "judge": {
-          "code": "",
-          "text": "미입력",
-          "tone": "gray"
-        }
-      },
-      {
-        "key": "gingiva",
-        "name": "치은염증",
-        "ref": "없음",
-        "value": "—",
-        "judge": {
-          "code": "",
-          "text": "미입력",
-          "tone": "gray"
-        }
-      },
-      {
-        "key": "calculus",
-        "name": "치석",
-        "ref": "없음",
-        "value": "—",
-        "judge": {
-          "code": "",
-          "text": "미입력",
-          "tone": "gray"
-        }
-      },
-      {
-        "key": "plaque",
-        "name": "치면세균막검사",
-        "ref": "1점 미만",
-        "value": "—",
-        "judge": {
-          "code": "",
-          "text": "미입력",
-          "tone": "gray"
-        }
-      }
-    ],
-    "counts": {
-      "A": 4,
-      "B": 4,
-      "D": 0
-    },
-    "overall": {
-      "label": "정상B(경계)",
-      "tone": "orange",
-      "desc": "건강에 이상은 없으나 식생활습관 개선 등 자가관리가 필요합니다."
-    },
-    "filled": 8,
-    "abnormal": [
-      {
-        "key": "glu",
-        "name": "공복혈당",
-        "ref": "100 미만",
-        "value": "100 mg/dL",
+        "value": "-2.1",
         "judge": {
           "code": "B",
           "text": "경계",
@@ -940,10 +710,276 @@
         }
       },
       {
+        "key": "bmd",
+        "name": "골밀도(정량)",
+        "ref": "120 초과",
+        "value": "96 mg/㎤",
+        "judge": {
+          "code": "B",
+          "text": "경계",
+          "tone": "orange"
+        }
+      },
+      {
+        "key": "leg",
+        "name": "하지기능",
+        "ref": "10초 이내",
+        "value": "13초",
+        "judge": {
+          "code": "B",
+          "text": "경계",
+          "tone": "orange"
+        }
+      },
+      {
+        "key": "balC",
+        "name": "평형성(눈 감은 상태)",
+        "ref": "15초 이상",
+        "value": "7초",
+        "judge": {
+          "code": "B",
+          "text": "경계",
+          "tone": "orange"
+        }
+      },
+      {
+        "key": "balO",
+        "name": "평형성(눈 뜬 상태)",
+        "ref": "20초 이상",
+        "value": "22초",
+        "judge": {
+          "code": "A",
+          "text": "정상A",
+          "tone": "green"
+        }
+      },
+      {
+        "key": "phq9",
+        "name": "우울증(PHQ-9)",
+        "ref": "0~4점",
+        "value": "7점",
+        "judge": {
+          "code": "B",
+          "text": "가벼운 우울증상",
+          "tone": "orange"
+        }
+      },
+      {
+        "key": "cape",
+        "name": "조기정신증(CAPE-15)",
+        "ref": "각 0~5점",
+        "value": "빈도 3 · 고통 4",
+        "judge": {
+          "code": "A",
+          "text": "특이소견 없음",
+          "tone": "green"
+        }
+      },
+      {
+        "key": "kdsq",
+        "name": "인지기능(KDSQ-C)",
+        "ref": "0~5점",
+        "value": "5점",
+        "judge": {
+          "code": "A",
+          "text": "특이소견 없음",
+          "tone": "green"
+        }
+      },
+      {
+        "key": "pta",
+        "name": "순음청력검사",
+        "ref": "40dB 미만",
+        "value": "42 dB",
+        "judge": {
+          "code": "D",
+          "text": "질환의심",
+          "tone": "red"
+        }
+      },
+      {
+        "key": "whisper",
+        "name": "귓속말 검사",
+        "ref": "양쪽 3개 이상",
+        "value": "한쪽이라도 3개 미만",
+        "judge": {
+          "code": "D",
+          "text": "정밀검사 의뢰",
+          "tone": "red"
+        }
+      },
+      {
+        "key": "spiro",
+        "name": "폐기능검사",
+        "ref": "FEV1/FVC 70 이상",
+        "value": "FEV1/FVC 67%",
+        "judge": {
+          "code": "D",
+          "text": "COPD 의심",
+          "tone": "red"
+        }
+      },
+      {
+        "key": "caries",
+        "name": "우식치아",
+        "ref": "없음",
+        "value": "있음",
+        "judge": {
+          "code": "D",
+          "text": "치료필요",
+          "tone": "red"
+        }
+      },
+      {
+        "key": "suspect",
+        "name": "우식의심치아",
+        "ref": "없음",
+        "value": "없음",
+        "judge": {
+          "code": "A",
+          "text": "양호",
+          "tone": "green"
+        }
+      },
+      {
+        "key": "filled",
+        "name": "수복치아",
+        "ref": "없음",
+        "value": "있음",
+        "judge": {
+          "code": "B",
+          "text": "주의",
+          "tone": "orange"
+        }
+      },
+      {
+        "key": "lost",
+        "name": "상실치아",
+        "ref": "없음",
+        "value": "있음",
+        "judge": {
+          "code": "D",
+          "text": "치료필요",
+          "tone": "red"
+        }
+      },
+      {
+        "key": "gingiva",
+        "name": "치은염증",
+        "ref": "없음",
+        "value": "경증",
+        "judge": {
+          "code": "D",
+          "text": "질환의심",
+          "tone": "red"
+        }
+      },
+      {
+        "key": "calculus",
+        "name": "치석",
+        "ref": "없음",
+        "value": "중증",
+        "judge": {
+          "code": "D",
+          "text": "치료필요",
+          "tone": "red"
+        }
+      },
+      {
+        "key": "plaque",
+        "name": "치면세균막검사",
+        "ref": "1점 미만",
+        "value": "4점",
+        "judge": {
+          "code": "D",
+          "text": "개선요망",
+          "tone": "red"
+        }
+      }
+    ],
+    "counts": {
+      "A": 6,
+      "B": 16,
+      "D": 12
+    },
+    "overall": {
+      "label": "고혈압·당뇨병·이상지질혈증 질환의심",
+      "tone": "red",
+      "desc": "해당 항목이 기준을 벗어나 진료와 검사가 필요합니다."
+    },
+    "filled": 34,
+    "abnormal": [
+      {
+        "key": "cxr",
+        "name": "흉부방사선촬영",
+        "ref": "정상",
+        "value": "비활동성 폐결핵",
+        "judge": {
+          "code": "B",
+          "text": "경계",
+          "tone": "orange"
+        }
+      },
+      {
+        "key": "bp",
+        "name": "혈압",
+        "ref": "120/80 미만",
+        "value": "138/86",
+        "judge": {
+          "code": "B",
+          "text": "경계",
+          "tone": "orange"
+        }
+      },
+      {
+        "key": "bmi",
+        "name": "체질량지수(BMI)",
+        "ref": "18.5~24.9",
+        "value": "26.2 kg/m²",
+        "judge": {
+          "code": "B",
+          "text": "경계",
+          "tone": "orange"
+        }
+      },
+      {
+        "key": "waist",
+        "name": "허리둘레",
+        "ref": "90 미만",
+        "value": "94 cm",
+        "judge": {
+          "code": "B",
+          "text": "경계",
+          "tone": "orange"
+        }
+      },
+      {
+        "key": "hb",
+        "name": "혈색소",
+        "ref": "13.0~16.5",
+        "value": "12.6 g/dL",
+        "judge": {
+          "code": "B",
+          "text": "경계",
+          "tone": "orange"
+        }
+      },
+      {
+        "key": "glu",
+        "name": "공복혈당",
+        "ref": "100 미만",
+        "value": "131 mg/dL",
+        "judge": {
+          "code": "D",
+          "text": "질환의심",
+          "tone": "red"
+        }
+      },
+      {
         "key": "tc",
         "name": "총콜레스테롤",
         "ref": "200 미만",
-        "value": "205 mg/dL",
+        "value": "228 mg/dL",
         "judge": {
           "code": "B",
           "text": "경계",
@@ -954,11 +990,55 @@
         "key": "hdl",
         "name": "HDL 콜레스테롤",
         "ref": "60 이상",
-        "value": "52 mg/dL",
+        "value": "38 mg/dL",
+        "judge": {
+          "code": "D",
+          "text": "질환의심",
+          "tone": "red"
+        }
+      },
+      {
+        "key": "tg",
+        "name": "중성지방",
+        "ref": "150 미만",
+        "value": "185 mg/dL",
         "judge": {
           "code": "B",
           "text": "경계",
           "tone": "orange"
+        }
+      },
+      {
+        "key": "ldl",
+        "name": "LDL 콜레스테롤",
+        "ref": "130 미만",
+        "value": "142 mg/dL",
+        "judge": {
+          "code": "B",
+          "text": "경계",
+          "tone": "orange"
+        }
+      },
+      {
+        "key": "ast",
+        "name": "AST(SGOT)",
+        "ref": "40 이하",
+        "value": "44 U/L",
+        "judge": {
+          "code": "B",
+          "text": "경계",
+          "tone": "orange"
+        }
+      },
+      {
+        "key": "ggt",
+        "name": "γ-GTP",
+        "ref": "11~63",
+        "value": "82 U/L",
+        "judge": {
+          "code": "D",
+          "text": "질환의심",
+          "tone": "red"
         }
       },
       {
@@ -971,112 +1051,175 @@
           "text": "경계",
           "tone": "orange"
         }
+      },
+      {
+        "key": "egfr",
+        "name": "신사구체여과율(e-GFR)",
+        "ref": "60 이상",
+        "value": "58 mL/min/1.73m²",
+        "judge": {
+          "code": "D",
+          "text": "질환의심",
+          "tone": "red"
+        }
+      },
+      {
+        "key": "tscore",
+        "name": "골밀도 T-score",
+        "ref": "-1 이상",
+        "value": "-2.1",
+        "judge": {
+          "code": "B",
+          "text": "경계",
+          "tone": "orange"
+        }
+      },
+      {
+        "key": "bmd",
+        "name": "골밀도(정량)",
+        "ref": "120 초과",
+        "value": "96 mg/㎤",
+        "judge": {
+          "code": "B",
+          "text": "경계",
+          "tone": "orange"
+        }
+      },
+      {
+        "key": "leg",
+        "name": "하지기능",
+        "ref": "10초 이내",
+        "value": "13초",
+        "judge": {
+          "code": "B",
+          "text": "경계",
+          "tone": "orange"
+        }
+      },
+      {
+        "key": "balC",
+        "name": "평형성(눈 감은 상태)",
+        "ref": "15초 이상",
+        "value": "7초",
+        "judge": {
+          "code": "B",
+          "text": "경계",
+          "tone": "orange"
+        }
+      },
+      {
+        "key": "phq9",
+        "name": "우울증(PHQ-9)",
+        "ref": "0~4점",
+        "value": "7점",
+        "judge": {
+          "code": "B",
+          "text": "가벼운 우울증상",
+          "tone": "orange"
+        }
+      },
+      {
+        "key": "pta",
+        "name": "순음청력검사",
+        "ref": "40dB 미만",
+        "value": "42 dB",
+        "judge": {
+          "code": "D",
+          "text": "질환의심",
+          "tone": "red"
+        }
+      },
+      {
+        "key": "whisper",
+        "name": "귓속말 검사",
+        "ref": "양쪽 3개 이상",
+        "value": "한쪽이라도 3개 미만",
+        "judge": {
+          "code": "D",
+          "text": "정밀검사 의뢰",
+          "tone": "red"
+        }
+      },
+      {
+        "key": "spiro",
+        "name": "폐기능검사",
+        "ref": "FEV1/FVC 70 이상",
+        "value": "FEV1/FVC 67%",
+        "judge": {
+          "code": "D",
+          "text": "COPD 의심",
+          "tone": "red"
+        }
+      },
+      {
+        "key": "caries",
+        "name": "우식치아",
+        "ref": "없음",
+        "value": "있음",
+        "judge": {
+          "code": "D",
+          "text": "치료필요",
+          "tone": "red"
+        }
+      },
+      {
+        "key": "filled",
+        "name": "수복치아",
+        "ref": "없음",
+        "value": "있음",
+        "judge": {
+          "code": "B",
+          "text": "주의",
+          "tone": "orange"
+        }
+      },
+      {
+        "key": "lost",
+        "name": "상실치아",
+        "ref": "없음",
+        "value": "있음",
+        "judge": {
+          "code": "D",
+          "text": "치료필요",
+          "tone": "red"
+        }
+      },
+      {
+        "key": "gingiva",
+        "name": "치은염증",
+        "ref": "없음",
+        "value": "경증",
+        "judge": {
+          "code": "D",
+          "text": "질환의심",
+          "tone": "red"
+        }
+      },
+      {
+        "key": "calculus",
+        "name": "치석",
+        "ref": "없음",
+        "value": "중증",
+        "judge": {
+          "code": "D",
+          "text": "치료필요",
+          "tone": "red"
+        }
+      },
+      {
+        "key": "plaque",
+        "name": "치면세균막검사",
+        "ref": "1점 미만",
+        "value": "4점",
+        "judge": {
+          "code": "D",
+          "text": "개선요망",
+          "tone": "red"
+        }
       }
     ]
   },
   "nutrients": [
-    {
-      "key": "비타민 A",
-      "name": "비타민 A",
-      "unit": "µg",
-      "level": "over",
-      "supp": 3000.0,
-      "meal": 500.0,
-      "total": 3500.0,
-      "rda": 700,
-      "ul": 3000,
-      "hasStd": true,
-      "ulSuppOnly": false,
-      "ulAmount": 3500.0,
-      "sources": [
-        "눈에 좋은 비타민A"
-      ],
-      "unmapped": [],
-      "basis": "권장 700 · 상한 3,000µg",
-      "bar": {
-        "supp": 74.53416149068323,
-        "meal": 12.422360248447205,
-        "rdaMark": 17.39130434782609,
-        "ulMark": 74.53416149068323
-      },
-      "gauge": {
-        "rda": 5.0,
-        "ul": 1.1666666666666667
-      },
-      "caption": "눈에 좋은 비타민A · 영양제 3,000µg + 식사 500µg",
-      "note": {
-        "title": "상한 초과.",
-        "body": "3,500µg, 상한 3,000µg을 넘었습니다. 제품 수를 줄이거나 함량이 낮은 제품으로 바꿔 보세요."
-      }
-    },
-    {
-      "key": "마그네슘",
-      "name": "마그네슘",
-      "unit": "mg",
-      "level": "near",
-      "supp": 350.0,
-      "meal": 280.0,
-      "total": 630.0,
-      "rda": 350,
-      "ul": 350,
-      "hasStd": true,
-      "ulSuppOnly": true,
-      "ulAmount": 350.0,
-      "sources": [
-        "마그네슘 350"
-      ],
-      "unmapped": [],
-      "basis": "권장 350 · 상한 350mg (영양제 기준)",
-      "bar": {
-        "supp": 48.309178743961354,
-        "meal": 38.64734299516908,
-        "rdaMark": 48.309178743961354,
-        "ulMark": 48.309178743961354
-      },
-      "gauge": {
-        "rda": 1.8,
-        "ul": 1.0
-      },
-      "caption": "마그네슘 350 · 영양제 350mg + 식사 280mg",
-      "note": {
-        "title": "상한 근접.",
-        "body": "여기에 같은 성분이 든 제품을 더하면 초과할 수 있습니다."
-      }
-    },
-    {
-      "key": "엽산",
-      "name": "엽산",
-      "unit": "µg",
-      "level": "near",
-      "supp": 1000.0,
-      "meal": 300.0,
-      "total": 1300.0,
-      "rda": 400,
-      "ul": 1000,
-      "hasStd": true,
-      "ulSuppOnly": true,
-      "ulAmount": 1000.0,
-      "sources": [
-        "엽산 1000"
-      ],
-      "unmapped": [],
-      "basis": "권장 400 · 상한 1,000µg (영양제 기준)",
-      "bar": {
-        "supp": 66.88963210702342,
-        "meal": 20.066889632107028,
-        "rdaMark": 26.755852842809368,
-        "ulMark": 66.88963210702342
-      },
-      "gauge": {
-        "rda": 3.25,
-        "ul": 1.0
-      },
-      "caption": "엽산 1000 · 영양제 1,000µg + 식사 300µg",
-      "note": {
-        "title": "상한 근접.",
-        "body": "여기에 같은 성분이 든 제품을 더하면 초과할 수 있습니다."
-      }
-    },
     {
       "key": "루테인",
       "name": "루테인",
@@ -1107,6 +1250,70 @@
       "note": {
         "title": "식사만으로는 모자랍니다.",
         "body": "권장량 10mg까지 9mg이 부족합니다. 위의 추천을 참고해 보세요."
+      }
+    },
+    {
+      "key": "마그네슘",
+      "name": "마그네슘",
+      "unit": "mg",
+      "level": "low",
+      "supp": 0.0,
+      "meal": 280.0,
+      "total": 280.0,
+      "rda": 350,
+      "ul": 350,
+      "hasStd": true,
+      "ulSuppOnly": true,
+      "ulAmount": 0.0,
+      "sources": [],
+      "unmapped": [],
+      "basis": "권장 350 · 상한 350mg (영양제 기준)",
+      "bar": {
+        "supp": 0.0,
+        "meal": 50.0,
+        "rdaMark": 62.5,
+        "ulMark": 62.5
+      },
+      "gauge": {
+        "rda": 0.8,
+        "ul": 0.0
+      },
+      "caption": "식사 평균 추정 280mg · 등록한 제품 없음",
+      "note": {
+        "title": "식사만으로는 모자랍니다.",
+        "body": "권장량 350mg까지 70mg이 부족합니다. 위의 추천을 참고해 보세요."
+      }
+    },
+    {
+      "key": "비타민 A",
+      "name": "비타민 A",
+      "unit": "µg",
+      "level": "low",
+      "supp": 0.0,
+      "meal": 500.0,
+      "total": 500.0,
+      "rda": 700,
+      "ul": 3000,
+      "hasStd": true,
+      "ulSuppOnly": false,
+      "ulAmount": 500.0,
+      "sources": [],
+      "unmapped": [],
+      "basis": "권장 700 · 상한 3,000µg",
+      "bar": {
+        "supp": 0.0,
+        "meal": 13.333333333333334,
+        "rdaMark": 18.666666666666668,
+        "ulMark": 80.0
+      },
+      "gauge": {
+        "rda": 0.7142857142857143,
+        "ul": 0.16666666666666666
+      },
+      "caption": "식사 평균 추정 500µg · 등록한 제품 없음",
+      "note": {
+        "title": "식사만으로는 모자랍니다.",
+        "body": "권장량 700µg까지 200µg이 부족합니다. 위의 추천을 참고해 보세요."
       }
     },
     {
@@ -1334,6 +1541,38 @@
       }
     },
     {
+      "key": "엽산",
+      "name": "엽산",
+      "unit": "µg",
+      "level": "low",
+      "supp": 0.0,
+      "meal": 300.0,
+      "total": 300.0,
+      "rda": 400,
+      "ul": 1000,
+      "hasStd": true,
+      "ulSuppOnly": true,
+      "ulAmount": 0.0,
+      "sources": [],
+      "unmapped": [],
+      "basis": "권장 400 · 상한 1,000µg (영양제 기준)",
+      "bar": {
+        "supp": 0.0,
+        "meal": 24.0,
+        "rdaMark": 32.0,
+        "ulMark": 80.0
+      },
+      "gauge": {
+        "rda": 0.75,
+        "ul": 0.0
+      },
+      "caption": "식사 평균 추정 300µg · 등록한 제품 없음",
+      "note": {
+        "title": "식사만으로는 모자랍니다.",
+        "body": "권장량 400µg까지 100µg이 부족합니다. 위의 추천을 참고해 보세요."
+      }
+    },
+    {
       "key": "오메가3",
       "name": "오메가3",
       "unit": "mg",
@@ -1427,76 +1666,6 @@
       "note": {
         "title": "식사만으로는 모자랍니다.",
         "body": "권장량 800mg까지 310mg이 부족합니다. 위의 추천을 참고해 보세요."
-      }
-    },
-    {
-      "key": "코엔자임q10",
-      "name": "코엔자임Q10",
-      "unit": "mg",
-      "level": "unknown",
-      "supp": 100.0,
-      "meal": 0.0,
-      "total": 100.0,
-      "rda": null,
-      "ul": null,
-      "hasStd": false,
-      "ulSuppOnly": false,
-      "ulAmount": 100.0,
-      "sources": [
-        "장에 좋은 유산균"
-      ],
-      "unmapped": [],
-      "basis": "표준 기준 미등록",
-      "bar": {
-        "supp": 86.95652173913044,
-        "meal": 0.0,
-        "rdaMark": null,
-        "ulMark": null
-      },
-      "gauge": {
-        "rda": null,
-        "ul": null
-      },
-      "caption": "장에 좋은 유산균 · 영양제 100mg",
-      "note": {
-        "title": "기준값이 없습니다.",
-        "body": "기준표에 없는 성분이라 합산량만 표시합니다."
-      }
-    },
-    {
-      "key": "프로바이오틱스",
-      "name": "프로바이오틱스",
-      "unit": "억CFU",
-      "level": "unknown",
-      "supp": 0.0,
-      "meal": 0.0,
-      "total": 0.0,
-      "rda": null,
-      "ul": null,
-      "hasStd": false,
-      "ulSuppOnly": false,
-      "ulAmount": 0.0,
-      "sources": [
-        "장에 좋은 유산균"
-      ],
-      "unmapped": [
-        "장에 좋은 유산균: 100억CFU"
-      ],
-      "basis": "표준 기준 미등록",
-      "bar": {
-        "supp": 0.0,
-        "meal": 0.0,
-        "rdaMark": null,
-        "ulMark": null
-      },
-      "gauge": {
-        "rda": null,
-        "ul": null
-      },
-      "caption": "장에 좋은 유산균",
-      "note": {
-        "title": "기준값이 없습니다.",
-        "body": "장에 좋은 유산균: 100억CFU — 이 단위는 환산 규칙이 없어 합산하지 않았습니다."
       }
     },
     {
@@ -1628,36 +1797,10 @@
       }
     }
   ],
-  "issues": [
-    {
-      "kind": "상한 초과",
-      "tone": "red",
-      "text": "비타민 A 합산량 3,500µg이 상한 3,000µg을 넘습니다. 제품 구성을 조정해 보세요."
-    },
-    {
-      "kind": "상한 근접",
-      "tone": "orange",
-      "text": "마그네슘이 상한의 70%를 넘었습니다. 같은 성분이 든 제품을 더하면 초과할 수 있습니다."
-    },
-    {
-      "kind": "상한 근접",
-      "tone": "orange",
-      "text": "엽산이 상한의 70%를 넘었습니다. 같은 성분이 든 제품을 더하면 초과할 수 있습니다."
-    },
-    {
-      "kind": "환산 불가",
-      "tone": "gray",
-      "text": "프로바이오틱스의 장에 좋은 유산균: 100억CFU — 단위를 환산할 수 없어 합산에서 제외했습니다."
-    },
-    {
-      "kind": "기준 미등록",
-      "tone": "gray",
-      "text": "코엔자임Q10, 프로바이오틱스는 기준값이 등록되어 있지 않아 비율을 계산하지 못했습니다."
-    }
-  ],
+  "issues": [],
   "recommend": {
     "title": "이런 성분을 더 챙겨 보세요",
-    "desc": "식사 평균 추정치 · 복용 중인 영양제 · 검진 8개 항목을 기준으로, 권장량에 못 미치는 성분을 모자란 순서로 골랐습니다. 이미 드시는 영양제로 채워지는 성분은 뺐습니다.",
+    "desc": "식사 평균 추정치 · 검진 34개 항목을 기준으로, 권장량에 못 미치는 성분을 모자란 순서로 골랐습니다.",
     "items": [
       {
         "name": "루테인",
@@ -1695,35 +1838,27 @@
         "caution": ""
       },
       {
-        "name": "비타민 E",
-        "amount": "3mg 더",
-        "reason": "식사 추정치로 9mg, 권장량 12mg의 75%입니다.",
+        "name": "비타민 A",
+        "amount": "200µg 더",
+        "reason": "식사 추정치로 500µg, 권장량 700µg의 71%입니다.",
         "tone": "blue",
         "caution": ""
       }
     ],
-    "advice": "건강검진에서 4개 항목이 기준을 벗어났습니다. 영양제를 고르기 전에 의사·약사와 상의하시기를 권합니다.",
-    "more": 5,
-    "moreText": "이 밖에 5개 성분도 권장량에 못 미칩니다. 아래 섭취량 카드에서 모두 확인하실 수 있습니다.",
+    "advice": "건강검진에서 28개 항목이 기준을 벗어났습니다. 영양제를 고르기 전에 의사·약사와 상의하시기를 권합니다.",
+    "more": 8,
+    "moreText": "이 밖에 8개 성분도 권장량에 못 미칩니다. 아래 섭취량 카드에서 모두 확인하실 수 있습니다.",
     "note": "권장섭취량에 견준 계산 결과일 뿐, 특정 제품이나 복용을 권하는 것이 아닙니다. 복용을 시작하기 전에 의사·약사와 상의하세요."
   },
   "summary": {
-    "text": "건강검진 종합 판정은 '정상B(경계)' 입니다. 등록한 4개 제품과 식사 평균 추정치에서 20개 성분을 확인했습니다. 비타민 A는 상한을 넘어 조정이 필요합니다. 마그네슘, 엽산은 상한에 가까워 추가 섭취에 주의가 필요합니다. 루테인, 비타민 B1, 비타민 B2 외 8개는 권장량에 미치지 못합니다. 나머지 4개 성분은 권장 범위 안에 있습니다. 점검에서 5건이 확인됐습니다.",
+    "text": "건강검진 종합 판정은 '고혈압·당뇨병·이상지질혈증 질환의심' 입니다. 식사 평균 추정치를 기준으로 18개 성분을 살펴봤습니다. 루테인, 마그네슘, 비타민 A 외 11개는 권장량에 미치지 못합니다. 나머지 4개 성분은 권장 범위 안에 있습니다.",
     "chips": [
-      {
-        "text": "상한 초과 1",
-        "tone": "red"
-      },
-      {
-        "text": "상한 근접 2",
-        "tone": "orange"
-      },
       {
         "text": "적정 4",
         "tone": "green"
       },
       {
-        "text": "부족 11",
+        "text": "부족 14",
         "tone": "blue"
       }
     ]
