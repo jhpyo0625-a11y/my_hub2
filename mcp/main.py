@@ -162,6 +162,25 @@ def _db_conn():
 # Tools
 # --------------------------------------------------------------------------- #
 def calculate_dynamic_ri(age: int, gender: str, weight_kg: float, target_nutrients: list[str]) -> dict:
+    """Compute the weight-adjusted recommended daily intake (RI) for each target nutrient.
+
+    Derives personalized dose targets from the user's age, gender, and body weight against
+    the 2025 KDRI reference table (Korean adults 19+). Weight-scaled nutrients (e.g. protein)
+    are multiplied by a per-kg factor; the rest use the fixed KDRI base for the sex bracket.
+    Call this FIRST, once the target nutrients are known, to establish dose targets before
+    recommending anything.
+
+    Args:
+        age: Age in years.
+        gender: "male"/"female" (any string starting with "m" is treated as male).
+        weight_kg: Body weight in kilograms.
+        target_nutrients: nutrient_code list to compute RIs for.
+
+    Returns:
+        {"custom_ri": {nutrient_code: {base, factor_per_kg, value, unit}}}. A code with no
+        matching KDRI row is omitted from the map (never dosed at 0). `factor_per_kg` is null
+        for non-weight-scaled nutrients; `value` is the final personalized RI in `unit`.
+    """
     gender = "male" if str(gender).lower().startswith("m") else "female"
     weight_kg = float(weight_kg)
     custom_ri = {}
@@ -183,6 +202,25 @@ def calculate_dynamic_ri(age: int, gender: str, weight_kg: float, target_nutrien
 def validate_ul_guardrail(current_supps_intake: dict[str, float], diet_estimated_intake: dict[str, float],
                           proposed_supps_intake: dict[str, float],
                           age: int, gender: str, weight_kg: float) -> dict:
+    """Enforce Tolerable Upper Intake Level (UL) safety across combined intake.
+
+    Sums current supplements + estimated diet + proposed supplements per nutrient and checks
+    each total against its KDRI UL. Returns the safe subset of proposed items with any
+    violations. Call this LAST, once a proposed supplement set exists, before finalizing —
+    it is the guardrail that guarantees no recommendation pushes a nutrient over its UL.
+
+    Args:
+        current_supps_intake: nutrient_code -> amount (KDRI unit) from existing supplements.
+        diet_estimated_intake: nutrient_code -> estimated amount from diet.
+        proposed_supps_intake: nutrient_code -> amount from the recommendations being validated.
+        age, gender, weight_kg: user profile (currently informational; UL is bracket-independent).
+
+    Returns:
+        {"is_safe": bool, "ul_violations": [{nutrient, total_intake, ul_limit, status:"EXCEEDED"}],
+         "approved_recommendations": [{nutrient, amount}]}. `is_safe` is True only when no total
+        exceeds its UL. Nutrients with no UL (ul=None) are never flagged. Any proposed nutrient
+        that breaches its UL is dropped from `approved_recommendations`.
+    """
     current_supps_intake = current_supps_intake or {}
     diet_estimated_intake = diet_estimated_intake or {}
     proposed_supps_intake = proposed_supps_intake or {}
@@ -209,6 +247,21 @@ def validate_ul_guardrail(current_supps_intake: dict[str, float], diet_estimated
 
 
 def check_nutrient_interactions(nutrient_list: list[str]) -> dict:
+    """Split nutrients into an AM/PM schedule that separates antagonistic pairs.
+
+    Looks up known antagonist pairs (e.g. calcium/iron, zinc/copper) among the given nutrients,
+    then 2-colors the conflict graph via BFS to produce a morning/evening schedule where
+    competing pairs never share a slot. Call after choosing which nutrients to recommend.
+
+    Args:
+        nutrient_list: nutrient_code list to schedule and check.
+
+    Returns:
+        {"conflicts_found": bool, "time_separated_schedule": {"morning_AM": [...],
+         "evening_PM": [...]}, "cautions": [str]}. `cautions` carries human-readable interaction
+        notes; when an odd-cycle conflict cannot be perfectly 2-colored it adds a best-effort
+        caution and still returns a schedule.
+    """
     present = [n for n in (nutrient_list or [])]
     pset = set(present)
     edges = [(a, b) for a, b in ANTAGONISTS if a in pset and b in pset]
@@ -244,6 +297,20 @@ def check_nutrient_interactions(nutrient_list: list[str]) -> dict:
 
 
 def normalize_medical_data(raw_lab_results: list[dict]) -> dict:
+    """Standardize raw lab-test values and flag each low/normal/high.
+
+    Matches each test name (case-insensitive, with synonym aliases like "ldl-c"->"ldl",
+    "당화혈색소"->"hba1c") to a reference range and flags the value. Call when the user provides
+    health-checkup numbers (OCR'd or typed) that need interpretation before profiling.
+
+    Args:
+        raw_lab_results: list of {"test_name": str, "value": number, "unit": str}.
+            test_name is matched case-insensitively (e.g. LDL, HDL, glucose, vitamin D).
+
+    Returns:
+        {"results": [{test_name, value, unit, flag}]} where flag is "low"/"normal"/"high".
+        Tests with no known reference range are passed through as "normal" (judgment withheld).
+    """
     results = []
     for row in raw_lab_results or []:
         name_raw = str(row.get("test_name", ""))
@@ -266,6 +333,21 @@ def normalize_medical_data(raw_lab_results: list[dict]) -> dict:
 
 
 def resolve_nutrient_codes(names: list[str]) -> dict:
+    """Resolve free-text nutrient names (Korean or English) to canonical nutrient_code values.
+
+    Normalizes each input (lowercase, strip spaces/hyphens/underscores) and matches it against
+    the KDRI code set (exact) then the synonym table (e.g. "철분"->iron, "비타민C"->vitamin_c).
+    Call once up front, in the Normalizer step, to turn the user's supplement list and abnormal
+    lab signals into nutrient_code strings before any other tool runs.
+
+    Args:
+        names: free-text nutrient/supplement names.
+
+    Returns:
+        {"resolved": [{input, nutrient_code, matched_synonym, confidence}]}. `confidence` is
+        "exact" (input was already a code), "synonym" (matched an alias), or "none"
+        (unrecognized — nutrient_code and matched_synonym are null).
+    """
     resolved = []
     for name in names or []:
         code_form = str(name).strip().lower()
@@ -286,6 +368,24 @@ def resolve_nutrient_codes(names: list[str]) -> dict:
 def fill_missing_profile(age: int, gender: str, weight_kg: float | None = None,
                          current_intake: dict[str, float] | None = None,
                          target_nutrients: list[str] | None = None) -> dict:
+    """Fill missing weight and current-intake fields with cohort defaults, reporting each estimate.
+
+    When the user omits weight, substitutes the cohort median weight for their sex. When a target
+    nutrient is missing from current_intake, substitutes the cohort RI base for it. Every
+    substitution is recorded in `advisory` so downstream steps know which numbers were estimated
+    rather than user-provided. Call in the Normalizer step when weight or current intake is absent.
+
+    Args:
+        age: Age in years.
+        gender: "male"/"female" (any string starting with "m" is treated as male).
+        weight_kg: Body weight in kg, or None to fill from the cohort median-weight table.
+        current_intake: nutrient_code -> current amount, or None; missing targets are filled.
+        target_nutrients: nutrient_codes to ensure a current_intake value exists for.
+
+    Returns:
+        {"filled": {"weight_kg": number, "current_intake": {code: number}},
+         "advisory": [str]}. `advisory` lists exactly what was estimated and how.
+    """
     gender = "male" if str(gender).lower().startswith("m") else "female"
     advisory = []
     if weight_kg is None:
@@ -305,6 +405,22 @@ def fill_missing_profile(age: int, gender: str, weight_kg: float | None = None,
 
 
 def compute_intake_coverage(intake: dict[str, float], custom_ri: dict) -> dict:
+    """Classify each nutrient's intake as deficient/adequate/excess vs its personalized RI.
+
+    Divides intake by the RI to get a coverage percentage, then buckets it: <90% deficient,
+    >150% excess, otherwise adequate. Call in the Reviewer step after a UL check to detect
+    whether dropping a UL-breaching product left any target nutrient deficient; the result also
+    feeds the Aggregator's intake visualization.
+
+    Args:
+        intake: nutrient_code -> summed (current+diet+proposed) amount.
+        custom_ri: nutrient_code -> RI, accepting either a plain number or the
+            {"value": number, ...} object returned by calculate_dynamic_ri.
+
+    Returns:
+        {"coverage": {nutrient_code: {"pct": number, "status": "deficient"|"adequate"|"excess"}}}.
+        Codes with a non-positive RI are skipped.
+    """
     # custom_ri는 code->숫자 또는 code->{"value":..} 둘 다 허용.
     intake = intake or {}
     coverage = {}
@@ -325,6 +441,23 @@ def compute_intake_coverage(intake: dict[str, float], custom_ri: dict) -> dict:
 
 
 def search_products(target_nutrients: list[str], filters: dict | None = None) -> dict:
+    """Find supplement products supplying the target nutrients, ranked by coverage.
+
+    Queries the product_ingredients_master catalog (Neon PostgreSQL) for products whose
+    nutrients overlap the targets, optionally filtered by dosage form and excluded ingredients,
+    and ranks results by how many target nutrients each covers. Call after target RIs are known,
+    to pick concrete products. Requires DATABASE_URL — returns {"products": []} when the DB is
+    unset or unreachable (graceful degradation, never raises).
+
+    Args:
+        target_nutrients: nutrient_code list the product should supply.
+        filters: optional {"form": substring (ILIKE, e.g. "capsule"),
+            "exclude": [nutrient_codes to avoid]}.
+
+    Returns:
+        {"products": [{label_id, product_name, brand, form, nutrients}]}, up to 50, ranked by
+        target coverage descending. `nutrients` is nutrient_code -> per-serving amount (KDRI unit).
+    """
     filters = filters or {}
     form = filters.get("form")
     exclude = set(filters.get("exclude") or [])
@@ -368,6 +501,23 @@ def search_products(target_nutrients: list[str], filters: dict | None = None) ->
 
 
 def search_evidence(query: str, nutrient_code: str | None = None, k: int = 5) -> dict:
+    """Retrieve cited nutrition/interaction evidence passages semantically similar to a query.
+
+    Embeds the query (OpenAI embeddings) and runs a pgvector nearest-neighbor search over the
+    evidence_chunks table, returning the top-k most similar passages with their citations. Call
+    to ground an explanation or recommendation with a source. Requires DATABASE_URL and
+    OPENAI_API_KEY — returns {"chunks": []} when either is missing or the lookup fails.
+
+    Args:
+        query: natural-language search query (Korean or English).
+        nutrient_code: accepted for forward-compat but NOT used to filter (chunks have null
+            nutrient_code).
+        k: number of top passages to return (default 5).
+
+    Returns:
+        {"chunks": [{content, source, citation, url}]}, ordered by ascending cosine distance
+        (most similar first).
+    """
     conn = _db_conn()
     if conn is None or not os.getenv("OPENAI_API_KEY"):
         return {"chunks": []}

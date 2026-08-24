@@ -6,10 +6,15 @@ from pydantic import BaseModel, Field
 # MCP 툴 이름과 1:1로 고정 (mcp/mcp_tool_specs.json 기준).
 # Literal로 제한해 LLM structured output이 없는 툴을 계획에 넣는 것을 스키마에서 차단.
 ToolName = Literal[
+    "resolve_nutrient_codes",
+    "normalize_medical_data",
+    "fill_missing_profile",
     "calculate_dynamic_ri",
-    "validate_ul_guardrail",
-    "check_nutrient_interactions",
     "search_products",
+    "check_nutrient_interactions",
+    "validate_ul_guardrail",
+    "compute_intake_coverage",
+    "search_evidence",
 ]
 
 

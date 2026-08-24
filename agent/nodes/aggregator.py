@@ -57,12 +57,19 @@ async def aggregator_node(state: State) -> State:
     state["rag_context"] = rag_context
 
     # 근거는 반드시 출처를 동반한다 — 무인용 근거는 제외(신뢰성 직결).
-    guidelines = []
-    for d in rag_context[:2]:
-        text = d.get("content")
-        source = _citation(d)
-        if text and source:
-            guidelines.append({"text": text, "source": source})
+    # 우선 search_evidence(MCP) 청크에서 구성. text/source 둘 다 있어야 채택.
+    guidelines = [
+        {"text": c["content"], "source": c.get("citation") or c.get("source")}
+        for c in by_task.get("search_evidence", {}).get("chunks", [])
+        if c.get("content") and (c.get("citation") or c.get("source"))
+    ]
+    # MCP 근거가 없을 때만 로컬 RAG 보강으로 폴백.
+    if not guidelines:
+        for d in rag_context[:2]:
+            text = d.get("content")
+            source = _citation(d)
+            if text and source:
+                guidelines.append({"text": text, "source": source})
 
     state["aggregated_report"] = {
         "title": "개인 맞춤형 정밀 영양 리포트",
@@ -74,6 +81,8 @@ async def aggregator_node(state: State) -> State:
         "ul_check": by_task.get("validate_ul_guardrail", {}),
         "failed_items": state.get("failed_items", []),
         "guidelines": guidelines,
+        "coverage": by_task.get("compute_intake_coverage", {}),
+        "lab_results": by_task.get("normalize_medical_data", {}),
     }
     state["aggregated_report"] = AggregatedReport.model_validate(
         state["aggregated_report"]).model_dump()

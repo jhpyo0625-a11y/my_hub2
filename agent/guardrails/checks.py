@@ -3,15 +3,22 @@ import re
 from nodes.reviewer import MAX_RETRIES
 
 _TOOLS = {
-    "calculate_dynamic_ri", "validate_ul_guardrail",
-    "check_nutrient_interactions", "search_products",
+    "resolve_nutrient_codes", "normalize_medical_data", "fill_missing_profile",
+    "calculate_dynamic_ri", "search_products", "check_nutrient_interactions",
+    "validate_ul_guardrail", "compute_intake_coverage", "search_evidence",
 }
 _REQ_ARGS = {
+    "resolve_nutrient_codes": {"names"},
+    "normalize_medical_data": {"raw_lab_results"},
+    "fill_missing_profile": {"age", "gender", "weight_kg",
+                             "current_intake", "target_nutrients"},
     "calculate_dynamic_ri": {"age", "gender", "weight_kg", "target_nutrients"},
+    "search_products": {"target_nutrients"},
+    "check_nutrient_interactions": {"nutrient_list"},
     "validate_ul_guardrail": {"current_supps_intake", "diet_estimated_intake",
                               "proposed_supps_intake", "age", "gender", "weight_kg"},
-    "check_nutrient_interactions": {"nutrient_list"},
-    "search_products": {"target_nutrients"},
+    "compute_intake_coverage": {"intake", "custom_ri"},
+    "search_evidence": {"query", "nutrient_code", "k"},
 }
 
 
@@ -53,7 +60,6 @@ def post_planner(state) -> list[str]:
     if not isinstance(plan, list) or not plan:
         return ["execution_plan 없음/빈값"]
     p = []
-    ul_step = sp_step = None
     for s in plan:
         tn = s.get("tool_name")
         if tn not in _TOOLS:
@@ -62,12 +68,24 @@ def post_planner(state) -> list[str]:
         missing = _REQ_ARGS[tn] - set((s.get("args") or {}).keys())
         if missing:
             p.append(f"{tn} 필수 args 누락: {sorted(missing)}")
-        if tn == "validate_ul_guardrail":
-            ul_step = s.get("step")
-        if tn == "search_products":
-            sp_step = s.get("step")
-    if ul_step is not None and sp_step is not None and not (ul_step > sp_step):
-        p.append("validate_ul_guardrail가 search_products 뒤가 아님")
+
+    def step_of(tool):
+        # 해당 tool_name의 step 번호(없으면 None). 둘 다 존재할 때만 순서 검증.
+        for s in plan:
+            if s.get("tool_name") == tool:
+                return s.get("step")
+        return None
+
+    def assert_after(later, earlier):
+        a, b = step_of(later), step_of(earlier)
+        if a is not None and b is not None and not (a > b):
+            p.append(f"{later}가 {earlier} 뒤가 아님")
+
+    assert_after("fill_missing_profile", "resolve_nutrient_codes")
+    assert_after("calculate_dynamic_ri", "resolve_nutrient_codes")
+    assert_after("calculate_dynamic_ri", "fill_missing_profile")
+    assert_after("validate_ul_guardrail", "search_products")
+    assert_after("compute_intake_coverage", "calculate_dynamic_ri")
     return p
 
 
@@ -118,7 +136,8 @@ def post_aggregator(state) -> list[str]:
     if not isinstance(rep, dict):
         return ["aggregated_report 없음"]
     p = []
-    for k in ("title", "user_profile", "calculated_target", "ul_check", "guidelines"):
+    for k in ("title", "user_profile", "calculated_target", "ul_check",
+              "guidelines", "coverage", "lab_results"):
         if k not in rep:
             p.append(f"필수키 없음: {k}")
     by_task = {

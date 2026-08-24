@@ -55,16 +55,18 @@ async def test_reviewer():
 
 async def test_executor():
     plan = _deterministic_plan(
-        {"age": 30, "gender": "female", "weight_kg": 60}, ["vitamin_d"]
+        {"age": 30, "gender": "female", "weight_kg": 60},
+        ["vitamin_d"], ["vitamin_d"], [],
     )
-    # 배치: step1 단독, step2+3 그룹, step4 단독 → 3배치
+    # 9-step 계획 배치: [resolve,normalize] [fill] [ri,products,interactions]
+    # [validate] [coverage,evidence] → 길이 [2,1,3,1,2]
     batches = _batches(plan)
-    assert [len(b) for b in batches] == [1, 2, 1], batches
+    assert [len(b) for b in batches] == [2, 1, 3, 1, 2], batches
 
-    # MCP 미구동 → fallback으로 전부 success
+    # MCP 미구동 → DB직조회/fallback으로 전부 success
     s = await executor_node({"execution_plan": plan})
     results = s["execution_results"]
-    assert len(results) == 4
+    assert len(results) == 9
     assert all(r["status"] == "success" for r in results), results
     ri = next(r for r in results if r["task_name"] == "calculate_dynamic_ri")
     # DB 연동 시 실제 RI, DB 불가 시 stub. 어느 경로든 vitamin_d는 양수.

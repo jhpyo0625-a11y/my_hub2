@@ -12,6 +12,16 @@ async def specialized_review_node(state: State) -> State:
     results = state.get("execution_results", [])
     retry = state.get("retry_count", 0)
 
+    # 참고용(ADVISORY): 충족 미달 영양소가 있으면 피드백에 덧붙인다.
+    # 라우팅/review_status 는 건드리지 않는다(부족만으로 재시도 유발 금지).
+    cov_res = next(
+        (r for r in results if r.get("task_name") == "compute_intake_coverage"),
+        None,
+    )
+    cov = (cov_res or {}).get("result", {}).get("coverage", {}) or {}
+    deficient = [c for c, v in cov.items() if v.get("status") == "deficient"]
+    defnote = f" (참고: 충족 미달 영양소 {deficient})" if deficient else ""
+
     # 1) 툴 호출 자체 실패 → 실행(Executor) 문제
     tool_errors = [r for r in results if r.get("status") == "error"]
 
@@ -35,7 +45,7 @@ async def specialized_review_node(state: State) -> State:
 
     if problem is None:
         state["review_status"] = "pass"
-        state["review_feedback"] = "모든 연산 및 가드레일 검수 통과."
+        state["review_feedback"] = "모든 연산 및 가드레일 검수 통과." + defnote
         return state
 
     # 3회 소진 후에도 실패 → 부분 실패로 확정하고 파이프라인은 계속.
@@ -59,7 +69,7 @@ async def specialized_review_node(state: State) -> State:
         state["failed_items"] = failed
         state["review_status"] = "pass"
         state["review_feedback"] = (
-            f"{MAX_RETRIES}회 재시도 소진, 일부 항목을 부분 실패로 확정."
+            f"{MAX_RETRIES}회 재시도 소진, 일부 항목을 부분 실패로 확정." + defnote
         )
         print(f"  -> ⛔ 재시도 {MAX_RETRIES}회 초과: 부분 실패 확정, 계속 진행.")
         return state
@@ -69,11 +79,11 @@ async def specialized_review_node(state: State) -> State:
     if problem == "executor":
         state["review_status"] = "reject_to_executor"
         state["review_feedback"] = (
-            "MCP 툴 호출 오류/타임아웃 감지. 재실행 필요."
+            "MCP 툴 호출 오류/타임아웃 감지. 재실행 필요." + defnote
         )
     else:
         state["review_status"] = "reject_to_planner"
         state["review_feedback"] = (
-            "상한 섭취량(UL) 초과 항목 감지. 계획 재수립 및 추천 수치 하향 요망."
+            "상한 섭취량(UL) 초과 항목 감지. 계획 재수립 및 추천 수치 하향 요망." + defnote
         )
     return state

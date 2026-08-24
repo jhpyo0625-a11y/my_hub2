@@ -133,6 +133,7 @@ def _agg_state():
         "guidelines": [{"text": "a", "source": "file.pdf p.1"}],
         "calculated_target": {"custom_ri": {"vitamin_d": {"value": 10}}},
         "ul_check": {"is_safe": True},
+        "coverage": {}, "lab_results": {},
     }
     return {"execution_results": results, "aggregated_report": rep}
 

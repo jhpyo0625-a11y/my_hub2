@@ -39,6 +39,13 @@ async def input_normalization_node(state: State) -> State:
 
     indicators = state["ocr_result"].get("extracted_indicators", {})
 
+    # 원시 검사 수치: normalize_medical_data 도구 입력용. 값 없는 지표는 제외.
+    state["raw_lab_results"] = [
+        {"test_name": name, "value": info.get("value"), "unit": info.get("unit")}
+        for name, info in indicators.items()
+        if info.get("value") is not None
+    ]
+
     # PII는 마스킹하지 않고 원본 보존. 어떤 필드가 PII인지 스키마 레벨에서 태깅.
     # gender: KDRI 규칙상 성별은 임의 기본값 금지 대상이나, 파이프라인 산출을 위해
     # 누락 시 female로 채우고 gender_defaulted 플래그로 하류에 사실을 전달한다.

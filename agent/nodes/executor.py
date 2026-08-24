@@ -68,22 +68,93 @@ def _fallback(tool_name: str, args: dict) -> dict:
     if tool_name == "search_products":
         return {"products": []}
 
+    if tool_name == "resolve_nutrient_codes":
+        # 빈 resolved -> 주입 단계가 planner 시드 targets를 유지.
+        return {"resolved": []}
+
+    if tool_name == "normalize_medical_data":
+        return {"results": [
+            {
+                "test_name": r.get("test_name"),
+                "value": r.get("value"),
+                "unit": r.get("unit"),
+                "flag": "normal",
+            }
+            for r in args.get("raw_lab_results", [])
+        ]}
+
+    if tool_name == "fill_missing_profile":
+        return {
+            "filled": {
+                "weight_kg": float(args.get("weight_kg") or 60.0),
+                "current_intake": dict(args.get("current_intake") or {}),
+            },
+            "advisory": [],
+        }
+
+    if tool_name == "compute_intake_coverage":
+        return {"coverage": {}}
+
+    if tool_name == "search_evidence":
+        return {"chunks": []}
+
     return {"status": "success"}
 
 
 def _inject_dependencies(step: dict, results_by_task: dict) -> None:
     """계획 시점에 미확정이던 교차-step 인자를 앞선 결과에서 주입."""
-    if step["tool_name"] != "validate_ul_guardrail":
-        return
-    products = (
-        results_by_task.get("search_products", {}) or {}
-    ).get("products", [])
-    if products:
-        # ponytail: 첫 제품의 per-serving 함량을 proposed로 사용.
-        # 다제품 합산은 중복 계상 위험 있어 보류 — 정밀 합산 필요 시 승격.
-        step["args"]["proposed_supps_intake"] = products[0].get(
-            "nutrients", {}
-        )
+    tool = step["tool_name"]
+    args = step["args"]
+
+    resolve_res = results_by_task.get("resolve_nutrient_codes", {}) or {}
+    seen: set = set()
+    RESOLVED: list = []
+    for r in resolve_res.get("resolved", []):
+        code = r.get("nutrient_code")
+        if code and code not in seen:
+            seen.add(code)
+            RESOLVED.append(code)  # dedup, 순서 유지
+    fill = (results_by_task.get("fill_missing_profile", {}) or {}).get(
+        "filled", {}
+    )
+    products = (results_by_task.get("search_products", {}) or {}).get(
+        "products", []
+    )
+    custom_ri = (results_by_task.get("calculate_dynamic_ri", {}) or {}).get(
+        "custom_ri", {}
+    )
+
+    # 1. resolved 코드가 있을 때만 시드 targets를 덮어씀 (비면 MCP 다운 -> 유지).
+    if RESOLVED:
+        if tool in ("fill_missing_profile", "calculate_dynamic_ri",
+                    "search_products"):
+            args["target_nutrients"] = RESOLVED
+        elif tool == "check_nutrient_interactions":
+            args["nutrient_list"] = RESOLVED
+
+    # 2. 추정 체중 주입.
+    if tool in ("calculate_dynamic_ri", "validate_ul_guardrail") and \
+            fill.get("weight_kg") is not None:
+        args["weight_kg"] = fill["weight_kg"]
+
+    # 3. UL 가드레일: 현재 섭취량 + 첫 제품 함량을 proposed로.
+    if tool == "validate_ul_guardrail":
+        if fill:
+            args["current_supps_intake"] = fill.get("current_intake", {})
+        if products:
+            # ponytail: 첫 제품 per-serving만 proposed로. 다제품 합산은
+            # 중복 계상 위험 있어 보류 — 정밀 합산 필요 시 승격.
+            args["proposed_supps_intake"] = products[0].get("nutrients", {})
+
+    # 4. 충족도: custom_ri + (현재 + 제안) 합산 섭취.
+    if tool == "compute_intake_coverage":
+        args["custom_ri"] = custom_ri
+        proposed = products[0].get("nutrients", {}) if products else {}
+        current = fill.get("current_intake", {})
+        args["intake"] = {
+            c: float(current.get(c, 0)) + float(proposed.get(c, 0))
+            for c in set(current) | set(proposed)
+        }
 
 
 async def _run_step(step: dict) -> dict:

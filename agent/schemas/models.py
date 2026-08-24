@@ -200,6 +200,10 @@ class AggregatedReport(Base):
     ul_check: dict[str, Any] = Field(default_factory=dict)
     failed_items: list[dict[str, Any]] = Field(default_factory=list)
     guidelines: list[Any] = Field(default_factory=list)
+    # compute_intake_coverage 전체 결과 {"coverage":{...}}
+    coverage: dict[str, Any] = Field(default_factory=dict)
+    # normalize_medical_data 전체 결과 {"results":[...]}
+    lab_results: dict[str, Any] = Field(default_factory=dict)
 
 
 class FinalReport(Base):
