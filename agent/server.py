@@ -125,14 +125,14 @@ async def login(
 
 
 # ============================================================
-# 영양제 추천 및 검진표 정제 API
+# 검진표 정제 전용 API (신규)
 # ============================================================
 
 @app.post(
-    "/api/v1/recommend",
-    summary="검진표 이미지 기반 개인 맞춤 영양 추천 생성",
+    "/api/v1/normalize",
+    summary="검진표 이미지/데이터 정제 (Normalization)",
 )
-async def recommend_nutrition(
+async def normalize_checkup(
     file: Optional[UploadFile] = File(
         None,
         description="검진표 이미지 또는 PDF 파일",
@@ -158,6 +158,10 @@ async def recommend_nutrition(
         description="체중 (kg)",
     ),
 ):
+    """검진표 파일 및 전달받은 인적사항을 input_normalization_node에 전달하여
+
+    정제/표준화된 검진표 데이터(JSON)를 반환합니다.
+    """
     try:
         image_bytes = None
         filename = None
